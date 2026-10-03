@@ -434,6 +434,13 @@
 <span class="sd">:math:`(\tilde\mu, \tilde\gamma) \mapsto \rho` is the **efficient surface**;</span>
 <span class="sd">its lower envelope under the return constraint is the **efficient frontier**.</span>
 
+<span class="sd">The inverse formulae hold when :math:`A` is nonsingular, that is when</span>
+<span class="sd">:math:`r = \operatorname{rank}[\mu\;\gamma\;e] = 3`. If :math:`r &lt; 3`, the</span>
+<span class="sd">attainable pairs form an affine set :math:`\mathcal{S}` of dimension</span>
+<span class="sd">:math:`r-1`. On :math:`\mathcal{S}` the same formulae hold with the</span>
+<span class="sd">pseudoinverse :math:`A^{+}` in place of :math:`A^{-1}`. A target outside</span>
+<span class="sd">:math:`\mathcal{S}` is not a portfolio.</span>
+
 <span class="sd">See :doc:`../theory/mean_risk_optimization` for the derivation.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -441,14 +448,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_triangular</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance.risk</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MEAN_RISK_REACH_ATOL</span>
 
 <span class="c1"># Reciprocal golden ratio for golden-section search.</span>
 <span class="n">_INV_PHI</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5.0</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+<span class="n">_COORDINATE_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mu_tilde&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma_tilde&quot;</span><span class="p">,</span> <span class="s2">&quot;budget&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="EfficientSurface">
@@ -505,21 +516,75 @@
     <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_reduced_factors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return ``(A, A_inv, Sinv_M)`` with :math:`M = [\mu\;\gamma\;e]`.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduced_factors</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Whitened SVD of :math:`M = [\mu\;\gamma\;e]`.</span>
 
-<span class="sd">    :math:`A = M^\top \Sigma^{-1} M` (3×3 SPD),</span>
-<span class="sd">    :math:`\Sigma^{-1} M` (d×3), via Cholesky solves on</span>
-<span class="sd">    :math:`\Sigma = L L^\top`.</span>
+<span class="sd">    Returns ``(A, S, Vh, LT_U, rank)``. With :math:`\Sigma = L L^\top`,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        B = L^{-1} M = U \operatorname{diag}(S) V^\top,</span>
+
+<span class="sd">    ``Vh`` stores :math:`V^\top` and ``LT_U`` stores :math:`L^{-\top} U`.</span>
+<span class="sd">    The Gram matrix :math:`A = B^\top B = M^\top \Sigma^{-1} M` is</span>
+<span class="sd">    symmetric positive semidefinite and :math:`3\times 3`. It is singular</span>
+<span class="sd">    when :math:`\operatorname{rank}(M) &lt; 3`; it is not inverted here.</span>
+
+<span class="sd">    ``rank`` is the number of singular values strictly above</span>
+<span class="sd">    :math:`\max(d, 3)\, \varepsilon\, \sigma_{\max}`. Here :math:`\varepsilon`</span>
+<span class="sd">    is machine epsilon for the dtype of :math:`B`, and :math:`\sigma_{\max}`</span>
+<span class="sd">    is its largest singular value. This is the default relative tolerance</span>
+<span class="sd">    of a rank-revealing SVD (NumPy ``linalg.matrix_rank`` on a</span>
+<span class="sd">    :math:`d \times 3` matrix). A backward-stable SVD perturbs singular</span>
+<span class="sd">    values by about :math:`\varepsilon \|B\|` times a small factor of the</span>
+<span class="sd">    dimensions, so a singular value below the tolerance is collinear at</span>
+<span class="sd">    rounding scale.</span>
+
+<span class="sd">    The test is applied to :math:`\sigma(B)`, not to the eigenvalues</span>
+<span class="sd">    :math:`\sigma(B)^2` of :math:`A`. Forming :math:`A` and factoring it</span>
+<span class="sd">    squares the condition number. A Cholesky factor of :math:`A` is then</span>
+<span class="sd">    undefined, or non-finite, once a singular value of :math:`B` approaches</span>
+<span class="sd">    :math:`\sqrt{\varepsilon}`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">mu</span>
     <span class="n">gamma</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">gamma</span>
     <span class="n">e</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">e</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                  <span class="c1"># (d, 3)</span>
-    <span class="n">Sinv_M</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">((</span><span class="n">model</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">M</span><span class="p">)</span>           <span class="c1"># (d, 3)</span>
-    <span class="n">A</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">Sinv_M</span>                                       <span class="c1"># (3, 3)</span>
-    <span class="n">A_inv</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">(</span><span class="n">cho_factor</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">Sinv_M</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    <span class="c1"># L^{-1} M</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vh</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">LT_U</span> <span class="o">=</span> <span class="n">solve_triangular</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">L_Sigma</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">B</span>
+
+    <span class="n">singular</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+    <span class="n">sigma_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">singular</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sigma_max</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sigma_max</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;coordinate matrix M = [mu, gamma, e] has numerical rank 0&quot;</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">singular</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">tol</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">sigma_max</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">singular</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;coordinate matrix M = [mu, gamma, e] has numerical rank 0&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vh</span><span class="p">,</span> <span class="n">LT_U</span><span class="p">,</span> <span class="n">rank</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_raise_from_host_residual</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise if any entry of :math:`M^\\top w - c` exceeds the reach gap.&quot;&quot;&quot;</span>
+    <span class="n">bad</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">_COORDINATE_NAMES</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">MEAN_RISK_REACH_ATOL</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">bad</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">noun</span> <span class="o">=</span> <span class="s2">&quot;coordinate&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;coordinates&quot;</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array2string</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;unattainable reduced </span><span class="si">{</span><span class="n">noun</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">; &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;residual of M^T w - c is </span><span class="si">{</span><span class="n">shown</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MeanRiskProblem">
@@ -532,23 +597,30 @@
 <span class="sd">    fixed subordinator sample ``Y`` (common random numbers); draw it once via</span>
 <span class="sd">    ``model.joint.subordinator().rvs(n, seed)``.</span>
 
-<span class="sd">    The Cholesky factors :math:`A`, :math:`A^{-1}`, and :math:`\Sigma^{-1}M`</span>
-<span class="sd">    are computed once at construction (w-independent).</span>
+<span class="sd">    The whitened factorisation of :math:`M = [\mu\;\gamma\;e]` is computed</span>
+<span class="sd">    once at construction. The Gram matrix :math:`A = M^\top\Sigma^{-1}M`</span>
+<span class="sd">    is stored for the minimum-dispersion anchor; it is positive semidefinite</span>
+<span class="sd">    and need not be invertible. Weights use the truncated pseudoinverse of</span>
+<span class="sd">    the whitened factor and are returned only for attainable targets.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span>
     <span class="n">risk</span><span class="p">:</span> <span class="n">RiskMeasure</span>
     <span class="n">A</span><span class="p">:</span> <span class="n">Array</span>
-    <span class="n">A_inv</span><span class="p">:</span> <span class="n">Array</span>
-    <span class="n">Sinv_M</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">S</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">Vh</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">LT_U</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">static</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">risk</span><span class="p">:</span> <span class="n">RiskMeasure</span><span class="p">):</span>
-        <span class="n">A</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">,</span> <span class="n">Sinv_M</span> <span class="o">=</span> <span class="n">_reduced_factors</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vh</span><span class="p">,</span> <span class="n">LT_U</span><span class="p">,</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">_reduced_factors</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;risk&#39;</span><span class="p">,</span> <span class="n">risk</span><span class="p">)</span>
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;A_inv&#39;</span><span class="p">,</span> <span class="n">A_inv</span><span class="p">)</span>
-        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Sinv_M&#39;</span><span class="p">,</span> <span class="n">Sinv_M</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Vh&#39;</span><span class="p">,</span> <span class="n">Vh</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;LT_U&#39;</span><span class="p">,</span> <span class="n">LT_U</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;rank&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Reduced-coordinate algebra</span>
@@ -561,24 +633,76 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+        <span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Truncated factors :math:`w = L^{-\top} U_r S_r^{-1} V_r^\top c`</span>
+<span class="sd">        and :math:`g = \|S_r^{-1} V_r^\top c\|^2`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vh</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span> <span class="o">@</span> <span class="n">c</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LT_U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">r</span><span class="p">]</span> <span class="o">@</span> <span class="n">alpha</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span><span class="p">,</span> <span class="n">g</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_constraint_residual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Residual :math:`M^\top w - c = P_r c - c` for one target or a batch.&quot;&quot;&quot;</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">Vh_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vh</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">C</span> <span class="o">@</span> <span class="n">Vh_r</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">Vh_r</span> <span class="o">-</span> <span class="n">C</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_raise_if_unreachable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constraint_residual</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">resid</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">resid</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">resid</span><span class="p">[</span><span class="mi">2</span><span class="p">])])</span>
+        <span class="k">except</span> <span class="n">jax</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ConcretizationTypeError</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">_raise_from_host_residual</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_raise_if_any_unreachable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">C</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_constraint_residual</span><span class="p">(</span><span class="n">C</span><span class="p">))</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="n">resid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">worst</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">flat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">_raise_from_host_residual</span><span class="p">(</span><span class="n">flat</span><span class="p">[</span><span class="n">worst</span><span class="p">])</span>
+
 <div class="viewcode-block" id="MeanRiskProblem.weights">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.weights">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Minimum-dispersion weights realising :math:`(\tilde\mu, \tilde\gamma)`.&quot;&quot;&quot;</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
-                       <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
-                       <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Sinv_M</span> <span class="o">@</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A_inv</span> <span class="o">@</span> <span class="n">c</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Minimum-dispersion weights realising :math:`(\tilde\mu, \tilde\gamma)`.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If :math:`(\tilde\mu, \tilde\gamma)` is outside the reachable</span>
+<span class="sd">            set. The message names each coordinate of</span>
+<span class="sd">            :math:`M^\top w - c` whose absolute residual exceeds</span>
+<span class="sd">            ``MEAN_RISK_REACH_ATOL``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">)</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_unreachable</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span></div>
 
 
 <div class="viewcode-block" id="MeanRiskProblem.dispersion">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.dispersion">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispersion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Realised dispersion :math:`g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*`.&quot;&quot;&quot;</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
-                       <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
-                       <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">c</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_inv</span> <span class="o">@</span> <span class="n">c</span></div>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Realised dispersion :math:`g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*`.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If :math:`(\tilde\mu, \tilde\gamma)` is outside the reachable set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">)</span>
+        <span class="n">_w</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solve</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_unreachable</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g</span></div>
 
 
 <div class="viewcode-block" id="MeanRiskProblem.expected_return">
@@ -612,6 +736,116 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">))</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_line_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Affine frame :math:`c(t) = c_0 + t\, dc` of a rank-2 reachable set.</span>
+
+<span class="sd">        :math:`c_0` has third coordinate 1 and :math:`dc` has third</span>
+<span class="sd">        coordinate 0. ``dc`` is nonzero.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vh</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">budget</span> <span class="o">=</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">budget</span> <span class="o">@</span> <span class="n">budget</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;budget coordinate is orthogonal to the row space of M&quot;</span><span class="p">)</span>
+        <span class="n">alpha0</span> <span class="o">=</span> <span class="n">budget</span> <span class="o">/</span> <span class="n">scale</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">budget</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">budget</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">V</span> <span class="o">@</span> <span class="n">alpha0</span><span class="p">,</span> <span class="n">V</span> <span class="o">@</span> <span class="n">direction</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_search_return_line</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">returns</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">gamma_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Golden-section search of :math:`\tilde\mu = m - \tilde\gamma E[Y]`.&quot;&quot;&quot;</span>
+        <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">()</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">risk_of_gamma</span><span class="p">(</span><span class="n">gamma_vec</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_vec</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">gamma_vec</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+
+        <span class="n">gamma_star</span> <span class="o">=</span> <span class="n">_golden_section_min</span><span class="p">(</span><span class="n">risk_of_gamma</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_star</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">gamma_star</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_degenerate_targets</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">returns</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">gamma_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Coordinates on :math:`S` realising each target return, or an error.&quot;&quot;&quot;</span>
+        <span class="n">returns_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">EY</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">())</span>
+        <span class="n">lo</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">hi</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_point_targets</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">returns_np</span><span class="p">,</span> <span class="n">EY</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_line_targets</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">returns_np</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">EY</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_point_targets</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">returns</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">returns_np</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">EY</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lo</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">hi</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Vh</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;budget coordinate is orthogonal to the row space of M&quot;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">v</span> <span class="o">/</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">m_star</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">EY</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">returns_np</span> <span class="o">-</span> <span class="n">m_star</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MEAN_RISK_REACH_ATOL</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;expected return is not attainable; the reachable set is the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;point (mu_tilde, gamma_tilde) = (</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;with expected return </span><span class="si">{</span><span class="n">m_star</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">MEAN_RISK_REACH_ATOL</span> <span class="o">&lt;=</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">MEAN_RISK_REACH_ATOL</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;unattainable reduced coordinate gamma_tilde; the only &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;portfolio has gamma_tilde=</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> outside gamma_bounds </span><span class="si">{</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span><span class="w"> </span><span class="n">hi</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_line_targets</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">returns</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">returns_np</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">EY</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lo</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">hi</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">gamma_bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="n">c0</span><span class="p">,</span> <span class="n">dc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_line_frame</span><span class="p">()</span>
+        <span class="n">slope</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">dc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">dc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">EY</span><span class="p">)</span>
+        <span class="n">m0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">c0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">c0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">EY</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">slope</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MEAN_RISK_REACH_ATOL</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">returns_np</span> <span class="o">-</span> <span class="n">m0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MEAN_RISK_REACH_ATOL</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;expected return is not attainable; on the reachable set &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;the return is constant and equal to </span><span class="si">{</span><span class="n">m0</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># The return constraint contains S, so the line search stays on S.</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_return_line</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">returns_np</span> <span class="o">-</span> <span class="n">m0</span><span class="p">)</span> <span class="o">/</span> <span class="n">slope</span>
+        <span class="n">gamma_np</span> <span class="o">=</span> <span class="n">c0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gamma_np</span> <span class="o">&lt;</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">MEAN_RISK_REACH_ATOL</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+            <span class="n">gamma_np</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">MEAN_RISK_REACH_ATOL</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;unattainable reduced coordinate gamma_tilde; the portfolio &quot;</span>
+                <span class="s2">&quot;on the reachable set has &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;gamma_tilde=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">array2string</span><span class="p">(</span><span class="n">gamma_np</span><span class="p">,</span><span class="w"> </span><span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;outside gamma_bounds </span><span class="si">{</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span><span class="w"> </span><span class="n">hi</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">mu_np</span> <span class="o">=</span> <span class="n">c0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_np</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_np</span><span class="p">)</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Risk on the efficient surface</span>
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -620,7 +854,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_surface_risk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Risk over flattened reduced coordinates (vectorized, JIT-able).&quot;&quot;&quot;</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu_flat</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mu_flat</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;pi,ij,pj-&gt;p&#39;</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_inv</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="p">(</span><span class="n">C</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vh</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[:</span><span class="n">r</span><span class="p">]</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_reduced</span><span class="p">,</span> <span class="n">in_axes</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))(</span>
             <span class="n">mu_flat</span><span class="p">,</span> <span class="n">gamma_flat</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
@@ -645,10 +881,18 @@
 <span class="sd">        ``mu_tilde`` and ``gamma_tilde`` are 1-D arrays; the returned</span>
 <span class="sd">        ``risk`` has shape ``(len(mu_tilde), len(gamma_tilde))``. Memory</span>
 <span class="sd">        scales as ``len(mu_tilde) * len(gamma_tilde) * len(Y)``.</span>
+<span class="sd">        Every grid node must lie in the reachable set.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If any node lies outside the reachable set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mu_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">gamma_tilde</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">MU</span><span class="p">,</span> <span class="n">GA</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">MU</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">GA</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">MU</span><span class="o">.</span><span class="n">size</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_any_unreachable</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
         <span class="n">risk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">MU</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">GA</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">MU</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">EfficientSurface</span><span class="p">(</span>
             <span class="n">mu_tilde</span><span class="o">=</span><span class="n">mu_tilde</span><span class="p">,</span> <span class="n">gamma_tilde</span><span class="o">=</span><span class="n">gamma_tilde</span><span class="p">,</span>
@@ -667,21 +911,31 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EfficientFrontier</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Minimum risk for each target expected return in ``returns``.</span>
 
-<span class="sd">        For every target :math:`m`, minimises the risk along the constraint</span>
-<span class="sd">        line :math:`\tilde\mu = m - \tilde\gamma E[Y]` over</span>
-<span class="sd">        :math:`\tilde\gamma \in` ``gamma_bounds`` by golden-section search</span>
-<span class="sd">        (the surface is convex, so the restriction is unimodal).</span>
+<span class="sd">        For every target :math:`m`, minimises the risk along the part of</span>
+<span class="sd">        :math:`\tilde\mu + \tilde\gamma E[Y] = m` that lies in the reachable</span>
+<span class="sd">        set and in ``gamma_bounds``. When the reachable set is a plane this</span>
+<span class="sd">        is golden-section search in :math:`\tilde\gamma`. When it is a line,</span>
+<span class="sd">        the return constraint selects one point of the line, or the whole</span>
+<span class="sd">        line if the return is constant there. A constant return that misses</span>
+<span class="sd">        the line, and any target off the reachable set, is infeasible.</span>
+<span class="sd">        When the reachable set is a point, that portfolio is returned for</span>
+<span class="sd">        its own expected return and every other return is infeasible.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If a target return is not attainable on the reachable set, or</span>
+<span class="sd">            the feasible :math:`\tilde\gamma` lies outside ``gamma_bounds``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">returns</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">()</span>
-        <span class="n">lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">risk_of_gamma</span><span class="p">(</span><span class="n">gamma_vec</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_vec</span> <span class="o">*</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">gamma_vec</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
-
-        <span class="n">gamma_star</span> <span class="o">=</span> <span class="n">_golden_section_min</span><span class="p">(</span><span class="n">risk_of_gamma</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
-        <span class="n">mu_star</span> <span class="o">=</span> <span class="n">returns</span> <span class="o">-</span> <span class="n">gamma_star</span> <span class="o">*</span> <span class="n">E_Y</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search_return_line</span><span class="p">(</span>
+                <span class="n">returns</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_degenerate_targets</span><span class="p">(</span>
+                <span class="n">returns</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">)</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">mu_star</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raise_if_any_unreachable</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
         <span class="n">risk_star</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surface_risk</span><span class="p">(</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
         <span class="n">weights</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)(</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">gamma_star</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">EfficientFrontier</span><span class="p">(</span>

@@ -188,6 +188,61 @@ $(\tilde{\mu}, \tilde{\gamma})$. The surface
 $(\tilde{\mu}, \tilde{\gamma}) \mapsto \rho$ is the **efficient surface**,
 generalizing the classical efficient frontier.
 
+## Degenerate cases
+
+Let $M = [\mu \; \gamma \; \mathbf{e}]$ and $r = \operatorname{rank}(M)$.
+The third column of $M$ is $\mathbf{e} \neq 0$, so $r \ge 1$. Also
+$r \le \min(d, 3)$. A reduced target $(\tilde{\mu}, \tilde{\gamma})$ is
+attainable when $(\tilde{\mu}, \tilde{\gamma}, 1)^\top$ lies in the row
+space of $M$. The attainable set
+
+```{math}
+\mathcal{S}
+= \bigl\{(\tilde{\mu}, \tilde{\gamma}) :
+(\tilde{\mu}, \tilde{\gamma}, 1)^\top \in \operatorname{range}(M^\top)\bigr\}
+```
+
+is an affine subspace of $\mathbb{R}^2$ of dimension $r - 1$.
+If $d < 3$, then $r \le d$, and the dimension of $\mathcal{S}$ drops
+accordingly.
+
+If $r = 3$, then $\mathcal{S} = \mathbb{R}^2$. The efficient surface and
+its frontier are the two-dimensional objects of the proposition above.
+
+If $r = 2$, then $\mathcal{S}$ is a line. For example, $\gamma = 0$
+while $\mu$ is not parallel to $\mathbf{e}$. Another example is
+$\mu = 0$ or $\mu \parallel \mathbf{e}$, while $\gamma$ is not parallel
+to $\mathbf{e}$. The efficient surface is this line. The return
+constraint $\tilde{\mu} + \tilde{\gamma}\, E[Y] = m$ meets the line in
+one point, unless the return is constant along $\mathcal{S}$. A
+constant return either holds at every point of $\mathcal{S}$ or at no
+point of $\mathcal{S}$. In the latter case the constraint is infeasible.
+
+If $r = 1$, then both $\mu$ and $\gamma$ are parallel to $\mathbf{e}$.
+Either vector may be the zero vector, and $d = 1$ is included. The set
+$\mathcal{S}$ is a single point, and the only minimum-dispersion
+portfolio is
+
+```{math}
+w = \Sigma^{-1} \mathbf{e} \,/\, (\mathbf{e}^\top \Sigma^{-1} \mathbf{e}).
+```
+
+On $\mathcal{S}$ the proposition holds with the pseudoinverse $A^{+}$
+in place of $A^{-1}$:
+
+```{math}
+w^*(\tilde{\mu}, \tilde{\gamma})
+= \Sigma^{-1} M \, A^{+} \, [\tilde{\mu} \; \tilde{\gamma} \; 1]^\top,
+\qquad
+g(\tilde{\mu}, \tilde{\gamma})
+= [\tilde{\mu} \; \tilde{\gamma} \; 1] \, A^{+} \,
+[\tilde{\mu} \; \tilde{\gamma} \; 1]^\top.
+```
+
+A target $(\tilde{\mu}, \tilde{\gamma}) \notin \mathcal{S}$ is not the
+reduced coordinate of any portfolio, so the efficient surface is not
+defined there.
+
 ## Worst-Case Risk Measures
 
 **Definition.** Let $\mathcal{P}$ be a set of probability distributions.

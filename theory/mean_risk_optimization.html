@@ -458,6 +458,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#degenerate-cases">Degenerate cases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
 </ul>
             </nav>
@@ -605,6 +606,49 @@ in <span class="math notranslate nohighlight">\(w^\top \Sigma w\)</span>. Theref
 <span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma}) \mapsto \rho\)</span> is the <strong>efficient surface</strong>,
 generalizing the classical efficient frontier.</p>
 </section>
+<section id="degenerate-cases">
+<h2>Degenerate cases<a class="headerlink" href="#degenerate-cases" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(M = [\mu \; \gamma \; \mathbf{e}]\)</span> and <span class="math notranslate nohighlight">\(r = \operatorname{rank}(M)\)</span>.
+The third column of <span class="math notranslate nohighlight">\(M\)</span> is <span class="math notranslate nohighlight">\(\mathbf{e} \neq 0\)</span>, so <span class="math notranslate nohighlight">\(r \ge 1\)</span>. Also
+<span class="math notranslate nohighlight">\(r \le \min(d, 3)\)</span>. A reduced target <span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma})\)</span> is
+attainable when <span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma}, 1)^\top\)</span> lies in the row
+space of <span class="math notranslate nohighlight">\(M\)</span>. The attainable set</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{S}
+= \bigl\{(\tilde{\mu}, \tilde{\gamma}) :
+(\tilde{\mu}, \tilde{\gamma}, 1)^\top \in \operatorname{range}(M^\top)\bigr\}\]</div>
+<p>is an affine subspace of <span class="math notranslate nohighlight">\(\mathbb{R}^2\)</span> of dimension <span class="math notranslate nohighlight">\(r - 1\)</span>.
+If <span class="math notranslate nohighlight">\(d &lt; 3\)</span>, then <span class="math notranslate nohighlight">\(r \le d\)</span>, and the dimension of <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> drops
+accordingly.</p>
+<p>If <span class="math notranslate nohighlight">\(r = 3\)</span>, then <span class="math notranslate nohighlight">\(\mathcal{S} = \mathbb{R}^2\)</span>. The efficient surface and
+its frontier are the two-dimensional objects of the proposition above.</p>
+<p>If <span class="math notranslate nohighlight">\(r = 2\)</span>, then <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> is a line. For example, <span class="math notranslate nohighlight">\(\gamma = 0\)</span>
+while <span class="math notranslate nohighlight">\(\mu\)</span> is not parallel to <span class="math notranslate nohighlight">\(\mathbf{e}\)</span>. Another example is
+<span class="math notranslate nohighlight">\(\mu = 0\)</span> or <span class="math notranslate nohighlight">\(\mu \parallel \mathbf{e}\)</span>, while <span class="math notranslate nohighlight">\(\gamma\)</span> is not parallel
+to <span class="math notranslate nohighlight">\(\mathbf{e}\)</span>. The efficient surface is this line. The return
+constraint <span class="math notranslate nohighlight">\(\tilde{\mu} + \tilde{\gamma}\, E[Y] = m\)</span> meets the line in
+one point, unless the return is constant along <span class="math notranslate nohighlight">\(\mathcal{S}\)</span>. A
+constant return either holds at every point of <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> or at no
+point of <span class="math notranslate nohighlight">\(\mathcal{S}\)</span>. In the latter case the constraint is infeasible.</p>
+<p>If <span class="math notranslate nohighlight">\(r = 1\)</span>, then both <span class="math notranslate nohighlight">\(\mu\)</span> and <span class="math notranslate nohighlight">\(\gamma\)</span> are parallel to <span class="math notranslate nohighlight">\(\mathbf{e}\)</span>.
+Either vector may be the zero vector, and <span class="math notranslate nohighlight">\(d = 1\)</span> is included. The set
+<span class="math notranslate nohighlight">\(\mathcal{S}\)</span> is a single point, and the only minimum-dispersion
+portfolio is</p>
+<div class="math notranslate nohighlight">
+\[w = \Sigma^{-1} \mathbf{e} \,/\, (\mathbf{e}^\top \Sigma^{-1} \mathbf{e}).\]</div>
+<p>On <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> the proposition holds with the pseudoinverse <span class="math notranslate nohighlight">\(A^{+}\)</span>
+in place of <span class="math notranslate nohighlight">\(A^{-1}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[w^*(\tilde{\mu}, \tilde{\gamma})
+= \Sigma^{-1} M \, A^{+} \, [\tilde{\mu} \; \tilde{\gamma} \; 1]^\top,
+\qquad
+g(\tilde{\mu}, \tilde{\gamma})
+= [\tilde{\mu} \; \tilde{\gamma} \; 1] \, A^{+} \,
+[\tilde{\mu} \; \tilde{\gamma} \; 1]^\top.\]</div>
+<p>A target <span class="math notranslate nohighlight">\((\tilde{\mu}, \tilde{\gamma}) \notin \mathcal{S}\)</span> is not the
+reduced coordinate of any portfolio, so the efficient surface is not
+defined there.</p>
+</section>
 <section id="worst-case-risk-measures">
 <h2>Worst-Case Risk Measures<a class="headerlink" href="#worst-case-risk-measures" title="Link to this heading">#</a></h2>
 <p><strong>Definition.</strong> Let <span class="math notranslate nohighlight">\(\mathcal{P}\)</span> be a set of probability distributions.
@@ -681,6 +725,7 @@ f_Y \text{ fixed}\},\]</div>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-return-as-normal-mixture">Portfolio Return as Normal Mixture</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mean-risk-optimization">Mean-Risk Optimization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dimension-reduction-via-the-efficient-surface">Dimension Reduction via the Efficient Surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#degenerate-cases">Degenerate cases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#worst-case-risk-measures">Worst-Case Risk Measures</a></li>
 </ul>
   </nav></div>

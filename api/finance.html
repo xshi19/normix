@@ -495,8 +495,10 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A_inv"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A_inv</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Sinv_M</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.S"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.S</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Vh"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Vh</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.LT_U"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.LT_U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.rank"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.rank</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
@@ -951,6 +953,12 @@ A = [\mu\;\gamma\;e]^\top \Sigma^{-1} [\mu\;\gamma\;e],\]</div>
 [\tilde\mu\;\tilde\gamma\;1]^\top\)</span>. The map
 <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma) \mapsto \rho\)</span> is the <strong>efficient surface</strong>;
 its lower envelope under the return constraint is the <strong>efficient frontier</strong>.</p>
+<p>The inverse formulae hold when <span class="math notranslate nohighlight">\(A\)</span> is nonsingular, that is when
+<span class="math notranslate nohighlight">\(r = \operatorname{rank}[\mu\;\gamma\;e] = 3\)</span>. If <span class="math notranslate nohighlight">\(r &lt; 3\)</span>, the
+attainable pairs form an affine set <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> of dimension
+<span class="math notranslate nohighlight">\(r-1\)</span>. On <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> the same formulae hold with the
+pseudoinverse <span class="math notranslate nohighlight">\(A^{+}\)</span> in place of <span class="math notranslate nohighlight">\(A^{-1}\)</span>. A target outside
+<span class="math notranslate nohighlight">\(\mathcal{S}\)</span> is not a portfolio.</p>
 <p>See <a class="reference internal" href="../theory/mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a> for the derivation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.optimization.EfficientSurface">
@@ -1047,8 +1055,11 @@ portfolio <code class="docutils literal notranslate"><span class="pre">weights</
 <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>. All heavy evaluations share a
 fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> (common random numbers); draw it once via
 <code class="docutils literal notranslate"><span class="pre">model.joint.subordinator().rvs(n,</span> <span class="pre">seed)</span></code>.</p>
-<p>The Cholesky factors <span class="math notranslate nohighlight">\(A\)</span>, <span class="math notranslate nohighlight">\(A^{-1}\)</span>, and <span class="math notranslate nohighlight">\(\Sigma^{-1}M\)</span>
-are computed once at construction (w-independent).</p>
+<p>The whitened factorisation of <span class="math notranslate nohighlight">\(M = [\mu\;\gamma\;e]\)</span> is computed
+once at construction. The Gram matrix <span class="math notranslate nohighlight">\(A = M^\top\Sigma^{-1}M\)</span>
+is stored for the minimum-dispersion anchor; it is positive semidefinite
+and need not be invertible. Weights use the truncated pseudoinverse of
+the whitened factor and are returned only for attainable targets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1073,13 +1084,23 @@ are computed once at construction (w-independent).</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.A_inv">
-<span class="sig-name descname"><span class="pre">A_inv</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.A_inv" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.S">
+<span class="sig-name descname"><span class="pre">S</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.S" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.Sinv_M">
-<span class="sig-name descname"><span class="pre">Sinv_M</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.Vh">
+<span class="sig-name descname"><span class="pre">Vh</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.Vh" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.LT_U">
+<span class="sig-name descname"><span class="pre">LT_U</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.LT_U" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.rank">
+<span class="sig-name descname"><span class="pre">rank</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.rank" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -1098,14 +1119,20 @@ are computed once at construction (w-independent).</p>
 <span class="sig-name descname"><span class="pre">weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.weights" title="Link to this definition">#</a></dt>
 <dd><p>Minimum-dispersion weights realising <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> is outside the reachable
+    set. The message names each coordinate of
+    <span class="math notranslate nohighlight">\(M^\top w - c\)</span> whose absolute residual exceeds
+    <code class="docutils literal notranslate"><span class="pre">MEAN_RISK_REACH_ATOL</span></code>.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1115,14 +1142,17 @@ are computed once at construction (w-independent).</p>
 <span class="sig-name descname"><span class="pre">dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.dispersion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.dispersion" title="Link to this definition">#</a></dt>
 <dd><p>Realised dispersion <span class="math notranslate nohighlight">\(g(\tilde\mu, \tilde\gamma) = w^{*\top}\Sigma w^*\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> is outside the reachable set.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1198,17 +1228,21 @@ minimum-variance portfolio <span class="math notranslate nohighlight">\(w = \Sig
 <dd><p>Evaluate the efficient surface over the grid <code class="docutils literal notranslate"><span class="pre">mu_tilde</span> <span class="pre">×</span> <span class="pre">gamma_tilde</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">mu_tilde</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_tilde</span></code> are 1-D arrays; the returned
 <code class="docutils literal notranslate"><span class="pre">risk</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(len(mu_tilde),</span> <span class="pre">len(gamma_tilde))</span></code>. Memory
-scales as <code class="docutils literal notranslate"><span class="pre">len(mu_tilde)</span> <span class="pre">*</span> <span class="pre">len(gamma_tilde)</span> <span class="pre">*</span> <span class="pre">len(Y)</span></code>.</p>
+scales as <code class="docutils literal notranslate"><span class="pre">len(mu_tilde)</span> <span class="pre">*</span> <span class="pre">len(gamma_tilde)</span> <span class="pre">*</span> <span class="pre">len(Y)</span></code>.
+Every grid node must lie in the reachable set.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If any node lies outside the reachable set.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.finance.optimization.EfficientSurface" title="normix.finance.optimization.EfficientSurface"><em>EfficientSurface</em></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.finance.optimization.EfficientSurface" title="normix.finance.optimization.EfficientSurface"><em>EfficientSurface</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1217,21 +1251,30 @@ scales as <code class="docutils literal notranslate"><span class="pre">len(mu_ti
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.efficient_frontier">
 <span class="sig-name descname"><span class="pre">efficient_frontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_frontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier" title="Link to this definition">#</a></dt>
 <dd><p>Minimum risk for each target expected return in <code class="docutils literal notranslate"><span class="pre">returns</span></code>.</p>
-<p>For every target <span class="math notranslate nohighlight">\(m\)</span>, minimises the risk along the constraint
-line <span class="math notranslate nohighlight">\(\tilde\mu = m - \tilde\gamma E[Y]\)</span> over
-<span class="math notranslate nohighlight">\(\tilde\gamma \in\)</span> <code class="docutils literal notranslate"><span class="pre">gamma_bounds</span></code> by golden-section search
-(the surface is convex, so the restriction is unimodal).</p>
+<p>For every target <span class="math notranslate nohighlight">\(m\)</span>, minimises the risk along the part of
+<span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma E[Y] = m\)</span> that lies in the reachable
+set and in <code class="docutils literal notranslate"><span class="pre">gamma_bounds</span></code>. When the reachable set is a plane this
+is golden-section search in <span class="math notranslate nohighlight">\(\tilde\gamma\)</span>. When it is a line,
+the return constraint selects one point of the line, or the whole
+line if the return is constant there. A constant return that misses
+the line, and any target off the reachable set, is infeasible.
+When the reachable set is a point, that portfolio is returned for
+its own expected return and every other return is infeasible.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If a target return is not attainable on the reachable set, or
+    the feasible <span class="math notranslate nohighlight">\(\tilde\gamma\)</span> lies outside <code class="docutils literal notranslate"><span class="pre">gamma_bounds</span></code>.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>returns</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em>)</p></li>
 <li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.finance.optimization.EfficientFrontier" title="normix.finance.optimization.EfficientFrontier"><em>EfficientFrontier</em></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.finance.optimization.EfficientFrontier" title="normix.finance.optimization.EfficientFrontier"><em>EfficientFrontier</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2220,8 +2263,10 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.model"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.model</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.A_inv"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.A_inv</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Sinv_M"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Sinv_M</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.S"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.S</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Vh"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Vh</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.LT_U"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.LT_U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.rank"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.rank</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
