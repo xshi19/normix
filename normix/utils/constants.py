@@ -139,3 +139,13 @@ BESSEL_PANEL_FLOOR: float = 1e-12
 # decomposition invalid (ENB → NaN), while roundoff-scale negatives are
 # projected to zero. Relative so daily vs annualized returns share one value.
 TORSION_SPECTRAL_FLOOR: float = 1e-12
+
+# ── Mean-risk reachable set ───────────────────────────────────────────
+
+# Infinity-norm tolerance on the constraint residual Mᵀw − c.
+# A reduced target inside this gap is a portfolio; a larger gap is not.
+# Attainable residuals sit at roundoff (~1e-16). The unattainable gaps
+# in the symmetric (γ̃ = 0.1) and rank-1 (μ̃ = 0.05) examples are 0.1
+# and 0.03. The same absolute gap decides whether expected return is
+# constant along a rank-2 reachable line.
+MEAN_RISK_REACH_ATOL: float = 1e-8

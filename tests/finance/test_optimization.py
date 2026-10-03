@@ -11,7 +11,9 @@ Cover the reduced-coordinate reduction of the mean-risk problem:
   ``CVaR.value`` and ``CVaR.value_reduced``;
 - the efficient frontier minimises risk along each return-constraint line
   and its weights realise the target return;
-- the reduction runs for all four normal-mixture families.
+- the reduction runs for all four normal-mixture families;
+- on a rank-deficient coordinate matrix, attainable targets match the KKT
+  portfolio and an unattainable target raises.
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
+from jax.scipy.linalg import cho_factor, cho_solve
 
 from normix import (
     GeneralizedHyperbolic, NormalInverseGamma, NormalInverseGaussian,
@@ -228,3 +231,181 @@ def test_cvar_monotonicity_theorem_signs():
     assert np.all(np.diff(mu_sweep) < 0.0)               # strictly decreasing in μ̃
     assert np.all(np.diff(ga_sweep) <= 1e-12)            # non-increasing in γ̃
     assert np.all(np.diff(sg_sweep) >= -1e-12)           # non-decreasing in σ̃
+
+
+def _symmetric_vg(mu, gamma, sigma=None):
+    """Variance-gamma model. Default dispersion is the identity."""
+    mu = jnp.asarray(mu, dtype=jnp.float64)
+    gamma = jnp.asarray(gamma, dtype=jnp.float64)
+    if sigma is None:
+        sigma = jnp.eye(mu.shape[0], dtype=jnp.float64)
+    return VarianceGamma.from_classical(
+        mu=mu, gamma=gamma, sigma=jnp.asarray(sigma, dtype=jnp.float64),
+        alpha=2.0, beta=2.0)
+
+
+def test_gamma_zero_attainable_weights_match_kkt():
+    r"""Symmetric VG: :math:`\gamma=0` drops the rank of :math:`M` to 2.
+
+    Attainable targets, including one that is not equal-weight, match the
+    KKT solution on a column basis of :math:`M` and realise
+    :math:`(\tilde\mu, \tilde\gamma)`.
+    """
+    mu = jnp.array([0.01, -0.02, 0.03])
+    model = _symmetric_vg(mu, jnp.zeros(3))
+    prob = MeanRiskProblem(model, CVaR(0.05))
+    Sigma = np.eye(3)
+    M = np.column_stack([np.asarray(model.mu), np.asarray(model.gamma),
+                         np.ones(3)])
+    # The zero column is γ. The column basis is (μ, e).
+    basis = [0, 2]
+
+    mu_eq = float(np.mean(np.asarray(mu)))
+    cases = {
+        "equal weight": (mu_eq, 0.0, np.full(3, 1.0 / 3.0)),
+        "other location": (0.0, 0.0, np.array([6.0, 9.0, 4.0]) / 19.0),
+    }
+    for mu_t, gamma_t, _expected in cases.values():
+        w = np.asarray(prob.weights(mu_t, gamma_t))
+        c_basis = np.array([mu_t, gamma_t, 1.0])[basis]
+        w_kkt = _kkt_min_variance(Sigma, M[:, basis], c_basis)
+        np.testing.assert_allclose(w, w_kkt, rtol=1e-8, atol=1e-10)
+        np.testing.assert_allclose(w.sum(), 1.0, atol=1e-10)
+        np.testing.assert_allclose(float(model.mu @ w), mu_t, rtol=0.0, atol=1e-8)
+        np.testing.assert_allclose(float(model.gamma @ w), gamma_t, rtol=0.0, atol=1e-8)
+        g = float(prob.dispersion(mu_t, gamma_t))
+        assert np.isfinite(g)
+        np.testing.assert_allclose(g, float(w @ Sigma @ w), rtol=1e-8, atol=1e-12)
+
+    w_eq = np.asarray(prob.weights(mu_eq, 0.0))
+    np.testing.assert_allclose(w_eq, cases["equal weight"][2], rtol=1e-8, atol=1e-10)
+    w_other = np.asarray(prob.weights(0.0, 0.0))
+    np.testing.assert_allclose(w_other, cases["other location"][2], rtol=1e-8, atol=1e-10)
+
+
+def test_unattainable_gamma_raises():
+    r"""A target with :math:`\tilde\gamma \neq 0` is not a portfolio when :math:`\gamma=0`."""
+    mu = jnp.array([0.01, -0.02, 0.03])
+    prob = MeanRiskProblem(_symmetric_vg(mu, jnp.zeros(3)), CVaR(0.05))
+    mu_eq = float(np.mean(np.asarray(mu)))
+    with pytest.raises(ValueError, match="gamma_tilde"):
+        prob.weights(mu_eq, 0.1)
+    with pytest.raises(ValueError, match="gamma_tilde"):
+        prob.dispersion(mu_eq, 0.1)
+
+
+def test_rank1_parallel_location_and_skewness():
+    r"""Both :math:`\mu` and :math:`\gamma` parallel to :math:`e`: :math:`\mathcal{S}` is a point.
+
+    The only minimum-dispersion portfolio is
+    :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.
+    """
+    mu = jnp.full(3, 0.02)
+    gamma = jnp.full(3, 0.01)
+    model = _symmetric_vg(mu, gamma)
+    prob = MeanRiskProblem(model, CVaR(0.05))
+    w = np.asarray(prob.weights(0.02, 0.01))
+    w_budget = _kkt_min_variance(np.eye(3), np.ones((3, 1)), np.array([1.0]))
+    np.testing.assert_allclose(w, w_budget, rtol=1e-8, atol=1e-10)
+    np.testing.assert_allclose(w, np.full(3, 1.0 / 3.0), rtol=1e-8, atol=1e-10)
+    np.testing.assert_allclose(w.sum(), 1.0, atol=1e-10)
+    np.testing.assert_allclose(float(model.mu @ w), 0.02, atol=1e-10)
+    np.testing.assert_allclose(float(model.gamma @ w), 0.01, atol=1e-10)
+
+    mu_t, gamma_t = prob.min_variance_point()
+    np.testing.assert_allclose(float(mu_t), 0.02, atol=1e-10)
+    np.testing.assert_allclose(float(gamma_t), 0.01, atol=1e-10)
+
+    with pytest.raises(ValueError, match="mu_tilde"):
+        prob.weights(0.05, 0.0)
+
+    Y = model.joint.subordinator().rvs(1_000, seed=0)
+    m_star = float(prob.expected_return(0.02, 0.01))
+    front = prob.efficient_frontier(
+        jnp.asarray([m_star]), Y, gamma_bounds=(-1.0, 1.0), n_iter=8)
+    np.testing.assert_allclose(np.asarray(front.weights[0]), w, rtol=1e-8, atol=1e-10)
+    with pytest.raises(ValueError, match="not attainable"):
+        prob.efficient_frontier(
+            jnp.asarray([m_star + 0.01]), Y, gamma_bounds=(-1.0, 1.0), n_iter=8)
+    with pytest.raises(ValueError, match="mu_tilde"):
+        prob.efficient_surface(
+            jnp.linspace(0.0, 0.05, 3), jnp.linspace(0.0, 0.02, 2), Y)
+
+
+def test_near_collinear_weights_stay_finite():
+    r"""Nearly parallel :math:`\mu` and :math:`\gamma` stay finite.
+
+    The Gram matrix :math:`A = M^\top\Sigma^{-1}M` is numerically indefinite
+    at this gap, so a Cholesky inverse is non-finite. The portfolio at the
+    budget-portfolio coordinates is still finite and meets the constraints.
+    """
+    mu = np.array([0.01, -0.02, 0.03])
+    gamma = mu + 1e-10 * np.array([1.0, 0.0, -1.0])
+    model = _symmetric_vg(mu, gamma)
+    prob = MeanRiskProblem(model, CVaR(0.05))
+
+    M = np.column_stack([mu, gamma, np.ones(3)])
+    singular = np.linalg.svd(M, compute_uv=False)
+    assert singular[0] / singular[-1] > 1e8
+    A = M.T @ M
+    A_inv = cho_solve(cho_factor(jnp.asarray(A)), jnp.eye(3))
+    assert not np.isfinite(np.asarray(A_inv)).all()
+
+    e = np.ones(3)
+    mu_t = float(mu @ e / 3.0)
+    gamma_t = float(gamma @ e / 3.0)
+    w = np.asarray(prob.weights(mu_t, gamma_t))
+    assert np.isfinite(w).all()
+    np.testing.assert_allclose(w.sum(), 1.0, atol=1e-8)
+    np.testing.assert_allclose(float(mu @ w), mu_t, atol=1e-8)
+    np.testing.assert_allclose(float(gamma @ w), gamma_t, atol=1e-8)
+    g = float(prob.dispersion(mu_t, gamma_t))
+    assert np.isfinite(g)
+    np.testing.assert_allclose(g, float(w @ w), rtol=1e-6, atol=1e-8)
+
+
+def test_dimension_one_reachable_set_is_a_point():
+    r"""In dimension 1 the only budget portfolio is :math:`w = 1`."""
+    model = _symmetric_vg(jnp.array([0.02]), jnp.array([-0.01]))
+    prob = MeanRiskProblem(model, CVaR(0.05))
+    w = np.asarray(prob.weights(0.02, -0.01))
+    np.testing.assert_allclose(w, np.array([1.0]), atol=1e-12)
+    with pytest.raises(ValueError, match="mu_tilde"):
+        prob.weights(0.05, -0.01)
+
+
+def test_rank2_frontier_follows_the_reachable_line():
+    r"""With :math:`\gamma=0`, the return constraint selects the point :math:`\tilde\gamma=0`."""
+    mu = jnp.array([0.01, -0.02, 0.03])
+    model = _symmetric_vg(mu, jnp.zeros(3))
+    prob = MeanRiskProblem(model, CVaR(0.05))
+    Y = model.joint.subordinator().rvs(1_000, seed=1)
+    target = jnp.asarray([0.0])
+    front = prob.efficient_frontier(target, Y, gamma_bounds=(-0.1, 0.1), n_iter=8)
+    w = np.asarray(front.weights[0])
+    np.testing.assert_allclose(w, np.asarray(prob.weights(0.0, 0.0)), rtol=1e-6, atol=1e-8)
+    np.testing.assert_allclose(float(model.project(w).mean()), 0.0, atol=1e-8)
+    with pytest.raises(ValueError, match="gamma_tilde"):
+        prob.efficient_frontier(target, Y, gamma_bounds=(0.1, 0.2), n_iter=8)
+
+
+def test_constant_return_on_the_reachable_line_is_infeasible_off_that_value():
+    r"""If :math:`\gamma=-\mu` and :math:`E[Y]=1`, every budget portfolio has return 0."""
+    mu = jnp.array([0.01, -0.02, 0.03])
+    model = _symmetric_vg(mu, -mu)
+    prob = MeanRiskProblem(model, CVaR(0.05))
+    np.testing.assert_allclose(float(prob.E_Y()), 1.0, atol=1e-12)
+    w = np.asarray(prob.weights(0.01, -0.01))
+    np.testing.assert_allclose(w.sum(), 1.0, atol=1e-8)
+    np.testing.assert_allclose(float(model.mu @ w), 0.01, atol=1e-8)
+    np.testing.assert_allclose(float(model.gamma @ w), -0.01, atol=1e-8)
+
+    Y = model.joint.subordinator().rvs(1_000, seed=2)
+    front = prob.efficient_frontier(
+        jnp.asarray([0.0]), Y, gamma_bounds=(-0.05, 0.05), n_iter=16)
+    w_front = np.asarray(front.weights[0])
+    np.testing.assert_allclose(w_front.sum(), 1.0, atol=1e-8)
+    np.testing.assert_allclose(float(model.project(w_front).mean()), 0.0, atol=1e-7)
+    with pytest.raises(ValueError, match="not attainable"):
+        prob.efficient_frontier(
+            jnp.asarray([0.01]), Y, gamma_bounds=(-0.05, 0.05), n_iter=8)

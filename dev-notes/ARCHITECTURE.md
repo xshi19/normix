@@ -271,6 +271,7 @@ from there. Never define magic numbers locally in distribution files.
 | `BESSEL_WINDOW_HI_MAX` | `800` | Cap on \|x\| during window search |
 | `BESSEL_PANEL_FLOOR` | `1e-12` | Floor on each GL panel half-width |
 | `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
+| `MEAN_RISK_REACH_ATOL` | `1e-8` | Infinity-norm gap on \(M^\top w-c\) for a reduced target to be a portfolio |
 
 ## GIG η→θ Optimization
 
