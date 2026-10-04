@@ -19,12 +19,8 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.finance._mc import quantile_cmc, quantile_cmc_raw
+from normix.finance._mc import bracket_cmc_raw, quantile_cmc, quantile_cmc_raw
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
-
-# Bracket half-width (in mixture std units) for the reduced-coordinate CMC
-# quantile. Generous because bisection cost is independent of the width.
-_BRACKET_STD = 20.0
 
 
 def _phi(z: jax.Array) -> jax.Array:
@@ -177,19 +173,25 @@ class CVaR(RiskMeasure):
     ) -> jax.Array:
         r"""CVaR from raw scalar parameters, vectorizable over a surface grid.
 
-        Inverts the conditional-MC CDF for :math:`x_\alpha` within an
-        analytic bracket :math:`E[X] \pm 20\,\mathrm{std}[X]` derived from
-        the subordinator sample moments of ``Y`` — no PINV table, no Bessel
-        evaluation — then reuses :meth:`_cvar_from_quantile`.
+        Inverts the conditional-MC CDF for :math:`x_\alpha` by bisection on
+        the component-quantile bracket :math:`[\min_i q_i, \max_i q_i]`,
+        :math:`q_i = \tilde\mu + \tilde\gamma Y_i + \tilde\sigma\sqrt{Y_i}\,
+        \Phi^{-1}(\alpha)`. The bracket contains the root for every sample
+        ``Y``. No PINV table and no Bessel evaluation; the CVaR integral is
+        :meth:`_cvar_from_quantile`.
+
+        Raises
+        ------
+        equinox.EquinoxRuntimeError
+            If the result is not finite, also under ``jit`` and ``vmap``.
         """
-        E_Y = jnp.mean(Y)
-        Var_Y = jnp.var(Y)
-        mean = mu + gamma * E_Y
-        half = _BRACKET_STD * jnp.sqrt(E_Y * sigma ** 2 + Var_Y * gamma ** 2)
-        x_alpha = quantile_cmc_raw(
-            self.alpha, mu, gamma, sigma, Y, mean - half, mean + half,
-        )
-        return self._cvar_from_quantile(mu, gamma, sigma, x_alpha, Y)
+        lo, hi = bracket_cmc_raw(self.alpha, mu, gamma, sigma, Y)
+        x_alpha = quantile_cmc_raw(self.alpha, mu, gamma, sigma, Y, lo, hi)
+        value = self._cvar_from_quantile(mu, gamma, sigma, x_alpha, Y)
+        return eqx.error_if(
+            value, ~jnp.isfinite(value),
+            "CVaR.value_reduced: non-finite CVaR; mu, gamma, sigma and Y "
+            "must be finite with sigma * sqrt(Y) > 0")
 
     def gradient_scalar(
         self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,

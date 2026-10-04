@@ -25,7 +25,9 @@ import pytest
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix import UnivariateVarianceGamma
 from normix.finance import CVaR, WeightFunctional
-from normix.finance._mc import cdf_cmc, cdf_cmc_raw, quantile_cmc
+from normix.finance._mc import (
+    bracket_cmc_raw, cdf_cmc, cdf_cmc_raw, quantile_cmc, quantile_cmc_raw,
+)
 
 def _model():
     mu = jnp.array([0.001, 0.0005, 0.0002])
@@ -95,6 +97,49 @@ def test_quantile_cmc_brackets_extreme_Y(q):
     old_half = 5.0 * float(uv.std())
     assert abs(x - (x_seed - old_half)) > 1e-6
     assert abs(x - (x_seed + old_half)) > 1e-6
+
+_REVIEW_Y = jnp.concatenate([jnp.ones(999), jnp.array([1.0e6])])
+
+
+@pytest.mark.contract
+def test_value_reduced_root_far_in_the_tail():
+    r"""The CMC root can lie far outside :math:`E[X] \pm k\,\mathrm{std}[X]`.
+
+    One draw :math:`Y=10^6` among 999 draws :math:`Y=1`, with
+    :math:`\alpha=10^{-4} < 1/1000`. The root is about 32 mixture standard
+    deviations below the mean. A ±20 bracket returned ``1e7``.
+    """
+    alpha, mu, gamma, sigma = 1e-4, 0.0, -1.0, 0.01
+    value = float(CVaR(alpha).value_reduced(
+        jnp.asarray(mu), jnp.asarray(gamma), jnp.asarray(sigma), _REVIEW_Y))
+    np.testing.assert_allclose(value, 1000017.5498134409, rtol=1e-10)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("q", [1e-6, 1e-4, 0.05, 0.5, 0.999])
+def test_bracket_cmc_raw_contains_the_root(q):
+    r""":math:`\hat F(\min_i q_i) \le q \le \hat F(\max_i q_i)` on heavy and light draws."""
+    Y = jnp.concatenate([
+        UnivariateVarianceGamma.from_classical(
+            mu=0.0, gamma=0.0, sigma=1.0, alpha=0.5, beta=1.0,
+        ).subordinator().rvs(2_000, seed=4),
+        _REVIEW_Y,
+    ])
+    for mu, gamma, sigma in [(0.0, -1.0, 0.01), (1e-3, 2e-3, 1e-2), (0.0, 0.0, 1.0)]:
+        lo, hi = bracket_cmc_raw(q, mu, gamma, sigma, Y)
+        F_lo = float(cdf_cmc_raw(lo, mu, gamma, sigma, Y))
+        F_hi = float(cdf_cmc_raw(hi, mu, gamma, sigma, Y))
+        assert F_lo <= q * (1.0 + 1e-12)
+        assert F_hi >= q * (1.0 - 1e-12)
+        x = quantile_cmc_raw(q, mu, gamma, sigma, Y, lo, hi)
+        assert float(lo) <= float(x) <= float(hi)
+
+
+def test_value_reduced_raises_on_non_finite_result():
+    with pytest.raises(Exception, match="non-finite"):
+        CVaR(0.05).value_reduced(
+            jnp.asarray(0.0), jnp.asarray(0.0), jnp.asarray(jnp.nan), jnp.ones(10))
+
 
 def test_var_ppf_deterministic():
     model = _model()
