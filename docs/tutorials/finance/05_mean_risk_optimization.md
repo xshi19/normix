@@ -92,7 +92,7 @@ for name, m in models.items():
 ## The dimension reduction, made concrete
 
 `MeanRiskProblem` bundles a fitted model with a risk measure and exposes the
-reduced-coordinate algebra. The global minimum-variance portfolio is a useful
+reduced-coordinate algebra. The global minimum-dispersion portfolio is a useful
 anchor — it sits at the bottom of the dispersion bowl and, because dispersion
 dominates CVaR at daily-return scales, very near the apex of the efficient
 surface.
@@ -102,8 +102,8 @@ gh = models["GH"]
 cvar = CVaR(0.05)
 prob = MeanRiskProblem(gh, cvar)
 
-mv_mu, mv_gamma = prob.min_variance_point()
-print(f"min-variance point   μ̃ = {float(mv_mu):+.3e}   γ̃ = {float(mv_gamma):+.3e}")
+mv_mu, mv_gamma = prob.min_dispersion_point()
+print(f"min-dispersion point   μ̃ = {float(mv_mu):+.3e}   γ̃ = {float(mv_gamma):+.3e}")
 print(f"its expected return  m = {float(prob.expected_return(mv_mu, mv_gamma)):+.3e}")
 ```
 
@@ -176,7 +176,7 @@ including the corner of *large* $\tilde\mu$ and $\tilde\gamma$. That is not a
 violation of Theorem 1. The theorem holds $\tilde\sigma$ fixed; here
 $\tilde\sigma = \sqrt{g(\tilde\mu, \tilde\gamma)}$ is the **minimum dispersion**
 needed to realise $(\tilde\mu, \tilde\gamma)$, and it grows quadratically away
-from the minimum-variance vertex. Reaching simultaneously high location and
+from the minimum-dispersion vertex. Reaching simultaneously high location and
 skewness requires an aggressive, leveraged portfolio whose dispersion — and
 hence CVaR, which is increasing in $\tilde\sigma$ — overwhelms the linear gain
 from $\tilde\mu, \tilde\gamma$. The valley floor is the efficient region; that
@@ -269,7 +269,7 @@ fig, ax = plt.subplots(figsize=(9, 5.6))
 for name, m in models.items():
     p = MeanRiskProblem(m, cvar)
     Ym = m.joint.subordinator().rvs(15_000, seed=0)
-    g_mv = float(p.min_variance_point()[1])
+    g_mv = float(p.min_dispersion_point()[1])
     span = 1.5 * max(np.asarray(m.gamma).max() - np.asarray(m.gamma).min(), 4e-4)
     fr = p.efficient_frontier(targets_cmp, Ym, gamma_bounds=(g_mv - span, g_mv + span), n_iter=46)
     frontiers[name] = fr
