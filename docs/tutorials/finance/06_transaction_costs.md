@@ -63,7 +63,7 @@ trading.
 
 ```{code-cell} python
 prob = MeanRiskProblem(model, cvar)
-mv_mu, mv_gamma = prob.min_variance_point()
+mv_mu, mv_gamma = prob.min_dispersion_point()
 mv_ret = float(prob.expected_return(mv_mu, mv_gamma))
 targets = jnp.linspace(mv_ret, mv_ret + 4e-4, 25)
 ga = float(mv_gamma)

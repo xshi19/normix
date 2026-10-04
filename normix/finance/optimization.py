@@ -285,11 +285,13 @@ class MeanRiskProblem(eqx.Module):
         r""":math:`m = \tilde\mu + \tilde\gamma\,E[Y]`."""
         return mu_tilde + gamma_tilde * self.E_Y()
 
-    def min_variance_point(self) -> tuple[Array, Array]:
+    def min_dispersion_point(self) -> tuple[Array, Array]:
         r"""Reduced coordinates :math:`(\tilde\mu, \tilde\gamma)` of the global
-        minimum-variance portfolio :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.
+        minimum-dispersion portfolio :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.
 
-        A convenient anchor for choosing efficient-surface grid ranges.
+        The objective is :math:`w^\top\Sigma w` subject to :math:`w^\top e = 1`,
+        not :math:`w^\top\mathrm{Cov}(X)w`. A convenient anchor for choosing
+        efficient-surface grid ranges.
         """
         denom = self.A[2, 2]
         return self.A[0, 2] / denom, self.A[1, 2] / denom

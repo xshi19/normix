@@ -6,7 +6,7 @@ Cover the reduced-coordinate reduction of the mean-risk problem:
 - the minimum-dispersion ``weights`` match an independent KKT solve, sum to
   one, and realise the requested :math:`(\tilde\mu, \tilde\gamma)`;
 - ``dispersion`` equals :math:`w^\top\Sigma w` and the projected variance;
-- ``min_variance_point`` matches the closed-form min-variance portfolio;
+- ``min_dispersion_point`` matches the closed-form minimum-dispersion portfolio;
 - the vectorized surface risk ``risk_at`` matches the object-based
   ``CVaR.value`` and ``CVaR.value_reduced``;
 - the efficient frontier minimises risk along each return-constraint line
@@ -102,7 +102,7 @@ def test_dispersion_matches_quadratic_and_projection():
     np.testing.assert_allclose(float(proj._gamma_scalar), gamma_t, rtol=1e-9)
     np.testing.assert_allclose(float(proj._sigma_scalar) ** 2, g, rtol=1e-9)
 
-def test_min_variance_point_closed_form():
+def test_min_dispersion_point_closed_form():
     model = _nig_model(5)
     prob = MeanRiskProblem(model, CVaR(0.05))
 
@@ -111,10 +111,10 @@ def test_min_variance_point_closed_form():
     w_mv = np.linalg.solve(Sigma, e)
     w_mv = w_mv / (e @ w_mv)
 
-    mu_t, gamma_t = prob.min_variance_point()
+    mu_t, gamma_t = prob.min_dispersion_point()
     np.testing.assert_allclose(float(mu_t), float(model.mu @ w_mv), rtol=1e-8)
     np.testing.assert_allclose(float(gamma_t), float(model.gamma @ w_mv), rtol=1e-8)
-    # the min-variance weights minimise dispersion among all w^T e = 1
+    # these weights minimise dispersion among all w^T e = 1
     np.testing.assert_allclose(
         float(prob.dispersion(mu_t, gamma_t)), float(w_mv @ Sigma @ w_mv),
         rtol=1e-8)
@@ -195,7 +195,7 @@ def test_reduction_runs_for_all_families(name):
 
 # Parameters rounded from the generalized-hyperbolic fit to the S&P 500 basket
 # in docs/tutorials/finance/05 (a = b gauge): the GIG(p, a, b) subordinator
-# (E[Y] ≈ 0.27) and the minimum-variance reduced coordinates (μ̃, γ̃, σ̃).
+# (E[Y] ≈ 0.27) and the minimum-dispersion reduced coordinates (μ̃, γ̃, σ̃).
 _GH_SUBORDINATOR = dict(p=-1.75, a=0.5, b=0.5)
 _VERTEX = dict(mu=1.1e-3, gamma=-2.0e-3, sigma=1.6e-2)
 
@@ -312,7 +312,7 @@ def test_rank1_parallel_location_and_skewness():
     np.testing.assert_allclose(float(model.mu @ w), 0.02, atol=1e-10)
     np.testing.assert_allclose(float(model.gamma @ w), 0.01, atol=1e-10)
 
-    mu_t, gamma_t = prob.min_variance_point()
+    mu_t, gamma_t = prob.min_dispersion_point()
     np.testing.assert_allclose(float(mu_t), 0.02, atol=1e-10)
     np.testing.assert_allclose(float(gamma_t), 0.01, atol=1e-10)
 
