@@ -43,6 +43,25 @@ def cdf_cmc_raw(
     return jnp.mean(jax.scipy.stats.norm.cdf(z))
 
 
+def bracket_cmc_raw(
+    q: float | jax.Array,
+    mu: jax.Array,
+    gamma: jax.Array,
+    sigma: jax.Array,
+    Y: jax.Array,
+) -> tuple[jax.Array, jax.Array]:
+    r"""Bracket :math:`[\min_i q_i, \max_i q_i]` of the CMC :math:`q`-quantile.
+
+    :math:`q_i = \mu + \gamma Y_i + \sigma\sqrt{Y_i}\,\Phi^{-1}(q)` is the
+    :math:`q`-quantile of the conditional normal given :math:`Y_i`. Each
+    component CDF is at most :math:`q` at :math:`\min_i q_i` and at least
+    :math:`q` at :math:`\max_i q_i`, and :math:`\hat F` is their mean, so
+    :math:`\hat F(\min_i q_i) \le q \le \hat F(\max_i q_i)` for every sample.
+    """
+    q_i = mu + gamma * Y + sigma * jnp.sqrt(Y) * jax.scipy.stats.norm.ppf(q)
+    return jnp.min(q_i), jnp.max(q_i)
+
+
 def quantile_cmc_raw(
     q: float | jax.Array,
     mu: jax.Array,
