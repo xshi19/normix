@@ -503,7 +503,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.expected_return"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.expected_return()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_variance_point()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_dispersion_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_dispersion_point()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.projection_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.projection_at()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk_at()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_surface()</span></code></a></li>
@@ -1175,11 +1175,13 @@ the whitened factor and are returned only for attainable targets.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.min_variance_point">
-<span class="sig-name descname"><span class="pre">min_variance_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.min_variance_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.min_dispersion_point">
+<span class="sig-name descname"><span class="pre">min_dispersion_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.min_dispersion_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.min_dispersion_point" title="Link to this definition">#</a></dt>
 <dd><p>Reduced coordinates <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> of the global
-minimum-variance portfolio <span class="math notranslate nohighlight">\(w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)\)</span>.</p>
-<p>A convenient anchor for choosing efficient-surface grid ranges.</p>
+minimum-dispersion portfolio <span class="math notranslate nohighlight">\(w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)\)</span>.</p>
+<p>The objective is <span class="math notranslate nohighlight">\(w^\top\Sigma w\)</span> subject to <span class="math notranslate nohighlight">\(w^\top e = 1\)</span>,
+not <span class="math notranslate nohighlight">\(w^\top\mathrm{Cov}(X)w\)</span>. A convenient anchor for choosing
+efficient-surface grid ranges.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
@@ -2271,7 +2273,7 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.expected_return"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.expected_return()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_variance_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_variance_point()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.min_dispersion_point"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.min_dispersion_point()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.projection_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.projection_at()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.risk_at"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.risk_at()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.efficient_surface()</span></code></a></li>

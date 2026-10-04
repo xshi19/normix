@@ -69,7 +69,7 @@ prob = MeanRiskProblem(model, CVaR(0.05))
 Y = model.joint.subordinator().rvs(20_000, seed=0)
 
 prob.weights(mu_t, gamma_t)        # min-dispersion weights for a target (μ̃, γ̃)
-prob.min_variance_point()          # reduced coords of the global min-variance portfolio
+prob.min_dispersion_point()        # reduced coords of the global min-dispersion portfolio
 
 surface = prob.efficient_surface(mu_grid, gamma_grid, Y)   # CVaR over a (μ̃, γ̃) grid
 frontier = prob.efficient_frontier(targets, Y, gamma_bounds=(lo, hi))  # min risk per return

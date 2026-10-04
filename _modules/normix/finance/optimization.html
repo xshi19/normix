@@ -712,13 +712,15 @@
         <span class="k">return</span> <span class="n">mu_tilde</span> <span class="o">+</span> <span class="n">gamma_tilde</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Y</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="MeanRiskProblem.min_variance_point">
-<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.min_variance_point">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">min_variance_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<div class="viewcode-block" id="MeanRiskProblem.min_dispersion_point">
+<a class="viewcode-back" href="../../../api/finance.html#normix.finance.optimization.MeanRiskProblem.min_dispersion_point">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_dispersion_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Reduced coordinates :math:`(\tilde\mu, \tilde\gamma)` of the global</span>
-<span class="sd">        minimum-variance portfolio :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.</span>
+<span class="sd">        minimum-dispersion portfolio :math:`w = \Sigma^{-1}e / (e^\top\Sigma^{-1}e)`.</span>
 
-<span class="sd">        A convenient anchor for choosing efficient-surface grid ranges.</span>
+<span class="sd">        The objective is :math:`w^\top\Sigma w` subject to :math:`w^\top e = 1`,</span>
+<span class="sd">        not :math:`w^\top\mathrm{Cov}(X)w`. A convenient anchor for choosing</span>
+<span class="sd">        efficient-surface grid ranges.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">denom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">denom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">denom</span></div>
