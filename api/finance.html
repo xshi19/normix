@@ -797,21 +797,26 @@ the integral, for common random numbers).</p>
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_reduced">
 <span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_reduced" title="Link to this definition">#</a></dt>
 <dd><p>CVaR from raw scalar parameters, vectorizable over a surface grid.</p>
-<p>Inverts the conditional-MC CDF for <span class="math notranslate nohighlight">\(x_\alpha\)</span> within an
-analytic bracket <span class="math notranslate nohighlight">\(E[X] \pm 20\,\mathrm{std}[X]\)</span> derived from
-the subordinator sample moments of <code class="docutils literal notranslate"><span class="pre">Y</span></code> — no PINV table, no Bessel
-evaluation — then reuses <code class="xref py py-meth docutils literal notranslate"><span class="pre">_cvar_from_quantile()</span></code>.</p>
+<p>Inverts the conditional-MC CDF for <span class="math notranslate nohighlight">\(x_\alpha\)</span> by bisection on
+the component-quantile bracket <span class="math notranslate nohighlight">\([\min_i q_i, \max_i q_i]\)</span>,
+<span class="math notranslate nohighlight">\(q_i = \tilde\mu + \tilde\gamma Y_i + \tilde\sigma\sqrt{Y_i}\,
+\Phi^{-1}(\alpha)\)</span>. The bracket contains the root for every sample
+<code class="docutils literal notranslate"><span class="pre">Y</span></code>. No PINV table and no Bessel evaluation; the CVaR integral is
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">_cvar_from_quantile()</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>equinox.EquinoxRuntimeError</strong> – If the result is not finite, also under <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
