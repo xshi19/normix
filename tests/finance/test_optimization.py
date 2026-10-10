@@ -127,7 +127,7 @@ def test_risk_at_matches_object_and_value_reduced():
     Y = model.joint.subordinator().rvs(40_000, seed=0)
 
     proj = prob.projection_at(mu_t, gamma_t)
-    r_object = float(cvar.value(proj, Y))                      # PINV-seeded quantile
+    r_object = float(cvar.value(proj, Y))                      # object path
     r_reduced = float(prob.risk_at(mu_t, gamma_t, Y))          # component-bracket quantile
     r_value_reduced = float(cvar.value_reduced(
         proj._mu_scalar, proj._gamma_scalar, proj._sigma_scalar, Y))

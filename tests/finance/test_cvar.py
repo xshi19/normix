@@ -135,6 +135,31 @@ def test_bracket_cmc_raw_contains_the_root(q):
         assert float(lo) <= float(x) <= float(hi)
 
 
+@pytest.mark.contract
+def test_quantile_cmc_root_far_in_the_tail():
+    r"""``CVaR.value`` and ``value_reduced`` share the component bracket.
+
+    Same draws as :func:`test_value_reduced_root_far_in_the_tail`. A bracket
+    seeded at the PINV quantile and doubled 8 times stopped near
+    :math:`-2.6\times 10^5`; the root is near :math:`-10^6`.
+    """
+    alpha = 1e-4
+    uv = UnivariateVarianceGamma.from_classical(
+        mu=0.0, gamma=-1.0, sigma=0.01 ** 2, alpha=1.0, beta=1.0,
+    )
+    x = quantile_cmc(uv, alpha, _REVIEW_Y)
+    F = float(cdf_cmc(uv, x, _REVIEW_Y))
+    np.testing.assert_allclose(F, alpha, rtol=1e-8)
+    cvar = CVaR(alpha)
+    np.testing.assert_allclose(
+        float(cvar.value(uv, _REVIEW_Y)), 1000017.5498134409, rtol=1e-10)
+    np.testing.assert_allclose(
+        float(cvar.value(uv, _REVIEW_Y)),
+        float(cvar.value_reduced(
+            uv._mu_scalar, uv._gamma_scalar, uv._sigma_scalar, _REVIEW_Y)),
+        rtol=1e-12)
+
+
 def test_value_reduced_raises_on_non_finite_result():
     with pytest.raises(Exception, match="non-finite"):
         CVaR(0.05).value_reduced(
