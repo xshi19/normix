@@ -2,8 +2,8 @@
 name: architect
 description: >-
   Design before implementing: sketch eqx.Module fields, classmethod
-  signatures, and module boundaries before code, fan candidates through the
-  arena skill, and land the decision as a dev-notes/design/design.md row.
+  signatures, and module boundaries before code, hand the sketch to
+  Normix Engineer, and land the decision as a dev-notes/design/design.md row.
   Use for one-way-door structural changes — a new ABC layer, a new mixture
   family shape, an η-update abstraction — or when the user asks to
   design/architect something non-trivial. Not for routine work (a new
@@ -39,20 +39,28 @@ is a constraint, not trivia.
 Completion criterion: you can name the `design.md` rows, topical docs,
 and code that constrain the sketch.
 
-## Phase B: Sketch (arena)
+## Phase B: Sketch (hand-off)
 
-Run `.cursor/skills/arena/SKILL.md` with the design task and the Phase A
-grounding. Pass each runner `references/runner-prompt.md`; each returns a
-design package shaped per `references/rationale-template.md` — caller's
-usage first, then the field sketch, classmethod signatures with
-`NotImplementedError` bodies, module map, and rationale. Arena returns one
-synthesized package with its synthesis decision filled in.
+Prepare the hand-off package. Do not spawn candidates in this session.
 
-Completion criterion: a synthesized design package exists, shaped per
-`references/rationale-template.md`, with rejected alternatives recorded.
+The package contains:
+
+- the design task
+- the Phase A grounding
+- `references/runner-prompt.md`
+- `references/rationale-template.md`
+- a rubric of 3–6 gradeable criteria, per `.cursor/skills/arena/SKILL.md`
+
+Stop when the package is ready. Normix Engineer runs the external
+bake-off and returns one synthesized package. That package is shaped per
+`references/rationale-template.md`, with the synthesis decision filled in.
+
+Completion criterion: the package above is ready, and this session spawned
+no candidate.
 
 ## Phase C: Agree (checkpoint by default)
 
+Start this phase only after the synthesized package is back.
 Present the synthesized package and a draft `design.md` row to the user
 before implementing. Architect only fires on one-way doors, which is
 exactly where human attention belongs — reversible work never reaches this
@@ -103,17 +111,17 @@ Follow the agent-maintenance skill's "Design Decision Made" trigger:
    `dev-notes/archive/design/` once implemented)
 3. `docs/design/` update if the rationale is user-facing
 
-The rejected alternatives from arena go into the rationale doc. That nuance
-is a large part of why architect was run at all.
+The rejected alternatives from the synthesized package go into the rationale
+doc. That nuance is a large part of why architect was run at all.
 
 Completion criterion: a new or amended `design.md` row exists, with
 rationale in the topical doc (or a plan file for subsystem-scale work).
 
 ## Gotchas
 
-- Numerical-method choices inside a design (solver, backend, tolerance) are
-  settled by benchmarks, not by the arena — leave them as open questions in
-  the package with a benchmark plan.
+- Do not settle a numerical choice inside a design by bake-off. Solver,
+  backend, and tolerance choices belong to benchmarks. Leave them as open
+  questions in the package. Attach a benchmark plan.
 - Don't let the sketch drift into implementation: bodies stay
   `NotImplementedError` until Phase D, or the "design" is just code review
   of premature code.

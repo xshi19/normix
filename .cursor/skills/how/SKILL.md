@@ -28,9 +28,9 @@ Then read the actual code (Grep + Read). Don't guess from file names.
 - **Small question** (one module, one function, one flow): answer inline —
   normix is small enough that Grep + Read beats spawning anything.
 - **Subsystem question** (the Joint/Marginal mixture machinery, the φ↔θ
-  solver chain rule, the EM flow end to end): spawn ONE readonly subagent
-  (default model `claude-sonnet-5-thinking-high`) that explores and writes
-  the explanation, keeping the bulk file reads out of the parent context.
+  solver chain rule, the EM flow end to end): spawn ONE readonly subagent.
+  Use model `grok-4.7-xhigh` (Cursor Grok 4.7). It explores and writes the
+  explanation. Keep the bulk file reads out of the parent context.
   No parallel explorers.
 
 If the question's scope is ambiguous, state your best-guess interpretation

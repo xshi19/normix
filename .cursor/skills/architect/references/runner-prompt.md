@@ -1,9 +1,10 @@
 # Architect runner prompt
 
-Passed to each arena runner in Phase B, together with the task, the Phase A
-grounding (relevant `design.md` rows, topical design doc, ARCHITECTURE
-excerpt), and output instructions (default: return the package in the final
-response body).
+Hand this file to Normix Engineer with the Phase B package. Each external
+candidate receives the file, the task, and the Phase A grounding (relevant
+`design.md` rows, topical design doc, ARCHITECTURE excerpt). Each candidate
+also receives the output instructions. The default is to return the package
+in the final response body.
 
 ---
 

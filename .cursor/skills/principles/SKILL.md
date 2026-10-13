@@ -28,8 +28,8 @@ every later phase benefits. A late data-structure change is a rewrite; an
 early one is a one-line diff.
 
 **Exhaust the design space.** When a structural decision has no precedent,
-sketch 2–3 competing shapes before committing — the architect and arena
-skills make this concrete. Not for mechanical work, bug fixes, or
+sketch 2–3 competing shapes before committing — the architect skill
+makes this concrete. Not for mechanical work, bug fixes, or
 numerical-method choices; benchmarks decide those (rows S5, S8, S9).
 
 **Redesign from first principles.** Integrating a new requirement means
@@ -125,8 +125,8 @@ illegal state transitions unrepresentable. Don't smuggle in mutable state,
 - **Make operations idempotent** — relevant to `benchmarks/run_all.py`
   resumption and docs publishing; the library itself is pure-functional.
 - **Separate before serializing shared state** — relevant to
-  multi-agent/worktree runs (arena, best-of-n); give each writer its own
-  path.
+  multi-agent/worktree runs (best-of-n or an external bake-off); give each
+  writer its own path.
 
 ## Gotchas
 

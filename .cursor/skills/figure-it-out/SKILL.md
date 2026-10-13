@@ -46,7 +46,7 @@ tradeoffs before committing.
   `benchmarks/compare.py` are the existing lever — extend them, don't
   hand-collect numbers.
 - One-way-door design decisions inside the plan → run the architect skill.
-  Mechanical work whose shape is already concrete → don't; a second arena
+  Mechanical work whose shape is already concrete → don't; a second bake-off
   over a settled design is over-engineering.
 - Write the phase list into a plan file under `dev-notes/plans/` (or
   `dev-notes/investigations/` for investigation-shaped work). That file is

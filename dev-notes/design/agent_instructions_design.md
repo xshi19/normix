@@ -20,7 +20,7 @@ discipline for our agent-facing knowledge system.
 | [Harness Engineering (OpenAI, Feb 2026)](https://openai.com/index/harness-engineering/) | AGENTS.md = table of contents, not encyclopedia; progressive disclosure; enforce architecture mechanically; repository knowledge is the system of record |
 | [How To Be A World-Class Agentic Engineer (nonsensee, Mar 2026)](https://nonsensee.medium.com/how-to-be-a-world-class-agentic-engineer-413783d24388) | Context is everything — give only what's needed; CLAUDE.md is a nested directory of where to find context; rules = preferences, skills = recipes; start barebones, iterate, consolidate |
 | [Lessons from Building Claude Code: How We Use Skills (Anthropic, Mar 2026)](https://x.com/trq212/status/2033949937936085378) | Skills are folders, not just files; progressive disclosure via file system; gotchas sections are highest signal; don't state the obvious; don't railroad the agent |
-| [pstack plugin (poteto, 2026)](https://github.com/cursor/plugins/tree/main/pstack) | Workflow skills with narrow triggers; a principles library cited by name from workflows; multi-model panels for design and review. Adapted into normix skills 2026-07 — survey, verdicts, and adaptations archived at `../archive/references/pstack_skills_review.md` (decision row C4 in `design.md`) |
+| [pstack plugin (poteto, 2026)](https://github.com/cursor/plugins/tree/main/pstack) | Workflow skills with narrow triggers; a principles library cited by name from workflows. Adapted into normix skills 2026-07 — survey archived at `../archive/references/pstack_skills_review.md` (decision row C4). In-repo model panels from that adaptation are retired. |
 | [poteto, *Loops You Can Trust* (Jun 2026)](https://x.com/poteto/article/2069824386283319343) | Verification is the limiting step — build it before the loop; demand artifacts, not claims; build the lever; loops earn autonomy only after they earn trust. Drives `../plans/loops_and_orchestration.md` |
 | [humanlayer/skills (2026)](https://github.com/humanlayer/skills) | Smallest-view visual explanations (`show-me`); control-loop vocabulary (sensor / controller / actuator, memory file, PR bounding). Adapted 2026-08 — survey at `../references/humanlayer_skills_review.md` (decision row C5 in `design.md`) |
 
@@ -151,12 +151,16 @@ by the workflows that own those moments.
   non-trigger in the body (architect: "would this add a `design.md`
   row? if not, skip"). Skills produce records; docs remain the record —
   architect *lands* a design.md row rather than replacing the table.
-- Multi-model panels are a review signal priced by task shape:
-  open-ended generation (arena) gets the strong panel; bounded diff
-  review (interrogate) gets a cheap cross-family trio, escalating only
-  for deep-math paths. Panels are defined once (`arena/SKILL.md`) and
-  referenced, never copied. Cross-family panels are Cursor-only —
-  Claude Code and Codex cannot spawn other-family subagents natively.
+- Cross-family bake-offs run outside this repo. Cursor sessions here use
+  Grok only (`grok-4.7-xhigh`). GPT runs only in Codex. Normix Engineer
+  runs one Codex GPT candidate, one Cursor Grok candidate, and its own
+  candidate. It compares the three and grafts a synthesis.
+- Architect Phase B prepares that hand-off and stops. The default
+  interrogate tier is Cursor Grok 4.7 reviewers with distinct lenses.
+  Escalation uses the same hand-off for Bessel, the GIG/GH solvers, the
+  EM fitter, `@jax.custom_jvp`, or an explicit cross-family request. The
+  hand-off contract is `.cursor/skills/arena/SKILL.md`. Do not copy a
+  model list into another skill.
 - Checkpoint policy: reversible work proceeds without asking; one-way
   doors get a human checkpoint (architect Phase C). Human attention is
   spent exactly where reversal is expensive.
