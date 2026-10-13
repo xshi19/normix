@@ -1,6 +1,8 @@
 # Reviewer prompt template
 
-Fill the placeholders; the same filled prompt goes to every panel model.
+Fill `{INTENT}` and `{DIFF_AND_CONTEXT}` the same way for every reviewer.
+On the default tier, assign each reviewer one lens from the list below.
+Do not send every lens to every reviewer.
 
 ---
 

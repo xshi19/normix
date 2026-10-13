@@ -82,7 +82,7 @@ Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 | Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
 | Docs website build/publish | `.cursor/skills/docs-publish/` |
 | Cross-link conventions | `.cursor/rules/docs-cross-links.mdc` |
-| One-way-door design workflow (→ design.md row) | `.cursor/skills/architect/` (calls `arena`, the strong model panel) |
+| One-way-door design workflow (→ design.md row) | `.cursor/skills/architect/` (Phase B hand-off to Normix Engineer) |
 | Adversarial diff review (Bessel/solver/EM/`custom_jvp`) | `.cursor/skills/interrogate/` |
 | Walkthroughs & design history | `.cursor/skills/how/`, `.cursor/skills/why/` |
 | Visual explanations (diagrams, HTML review artifacts) | `.cursor/skills/show-me/` |

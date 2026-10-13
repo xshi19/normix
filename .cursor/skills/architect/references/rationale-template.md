@@ -23,8 +23,8 @@ do.*
 
 ## Synthesis decision
 
-*Filled in by arena: which candidate became the base and why, what was
-grafted from each other candidate, what was rejected and why.*
+*Normix Engineer fills this section after the bake-off. Record the base,
+the grafts, and the rejections. Leave this section blank in the hand-off.*
 
 ## Tradeoffs accepted
 
