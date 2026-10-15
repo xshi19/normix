@@ -95,12 +95,12 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 
 ## Codex notes
 
-Cursor frontmatter does not load these files in Codex.
-Read the selected bodies explicitly.
+Cursor frontmatter does not load these files in Codex. Read the selected bodies explicitly.
 Skills remain canonical under `.cursor/skills/`.
-`.agents/skills/` may expose them through directory symlinks.
+`.agents/skills/` may symlink those directories, and `.codex/agents/` holds project subagents.
 Use available host tools.
 Cursor tool arguments and model names are not Codex configuration.
+
 Preserve required external hand-offs.
 Report a prepared package separately from a completed external review.
 Follow the user's task scope.

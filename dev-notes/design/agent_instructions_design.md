@@ -33,8 +33,9 @@ discipline for our agent-facing knowledge system.
 > "Give the agent a map, not a 1,000-page instruction manual."
 > — OpenAI Harness Engineering
 
-`AGENTS.md` is a **table of contents** — roughly 100 lines — that tells the
-agent *where to look*, not *everything it needs to know*. Deep knowledge lives
+`AGENTS.md` is a **table of contents**. The length cap is in
+`.cursor/rules/rule-authoring.mdc`. It tells the agent *where to look*, not
+*everything it needs to know*. Deep knowledge lives
 in `docs/`, `.cursor/rules/`, and skills. The agent reads deeper context only
 when it needs it.
 
@@ -102,6 +103,7 @@ Every fact appears in exactly one place. Other documents **point** to it.
 | Design rationale | `design.md` | `AGENTS.md` |
 | Mathematical derivations | `../../docs/theory/*.md` | `AGENTS.md`, `../ARCHITECTURE.md` |
 | Bessel implementation | `../tech_notes/bessel_*.md` | `../ARCHITECTURE.md` |
+| Instruction length caps | `.cursor/rules/rule-authoring.mdc` | `maintain-agents-md.mdc`, `maintain-cursor-rules.mdc`, this file |
 
 Duplicating facts across files leads to contradictions when one is updated
 and the other isn't.
@@ -176,10 +178,14 @@ Conversation-scoped explanations that chat mermaid / LaTeX can't carry
 go through the `show-me` skill (row C5). Smallest view first; HTML
 is the last resort, matching `docs/_static/normix.css` tokens.
 
-HTML is not a third documentation system. Desktop: right-click →
-Open in Browser. Cloud / iOS: headless-Chrome screenshot (the iOS
-app has no file browser). Durable notes still land in `docs/` or
-`dev-notes/`. Survey: `../references/humanlayer_skills_review.md`.
+HTML is not a third documentation system. Durable notes still land in
+`docs/` or `dev-notes/`. The desktop menu and the cloud screenshot path
+are Cursor-only. Delivery steps are in `.cursor/skills/show-me/SKILL.md`.
+
+On Codex, write HTML outside the git tree.
+Give an ordinary link to that file.
+Do not assume Mermaid or `/opt/cursor/artifacts/`.
+Survey: `../references/humanlayer_skills_review.md`.
 
 ### Completion criteria in skill bodies
 
@@ -192,9 +198,10 @@ checkable predicate, not a restatement of the step.
 
 ## Structure
 
-Detailed rules for each document type live in their own `.cursor/rules/` files,
-auto-injected when editing that type. This avoids loading all maintenance rules
-when only one is relevant.
+Detailed rules for each document type live in their own `.cursor/rules/` files.
+In Cursor, a rule loads when its glob matches, or when `alwaysApply` is true.
+In Codex, the agent reads the one rule the route names.
+This avoids loading every maintenance rule for one edit.
 
 | Document | Maintenance Rule |
 |---|---|
@@ -251,7 +258,7 @@ Git commit conventions for docs and all other changes are codified in the
 5. Proposes a new ABC layer → `architect` skill (checkpoint, then a
    `design.md` row)
 6. Needs a side-by-side math comparison → `show-me` skill (HTML last
-   resort; screenshot on cloud / iOS)
+   resort). Cursor may screenshot. Codex uses a writable path and an ordinary link.
 7. Commits → uses `git-conventions` skill
 
 At no point does the agent load everything. Context grows only as needed.
@@ -272,17 +279,47 @@ Cursor and Codex read the same files. They do not load those files the same way.
 
 ### Codex
 
-- Startup loads the root `AGENTS.md` only. Codex does not evaluate `.mdc` frontmatter.
+- In this checkout, project startup text is the root `AGENTS.md`.
+  Codex can also load a global file and a nested `AGENTS.md`.
+  This checkout has no nested `AGENTS.md`.
+  Codex does not evaluate `.mdc` frontmatter.
 - Read each selected rule or skill body from the route in `AGENTS.md`.
 - `.agents/skills/` holds directory symlinks into `.cursor/skills/`.
   Codex can match those skills by description.
 - The canonical body stays under `.cursor/skills/`. Do not keep a second copy.
+- Do not link `figure-it-out` or `arena` for catalog coverage.
+  `figure-it-out` stays explicit-only.
+- `.codex/agents/` holds project custom agents.
+  `comment-sicko.toml` names `comment_sicko` and sets no `model`.
+  The agent inherits the parent model.
+  Docs: https://learn.chatgpt.com/docs/agent-configuration/subagents
+- A Codex subagent inherits the parent sandbox.
+  Read-only behavior needs a read-only parent sandbox.
+  A "do not edit" line in the toml is not that sandbox.
 - Set `allow_implicit_invocation: false` in `agents/openai.yaml` to block implicit selection.
   It does not hide the file.
 - Cursor `Task` arguments are not Codex settings.
   `subagent_type`, `readonly`, and model slugs are not Codex settings.
   Use the tools this host has.
 - A sequential lens pass in one session is not an independent cross-family review.
+
+### Discovery smoke
+
+Read-only. Do not add skill links to grow the catalog.
+
+1. Check that each `.agents/skills/*` symlink resolves.
+2. Check that `.agents/skills/figure-it-out` is absent.
+3. Check that `.agents/skills/arena` is absent.
+4. Check that `.codex/agents/comment-sicko.toml` sets `name = "comment_sicko"`.
+5. If `codex` is on `PATH`, run the read-only command below.
+
+   ```bash
+   codex exec --sandbox read-only --ask-for-approval never \
+     "List the skill names in your startup catalog. Do not edit files."
+   ```
+
+   Expect the linked skill names.
+   Do not expect `figure-it-out`.
 
 ### Normix Engineer hand-off
 
@@ -326,7 +363,7 @@ Never write "reviewed" unless that synthesis is back in the session.
 | Rules that state the obvious | Wastes context; agent already knows this | Focus on project-specific, non-obvious conventions |
 | Over-specified skills ("run this exact command") | Brittle; breaks when commands change | State goals and constraints, not exact steps |
 | Never updating rules | Stale rules cause worse behavior than no rules | Treat rules as living code; maintain them |
-| Too many rules loaded at once | Context pollution → confused agent | Use glob-based conditional injection |
+| Too many rules loaded at once | Context pollution → confused agent | In Cursor, use globs. In Codex, read only the routed rule. |
 | Rules contradicting each other | Agent picks one arbitrarily, often wrong | Periodic consolidation; single source of truth |
 
 ---

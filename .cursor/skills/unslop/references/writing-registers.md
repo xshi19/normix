@@ -43,7 +43,7 @@ of the STE-style pass each register takes: the scope table in `ste.md`.
 - "We" active voice ("we show", "we obtain"); full sentences; derivations
   in prose and display math, not bullet chains.
 - ```{math}` blocks; `:label:` + `{eq}` only for equations that are
-  referenced; cite [Shi2016] via the citation defined in `index.md`.
+  referenced; cite [Shi2016] via the entry in `docs/references.md`.
 - Pure math: implementation details go to `dev-notes/tech_notes/`, per
   `.cursor/rules/maintain-theory-docs.mdc`.
 

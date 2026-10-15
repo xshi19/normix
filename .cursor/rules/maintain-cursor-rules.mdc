@@ -16,6 +16,7 @@ being edited. This is the primary mechanism for progressive disclosure.
 | Rule | Glob | Purpose |
 |---|---|---|
 | `project-overview.mdc` | `alwaysApply: true` | Project identity, distribution catalog |
+| `rule-authoring.mdc` | `alwaysApply: true` | Length caps; where instruction text belongs |
 | `coding-conventions.mdc` | `**/*.py` | Python coding patterns |
 | `testing-guidelines.mdc` | `**/tests/**/*.py` | Test structure and tolerances |
 | `notebook-guidelines.mdc` | `**/notebooks/**` | Two-tier notebook policy |
@@ -29,10 +30,11 @@ being edited. This is the primary mechanism for progressive disclosure.
 
 ## Rule Design Principles
 
-- **Under ~150 lines.** If longer, split or move detail to `docs/`.
+- **Length.** Follow `.cursor/rules/rule-authoring.mdc`.
+  Do not restate a different cap in this file.
 - **YAML frontmatter required**: `description` and `globs` (or `alwaysApply`).
-- **`alwaysApply: true` sparingly** — only `project-overview.mdc` should be always-applied.
-  Every always-applied rule costs context in every conversation.
+- **`alwaysApply: true` sparingly.** Cursor always applies `project-overview.mdc` and `rule-authoring.mdc`.
+  Do not add a third always-applied rule without a reason recorded in `dev-notes/design/`.
 - **Non-obvious content only.** Don't tell the agent things it already knows.
   Focus on project-specific conventions that differ from defaults.
 - **Gotchas section.** The highest-signal content. Maintain and update it when
@@ -60,4 +62,6 @@ being edited. This is the primary mechanism for progressive disclosure.
   (see Single Source of Truth table in `dev-notes/design/agent_instructions_design.md`).
 - **Don't add implementation details.** Rules say *what* and *what not to do*.
   Implementation details belong in code, docstrings, or tech notes.
-- **In Cursor, `project-overview.mdc` is always applied.** Keep it very concise.
+- **In Cursor, `project-overview.mdc` and `rule-authoring.mdc` are always applied.** Keep both under the length cap.
+- **`coding-conventions.mdc` is over the length cap.** Do not add lines to it.
+  Split it before the next addition.
