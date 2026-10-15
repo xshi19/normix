@@ -34,6 +34,7 @@
 | Why not Adam / L-BFGS on the observed NLL? | `../../docs/design/why_not_gradient_descent.md`; row E15 |
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |
+| How do Cursor and Codex load instructions, and what is the Normix Engineer hand-off? | `agent_instructions_design.md` § Host support |
 | Visual explanation artifacts (show-me HTML)? | `agent_instructions_design.md` § Visual artifacts; skill `.cursor/skills/show-me/` |
 
 ## See also

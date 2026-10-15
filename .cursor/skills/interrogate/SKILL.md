@@ -11,23 +11,30 @@ description: >-
 
 # Interrogate
 
-Reviewers share one diff and one intent. On the default tier, every
+Reviewers share one diff and one intent. On the Cursor default tier, every
 reviewer is Cursor Grok 4.7 (`grok-4.7-xhigh`). Diversity comes from
 distinct lens prompts. Agreement across lenses is the high-confidence
 signal. A finding from one lens is lower confidence.
+
+That Cursor tier is not available in Codex.
+A sequential lens pass there is a preliminary check.
+It is not independent cross-family review.
 
 The deliverable is a synthesized verdict. Do not auto-apply changes.
 
 ## Tiers
 
-| Tier | Reviewers | When |
-|---|---|---|
-| Default | Three reviewers on Cursor Grok 4.7 (`grok-4.7-xhigh`), each with a distinct lens prompt | any requested review that is not an escalation |
-| Escalation | Hand off to Normix Engineer. It runs Codex GPT and Cursor Grok reviewers outside this repo. | the diff touches `normix/utils/bessel.py`, a GIG or GH solver, the EM fitter, or a `@jax.custom_jvp` function; or the user asks for a cross-family review |
+| Tier | Where | Reviewers | When |
+|---|---|---|---|
+| Default | Cursor | Three reviewers, model `grok-4.7-xhigh`, distinct lenses | a requested review that is not an escalation |
+| Default | Codex | One sequential lens pass with the host model. Label it preliminary. | same, when the host is Codex |
+| Escalation | either | Do not spawn reviewers. Prepare the § Host support package and stop. | the diff touches `normix/utils/bessel.py`, a GIG or GH solver, the EM fitter, or a `@jax.custom_jvp` function; or the user asks for a cross-family review |
 
 Escalate for a sign error or a wrong Bessel step. A second model family
 catches that class of bug. On that tier, do not spawn reviewers here.
-Prepare the scope and intent package, then stop.
+Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
+The user relays it. Stop.
+The state is "ready for external review".
 
 ## Steps
 
@@ -47,15 +54,24 @@ Prepare the scope and intent package, then stop.
 
    Completion criterion: one intent paragraph exists; reviewers will
    challenge execution against it, not the goal.
-3. **Spawn.** On the default tier, spawn three readonly reviewers in one
-   message. Use `subagent_type: generalPurpose`, `readonly: true`, and model
-   `grok-4.7-xhigh`.
-   Fill `references/reviewer-prompt.md` with the intent and the diff. Give
-   each reviewer a different lens from that file. On the escalation tier,
-   do not spawn. Hand the same package to Normix Engineer and stop.
+3. **Review.**
+   **Cursor only.** Spawn three readonly reviewers in one message.
+   This spawn is a Cursor `Task` call.
+   Use `subagent_type: generalPurpose`, `readonly: true`, and model `grok-4.7-xhigh`.
+   That `subagent_type`, `readonly`, and model recipe is Cursor-only.
+   Fill `references/reviewer-prompt.md` with the intent and the diff.
+   Give each reviewer a different lens from that file.
+   **Codex.** Use the tools this host has.
+   You may apply the lenses in sequence with the host model.
+   Label that pass preliminary.
+   That pass is not independent cross-family review.
+   **Escalation, either host.** Do not spawn reviewers.
+   Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
+   The user relays it. Stop.
+   The state is "ready for external review".
 
-   Completion criterion: three `grok-4.7-xhigh` reviewers run on distinct
-   lenses, or the escalation hand-off is ready.
+   Completion criterion: Cursor ran three `grok-4.7-xhigh` reviewers on distinct lenses, or Codex recorded a preliminary pass.
+   Otherwise the escalation package is ready for external review.
 4. **Synthesize.** Deduplicate findings that reviewers describe in
    different words. Mark a consensus finding when 2 or more reviewers
    raise it. List explicit disagreements.
@@ -97,6 +113,8 @@ re-reading the reviewer transcripts.
   but dismissing it requires citing the row, not vibes.
 - The verdict is not a merge gate; the user decides. Act-on items they
   decline become Noted, not silently dropped.
+- A sequential lens pass is not cross-family review.
+  With no returned synthesis, the state is "ready for external review".
 - Do not run the escalation tier on both the sketch and the diff.
   Design time means architect Phase C. Review time is the other chance.
   Once is enough, unless the user asks for both.

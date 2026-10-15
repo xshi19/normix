@@ -61,6 +61,7 @@ Internal parameter attributes **MUST** use Greek letter names matching the mathe
 - No template boilerplate — keep it concise
 - Reference formulas only when non-obvious from the code
 - No long derivation comments inline — move math to `docs/theory/` or `dev-notes/tech_notes/`
+- Follow `.cursor/skills/no-comments/SKILL.md` for inline comments.
 
 ## Module Structure
 

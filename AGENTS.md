@@ -7,8 +7,8 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotli
 
 - Install: `uv sync`
 - Tests: `uv run pytest tests/` (fast default: excludes `slow`, `stress`, `integration`, `gpu`)
-- Full validation: `uv run pytest tests/ -m "slow or stress or integration"`
-- Single test: `uv run pytest tests/test_gamma.py -v`
+- Slow/stress/integration suite: `uv run pytest tests/ -m "slow or stress or integration"`
+- Single test file: `uv run pytest tests/test_bessel_contract.py -v`
 - Benchmarks: `uv run python benchmarks/run_all.py` (or individual: `uv run python benchmarks/bench_em_mixture.py`)
 - ASV smoke: `cd asv_bench && uv run asv run --python=same --quick`
 - ASV tripwire (local): `cd asv_bench && uv run asv continuous --factor 1.5 -b 'Bessel|GIGFromExpectation' master HEAD`
@@ -43,10 +43,6 @@ Before committing:
 - **Distribution API**: Every distribution provides `pdf`, `cdf` (where analytical), `mean`, `var`, `std`, `rvs`; joint/marginal mixtures provide `rvs`, `mean`, `cov`, `skewness`, `kurtosis` (excess)
 - **Information measures**: exponential families provide `entropy`, `varentropy`, `renyi(alpha)`, `log_density_power(alpha)` (autodiff of $R(\alpha)=\log\int p^\alpha$); marginal mixtures expose `joint_entropy/varentropy/renyi` (marginal-of-X versions are intractable)
 
-## Core Dependencies
-
-`jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotlib` (optional, notebooks/plotting).
-
 ## Context Map
 
 Published website source → `docs/` (built to https://xshi19.github.io/normix/)
@@ -55,42 +51,61 @@ Agent/dev internal knowledge → `dev-notes/` (not published; index at `dev-note
 
 Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
 
-| Area | Rule / Doc |
+| Area | Doc |
 |---|---|
-| Distribution code (`normix/`) | `.cursor/rules/coding-conventions.mdc` |
-| Tests (`tests/`) | `.cursor/rules/testing-guidelines.mdc` |
-| Notebooks (`notebooks/`) | `.cursor/rules/notebook-guidelines.mdc` |
 | Published design rationale | `docs/design/` (exponential_family, mixtures, em_framework, solvers_and_bessel, why_not_gradient_descent) |
-| Design decisions table (internal) | `dev-notes/design/design.md` |
-| Agent instructions design | `dev-notes/design/agent_instructions_design.md` |
-| Full design doc index (internal) | `dev-notes/design/index.md` |
-| Mathematical theory & derivations | `docs/theory/` (MyST `.md`, based on [Shi2016]) |
-| Published research notes | `docs/research/` (subordinator tracking); working notes in `dev-notes/research/` |
-| Published bibliography + citation/package-link rules | `docs/references.md`; `.cursor/rules/docs-cross-links.mdc` |
-| Distribution conversions (`to_<name>`) | `dev-notes/tech_notes/distribution_conversions.md` |
-| Active plans | `dev-notes/plans/` (`docs_refactor.md`, `loops_and_orchestration.md`) |
-| 2026-07-12 review roadmap (44 items; Phases 0–8 done) | `dev-notes/archive/plans/review_roadmap_2026-07-12.md` |
-| `normix.finance` roadmap (Phases D–F done; archived) | `dev-notes/archive/plans/finance_architecture.md` |
-| Docs refactor plan (Phases 1–7 done; Phase 8 polish in progress) | `dev-notes/plans/docs_refactor.md` |
-| Completed/archived plans (JAX migration, review roadmap, finance, ASV) | `dev-notes/archive/plans/` |
-| Archived design proposals (already implemented) | `dev-notes/archive/design/` |
-| Package survey (TFP, FlowJAX, efax) | `dev-notes/references/distribution_packages.md` |
-| GPJax review (design, JAX usage, adoption candidates) | `dev-notes/references/gpjax_review.md` |
-| Technical notes | `dev-notes/tech_notes/` |
-| Benchmarks | Deep-dive: `benchmarks/` (`run_all.py`, `compare.py`). Trends: `asv_bench/` (ASV; dashboard `/benchmarks/`; PR tripwire `.github/workflows/asv.yml`). Plan: `dev-notes/archive/plans/asv_benchmarking.md` |
-| Git conventions | `.cursor/skills/git-conventions/` |
-| Doc/rule/skill maintenance + post-task reflection | `.cursor/skills/agent-maintenance/` |
-| Docs website build/publish | `.cursor/skills/docs-publish/` |
-| Cross-link conventions | `.cursor/rules/docs-cross-links.mdc` |
-| One-way-door design workflow (→ design.md row) | `.cursor/skills/architect/` (Phase B hand-off to Normix Engineer) |
-| Adversarial diff review (Bessel/solver/EM/`custom_jvp`) | `.cursor/skills/interrogate/` |
-| Walkthroughs & design history | `.cursor/skills/how/`, `.cursor/skills/why/` |
-| Visual explanations (diagrams, HTML review artifacts) | `.cursor/skills/show-me/` |
-| TDD bug fixes / novel-work playbooks | `.cursor/skills/tdd/`, `.cursor/skills/figure-it-out/` |
-| Engineering principles library | `.cursor/skills/principles/` |
-| Prose style + writing registers | `.cursor/skills/unslop/` |
-| pstack skill survey (archived; implemented) | `dev-notes/archive/references/pstack_skills_review.md` |
-| humanlayer skill survey (`show-me`, control-loop harvest) | `dev-notes/references/humanlayer_skills_review.md` |
+| Internal design | `dev-notes/design/design.md`, `dev-notes/design/index.md`, `dev-notes/design/agent_instructions_design.md` |
+| Theory and research | `docs/theory/` (MyST, [Shi2016]); `docs/research/`; working notes in `dev-notes/research/` |
+| Bibliography | `docs/references.md` |
+| Conversions and tech notes | `dev-notes/tech_notes/distribution_conversions.md`; `dev-notes/tech_notes/` |
+| Plans | Active: `dev-notes/plans/` (`docs_refactor.md` Phase 8 polish, `loops_and_orchestration.md`). Done: `dev-notes/archive/plans/` (`review_roadmap_2026-07-12.md`, `finance_architecture.md`, `asv_benchmarking.md`) |
+| Archived proposals | `dev-notes/archive/design/` |
+| Surveys | `dev-notes/references/distribution_packages.md`, `dev-notes/references/gpjax_review.md`, `dev-notes/references/humanlayer_skills_review.md`; archived `dev-notes/archive/references/pstack_skills_review.md` |
+| Benchmarks | `benchmarks/` (`run_all.py`, `compare.py`); `asv_bench/`; `scripts/publish_asv_html.sh`; `.github/workflows/asv.yml` |
+
+## Reading rules and workflows
+
+Read the matching files below before work in that area. Apply every matching row.
+Resolve repository paths from the root. Resolve skill-local references from the skill directory.
+Read `.cursor/rules/project-overview.mdc` once for the project catalog. For instruction edits, also read `.cursor/rules/rule-authoring.mdc`.
+
+| When | Read |
+|---|---|
+| Python code, including tests and scripts | `.cursor/rules/coding-conventions.mdc` |
+| Comment Python, or review comments | `.cursor/skills/no-comments/SKILL.md` |
+| Add or change tests | `.cursor/rules/testing-guidelines.mdc` |
+| Run, select, or profile tests | `.cursor/skills/running-tests/SKILL.md` |
+| Add a distribution, module, constant, or design decision | `.cursor/skills/agent-maintenance/SKILL.md` |
+| Fix a reproducible bug | `.cursor/skills/tdd/SKILL.md` |
+| Change Bessel, GIG/GH solvers, EM, or custom JVPs | `.cursor/skills/interrogate/SKILL.md` |
+| Change class boundaries or introduce a new abstraction | `.cursor/skills/architect/SKILL.md` |
+| Explain behavior or trace design history | `.cursor/skills/how/SKILL.md` or `.cursor/skills/why/SKILL.md` |
+| Make design, verification, or refactoring decisions | `.cursor/skills/principles/SKILL.md` |
+| Edit prose, docstrings, rules, skills, or PR descriptions | `.cursor/skills/unslop/SKILL.md` |
+| Edit public docs, internal docs, README, or docstring links | `.cursor/rules/docs-cross-links.mdc` |
+| Edit tutorials; build or publish docs | `.cursor/skills/docs-publish/SKILL.md` |
+| Work in notebooks/ | `.cursor/rules/notebook-guidelines.mdc` |
+| Commit, prepare a PR, or release | `.cursor/skills/git-conventions/SKILL.md` |
+| Edit AGENTS.md or ARCHITECTURE.md | `.cursor/rules/maintain-agents-md.mdc` or `.cursor/rules/maintain-architecture-md.mdc`, respectively |
+| Edit theory or design/technical/reference notes | `.cursor/rules/maintain-theory-docs.mdc` or `.cursor/rules/maintain-design-docs.mdc`, as applicable |
+| Edit rules or skills | `.cursor/rules/maintain-cursor-rules.mdc` or `.cursor/rules/maintain-skills.mdc`, respectively |
+| Request a visual explanation | `.cursor/skills/show-me/SKILL.md` |
+| Explicitly request a custom playbook | `.cursor/skills/figure-it-out/SKILL.md` |
+| Prepare an external design/review package | `.cursor/skills/arena/SKILL.md` (hand-off reference; runner retired) |
+
+## Codex notes
+
+Cursor frontmatter does not load these files in Codex.
+Read the selected bodies explicitly.
+Skills remain canonical under `.cursor/skills/`.
+`.agents/skills/` may expose them through directory symlinks.
+Use available host tools.
+Cursor tool arguments and model names are not Codex configuration.
+Preserve required external hand-offs.
+Report a prepared package separately from a completed external review.
+Follow the user's task scope.
+A workflow pointer does not authorize publishing or releasing.
+Host execution and hand-offs: `dev-notes/design/agent_instructions_design.md` § Host support.
 
 ## Design Philosophy
 

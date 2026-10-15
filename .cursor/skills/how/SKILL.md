@@ -27,11 +27,15 @@ Then read the actual code (Grep + Read). Don't guess from file names.
 
 - **Small question** (one module, one function, one flow): answer inline —
   normix is small enough that Grep + Read beats spawning anything.
-- **Subsystem question** (the Joint/Marginal mixture machinery, the φ↔θ
-  solver chain rule, the EM flow end to end): spawn ONE readonly subagent.
-  Use model `grok-4.7-xhigh` (Cursor Grok 4.7). It explores and writes the
-  explanation. Keep the bulk file reads out of the parent context.
+- **Subsystem question, Cursor only** (the Joint/Marginal mixture machinery,
+  the φ↔θ solver chain rule, the EM flow end to end): spawn one readonly subagent.
+  Use model `grok-4.7-xhigh` (Cursor Grok 4.7).
+  The `readonly` flag and that model slug are Cursor-only.
+  It explores and writes the explanation.
+  Keep the bulk file reads out of the parent context.
   No parallel explorers.
+- **Subsystem question, Codex.** Read the files in this session with the tools you have.
+  Do not claim a separate read-only reviewer.
 
 If the question's scope is ambiguous, state your best-guess interpretation
 and proceed; let the user redirect.

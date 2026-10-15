@@ -99,8 +99,9 @@ PyPI): a `DeprecationWarning` cycle first, deletion in a following minor
 release.
 
 **Guard the context window.** Route bulk output to subagents and keep
-summaries in the main thread; read selectively. `project-overview.mdc` is
-always loaded — every line there costs every conversation.
+summaries in the main thread; read selectively. In Cursor,
+`project-overview.mdc` is always applied — every line there costs every
+Cursor conversation.
 
 **Encode lessons in structure.** A recurring correction becomes a constant
 (`normix/utils/constants.py`), a test, a lint rule, or a rule-file gotcha —

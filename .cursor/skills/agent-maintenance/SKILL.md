@@ -26,14 +26,18 @@ system. Each trigger below tells you what to update and where.
 
 ### New Distribution Added
 
-1. `.cursor/rules/project-overview.mdc` — add to distribution catalog table
-2. `dev-notes/ARCHITECTURE.md` — add to module hierarchy and distribution storage table
-3. `dev-notes/design/design.md` — if new design decisions were made, add to decision table
-4. Add tests under `tests/` (see `.cursor/rules/testing-guidelines.mdc`)
-5. Add notebook under `notebooks/` (see `.cursor/rules/notebook-guidelines.mdc`)
-6. Add theory derivation under `docs/theory/` if mathematical background is needed
-7. If the theory/tutorial names a foundational paper or algorithm, add/cite it in
-   `docs/references.md` (see `.cursor/rules/docs-cross-links.mdc`)
+1. Add the distribution to `.cursor/rules/project-overview.mdc`.
+2. Update the module tree and the storage table in `dev-notes/ARCHITECTURE.md`.
+3. If you made a design decision, add a row in `dev-notes/design/design.md`.
+4. Add tests under `tests/`. Follow `.cursor/rules/testing-guidelines.mdc`.
+5. Add a page under `docs/distributions/`. Link it from `docs/distributions/index.md`.
+6. Add an `automodule` block in `docs/api/distributions.rst`.
+7. Extend a page under `docs/tutorials/` when a public worked example is needed.
+8. Add a derivation under `docs/theory/` when the math is not already there.
+9. If prose names a paper or algorithm, cite it from `docs/references.md`.
+   Follow `.cursor/rules/docs-cross-links.mdc`.
+10. Add a notebook under `notebooks/` only for a private study.
+    Follow `.cursor/rules/notebook-guidelines.mdc`.
 
 ### Editing Published Docs (Tutorials / Theory / Design / User Guide)
 
@@ -143,6 +147,6 @@ Before making any documentation update:
 
 - **Don't update AGENTS.md for every change.** Only when the map needs a new entry.
 - **Don't add implementation details to rules.** Rules say *what* and *what not*.
-- **`project-overview.mdc` is always loaded.** Every line costs context in every conversation.
+- Keep `.cursor/rules/project-overview.mdc` short. Cursor applies it in every session.
 - **Check before creating.** The most common maintenance mistake is adding something that already exists in a different file.
 - **Never link `dev-notes/` from `docs/` or normix docstrings** — promote content to `docs/` first.
