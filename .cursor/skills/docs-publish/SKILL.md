@@ -74,9 +74,13 @@ To trigger a docs update: merge or push to `master` / `main` and let the workflo
 `docs.yml`, it forces every tutorial to re-execute from scratch (no myst-nb
 cache) and turns linkcheck into a hard gate instead of a report:
 
-1. Triggers: `push: tags: ['v*']` (fires automatically alongside `publish.yml`
-   on a release-please tag) or `workflow_dispatch` (manual run from the
-   Actions tab, any ref).
+1. Release path: release-please creates the tag, then `release-please.yml`
+   dispatches this workflow and `publish.yml` on that tag.
+   Manual recovery: `gh workflow run publish.yml --ref vX.Y.Z`.
+   For the docs site, run `gh workflow run docs-full.yml --ref vX.Y.Z`.
+   `push: tags: ['v*']` stays.
+   A `GITHUB_TOKEN` tag push starts no `on: push` workflow, so the dispatch is the only release run.
+   `workflow_dispatch` from the Actions tab still runs on any ref.
 2. Builds with `NB_EXECUTION_MODE=force` — no cache restore/save step, so a
    stale cached figure can never slip into a release build.
 3. Same ASV dashboard copy as `docs.yml` (`scripts/publish_asv_html.sh`).
@@ -90,6 +94,9 @@ cache) and turns linkcheck into a hard gate instead of a report:
    so a routine push to `master` running `docs.yml` cannot cancel an
    in-progress release build. `docs.yml` is keyed per PR / ref for the same
    reason — a global `pages` group was cancelling PR Docs checks.
+
+Versions 0.2.1 through 0.3.0 are absent from PyPI.
+Backfill of those versions is a manual owner decision.
 
 Use `workflow_dispatch` to manually force a full re-execution + republish
 without cutting a release (e.g. after suspecting a stale cached figure, or
