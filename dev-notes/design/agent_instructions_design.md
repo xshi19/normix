@@ -40,14 +40,17 @@ when it needs it.
 
 ### 2. Progressive Disclosure
 
-Context is injected in layers:
+Context arrives in layers. Which layer loads by itself depends on the host.
+See § Host support.
 
 ```
-Layer 0   AGENTS.md               Always in context. Map + pointers.
-Layer 1   .cursor/rules/*.mdc     Auto-injected by glob match (e.g. *.py triggers coding-conventions).
-Layer 2   design/*.md             Read on demand when the agent is making design decisions.
-Layer 3   tech_notes/*.md         Read on demand when the agent hits a specific numerical/algorithmic problem.
-Layer 4   .cursor/skills/         Descriptions always visible; bodies load on invocation (by description match or explicit request).
+Layer 0   AGENTS.md                  Startup map on Cursor and on Codex.
+Layer 1   .cursor/rules/*.mdc        Cursor: glob match, or alwaysApply.
+                                     Codex: read from the AGENTS.md route.
+Layer 2   dev-notes/design/*.md      Read on demand for a design decision.
+Layer 3   dev-notes/tech_notes/*.md  Read on demand for a numerical problem.
+Layer 4   .cursor/skills/            Cursor: description in the skill list; body on selection.
+                                     Codex: description only if .agents/skills/ links the skill.
 ```
 
 Each layer adds context **only when relevant**. An agent fixing a test never
@@ -118,13 +121,13 @@ Mathematical clarity > Simplicity) stay in `AGENTS.md`; operational
 principles live in **one** consolidated skill
 (`.cursor/skills/principles/`).
 
-- `AGENTS.md` is the only always-in-context surface. Moving the value
-  hierarchy into a skill would make it conditional — *more* ignorable,
-  not less. AGENTS.md carries *what to optimize*; the skill carries
-  *how to execute under it*.
-- One skill, not eighteen leaves: every skill's description is always
-  listed in the system prompt, so eighteen principle skills would cost
-  eighteen description lines in every session and fragment retrieval.
+- `AGENTS.md` is in context at startup on both hosts. In Cursor,
+  `alwaysApply` rules are also in context. Moving the value hierarchy
+  into a skill would make it conditional. AGENTS.md carries *what to
+  optimize*; the skill carries *how to execute under it*.
+- One skill, not eighteen leaves. In Cursor, every skill description
+  is listed in the system prompt. Eighteen principle skills would cost
+  eighteen description lines in every Cursor session.
   One description line, named sections inside (§ Prove it works,
   § Subtract before you add, …).
 - No duplication: a pstack principle that restated an AGENTS.md priority
@@ -132,14 +135,14 @@ principles live in **one** consolidated skill
   the 30-second reader test) plus normix grounding (design rows, the
   `compare.py` lever).
 
-### How principles stay visible (three layers)
+### How principles stay visible
 
-1. `AGENTS.md` — always in context; the priorities cannot be missed.
-2. The `principles` skill description — always in the system prompt's
-   skill list, auto-invoked in design/review/refactor contexts.
+1. `AGENTS.md` holds the four priorities. Both hosts load that file at startup.
+2. In Cursor, the `principles` description is in the skill list.
+   In Codex, that description is visible only when `.agents/skills/` links the skill.
+   This repo does not link `principles` yet. Read the body from the AGENTS.md route.
 3. Workflow skills (`architect`, `arena`, `interrogate`, `figure-it-out`,
-   `tdd`) cite principle sections by name at the moments they matter,
-   forcing the read.
+   `tdd`) cite principle sections by name. That citation is the read trigger.
 
 Rule of thumb: a principle that matters *everywhere* goes to AGENTS.md;
 one that matters *at specific moments* goes to the skill and gets cited
@@ -155,12 +158,13 @@ by the workflows that own those moments.
   Grok only (`grok-4.7-xhigh`). GPT runs only in Codex. Normix Engineer
   runs one Codex GPT candidate, one Cursor Grok candidate, and its own
   candidate. It compares the three and grafts a synthesis.
-- Architect Phase B prepares that hand-off and stops. The default
-  interrogate tier is Cursor Grok 4.7 reviewers with distinct lenses.
-  Escalation uses the same hand-off for Bessel, the GIG/GH solvers, the
-  EM fitter, `@jax.custom_jvp`, or an explicit cross-family request. The
-  hand-off contract is `.cursor/skills/arena/SKILL.md`. Do not copy a
-  model list into another skill.
+- Architect Phase B prepares that hand-off and stops. On Cursor, the
+  default interrogate tier is Grok 4.7 reviewers with distinct lenses.
+  On Codex, a sequential lens pass is not that review.
+  Escalation uses § Host support.
+  Use it for Bessel, the GIG/GH solvers, the EM fitter, or `@jax.custom_jvp`.
+  Use it when the user asks for a cross-family review.
+  Do not copy a model list into another skill.
 - Checkpoint policy: reversible work proceeds without asking; one-way
   doors get a human checkpoint (architect Phase C). Human attention is
   spent exactly where reversal is expensive.
@@ -216,28 +220,31 @@ Git commit conventions for docs and all other changes are codified in the
 ## Information Flow
 
 ```
-                    ┌─────────────────────────┐
-                    │       AGENTS.md          │  ← Always in context
-                    │   (map + pointers)       │
-                    └──────────┬──────────────┘
-                               │ points to
-         ┌─────────────────────┼─────────────────────┐
-         ▼                     ▼                      ▼
-┌─────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-│ .cursor/rules/  │  │ docs/            │  │ .cursor/skills/  │
-│ (auto-injected  │  │  ├── design/     │  │ (on-demand       │
-│  by glob match) │  │  ├── tech_notes/ │  │  workflows)      │
-└─────────────────┘  │  ├── theory/     │  └──────────────────┘
-                     │  ├── references/ │
-                     │  └── ARCH..      │
-                     │ (read on demand) │
-                     └──────────────────┘
+                         AGENTS.md
+                    startup map + pointers
+                               |
+         +---------------------+---------------------+
+         |                     |                     |
+         v                     v                     v
+  .cursor/rules/        dev-notes/            .cursor/skills/
+  Cursor: glob or       design/               canonical bodies
+  alwaysApply.          tech_notes/
+  Codex: read from      references/           .agents/skills/
+  the AGENTS.md route.  ARCHITECTURE.md       directory symlinks
+                        read on demand        for Codex discovery
+         |
+         v
+       docs/
+       design/ theory/ research/ tutorials/
+       published site
 ```
 
 **The agent's journey for a typical task:**
 
-1. Agent starts → sees `AGENTS.md` (map) + `project-overview.mdc` (always applied)
-2. Opens a `.py` file → `coding-conventions.mdc` auto-injected
+1. Cursor starts with `AGENTS.md`, `project-overview.mdc`, and `rule-authoring.mdc`.
+   Codex starts with `AGENTS.md`. Codex then reads other files from that route.
+2. In Cursor, opening a `.py` file injects `coding-conventions.mdc`.
+   In Codex, read that rule from the route before editing Python.
 3. Needs to understand GIG optimization → reads `../tech_notes/gig_eta_to_theta.md`
 4. Needs to add a new distribution → follows the `agent-maintenance`
    skill's "New Distribution Added" trigger list
@@ -248,6 +255,65 @@ Git commit conventions for docs and all other changes are codified in the
 7. Commits → uses `git-conventions` skill
 
 At no point does the agent load everything. Context grows only as needed.
+
+---
+
+## Host support
+
+Cursor and Codex read the same files. They do not load those files the same way.
+
+### Cursor
+
+- A rule with `alwaysApply: true` loads in every session.
+  Today those rules are `project-overview.mdc` and `rule-authoring.mdc`.
+- Any other `.mdc` rule loads when its `globs` match an open file.
+- A skill `description` is in the skill list. The body loads when the skill is selected.
+- `disable-model-invocation: true` blocks implicit selection. The file stays readable.
+
+### Codex
+
+- Startup loads the root `AGENTS.md` only. Codex does not evaluate `.mdc` frontmatter.
+- Read each selected rule or skill body from the route in `AGENTS.md`.
+- `.agents/skills/` holds directory symlinks into `.cursor/skills/`.
+  Codex can match those skills by description.
+- The canonical body stays under `.cursor/skills/`. Do not keep a second copy.
+- Set `allow_implicit_invocation: false` in `agents/openai.yaml` to block implicit selection.
+  It does not hide the file.
+- Cursor `Task` arguments are not Codex settings.
+  `subagent_type`, `readonly`, and model slugs are not Codex settings.
+  Use the tools this host has.
+- A sequential lens pass in one session is not an independent cross-family review.
+
+### Normix Engineer hand-off
+
+Normix Engineer is an external assistant. This repo has no call, endpoint, or import for it.
+
+Build the package the calling skill names. Then stop.
+
+**Architect Phase B.** Include the design task and the Phase A grounding.
+Include `.cursor/skills/architect/references/runner-prompt.md` and `.cursor/skills/architect/references/rationale-template.md`.
+Include a rubric of 3–6 gradeable criteria.
+
+Candidates do not see the rubric.
+Name a concrete row, such as S2.
+Write "the sketch keeps `grad_fn` in θ-space per row S2".
+Do not write "the code is correct".
+
+**Interrogate escalation.** Include the diff, the touched class, and its base.
+Include the theory or tech-note page.
+Include one intent paragraph.
+
+The user relays the package to Normix Engineer. Do not invent a transport.
+
+Normix Engineer returns one written synthesis.
+For a design bake-off, that note names the base, the grafts, and the rejections.
+For a review, it names the reviewers and the findings.
+
+Paste that return into the session before you call the work reviewed.
+With no return, the state is "ready for external review".
+Never write "reviewed" unless that synthesis is back in the session.
+
+`architect`, `interrogate`, and `arena` point here. Do not copy this contract into those skills.
 
 ---
 

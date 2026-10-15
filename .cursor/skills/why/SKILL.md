@@ -32,8 +32,13 @@ Work down; stop when answered, and note which sources you didn't reach.
    reviews` when authenticated
 6. `docs/design/` — the published, user-facing voice of the same decisions
 
-This is a reading task; do it inline by default. For an archaeology sweep
-across many files, one readonly subagent keeps the parent context clean.
+This is a reading task. Do it inline by default.
+
+On Cursor, one readonly subagent may sweep many files.
+That `readonly` request is Cursor-only.
+
+On Codex, read the files in this session.
+A second pass is not an independent reviewer.
 
 ## Epistemics (the product)
 

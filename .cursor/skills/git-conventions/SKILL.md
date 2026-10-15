@@ -1,9 +1,9 @@
 ---
 name: git-conventions
 description: >-
-  Git commit message conventions and pre-commit checklist for normix.
-  Use when committing changes, creating PRs, or when the user asks about
-  commit format, branch naming, or git workflow.
+  Git commit conventions, the pre-commit checklist, and release-please
+  for normix. Use when committing, opening a PR, preparing a release,
+  or when the user asks about commit format or git workflow.
 ---
 
 # Git Conventions
@@ -77,23 +77,37 @@ Before committing, verify:
 Versioning and PyPI releases are automated via `googleapis/release-please-action`.
 **Never edit `version` in `pyproject.toml` or `__version__` in `normix/__init__.py` by hand.**
 
+Config and workflows:
+
+- `release-please-config.json`
+- `.release-please-manifest.json`
+- `.github/workflows/release-please.yml`
+- `.github/workflows/publish.yml`
+
 How it works:
 
-1. Commits merged to `master` with `feat:` or `fix:` types cause release-please to open
-   (or update) a Release PR titled `chore: release X.Y.Z`.
+1. A commit on `master` whose type is a visible changelog section opens or updates a Release PR.
+   The title pattern is `chore: release X.Y.Z`.
 2. Merging the Release PR bumps `pyproject.toml` and `normix/__init__.py`, updates
    `CHANGELOG.md`, and pushes a `vX.Y.Z` tag.
 3. The `vX.Y.Z` tag triggers `.github/workflows/publish.yml`, which builds and
    publishes the package to PyPI via Trusted Publishing.
 
-**Version bump rules (pre-1.0):**
+**Version bump rules (pre-1.0).** Both `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` are true.
+These bumps apply while the version is below 1.0.0.
+At 1.0.0 and above, a breaking change bumps the major, and `feat` bumps the minor.
 
-| Commit type | Bump |
-|---|---|
-| `fix:` | patch (`0.2.0 → 0.2.1`) |
-| `feat:` | minor (`0.2.0 → 0.3.0`) |
-| `feat!:` / `BREAKING CHANGE:` footer | minor (not major until 1.0) |
-| `docs:`, `test:`, `refactor:`, `chore:`, `perf:` | no release |
+A hidden changelog type opens no Release PR, unless that commit carries a breaking-change marker.
+
+| Commit type | Release | Bump |
+|---|---|---|
+| `feat:` | yes | patch (`0.2.0 → 0.2.1`) |
+| `fix:` | yes | patch (`0.2.0 → 0.2.1`) |
+| `perf:`, `refactor:`, `docs:` | yes | patch (`0.2.0 → 0.2.1`) |
+| `type!:` or a `BREAKING CHANGE:` footer | yes | minor (`0.2.0 → 0.3.0`) |
+| `test:`, `chore:`, `ci:`, `build:`, `style:` | no | — |
+
+Observed on this repo: v0.2.2 was a `feat` patch, v0.2.4 was a `docs` patch, and v0.3.0 was a breaking minor.
 
 **Do not** push `vX.Y.Z` tags manually — release-please manages them.
 

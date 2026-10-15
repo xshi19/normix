@@ -38,13 +38,33 @@ and reference data. They encode multi-step workflows — recipes, not preference
 - **Gotchas section.** Build from actual failure modes. Update every time
   the agent hits a new edge case.
 - **Don't railroad.** Give information and flexibility, not rigid scripts.
-  "Ensure all tests pass" not "run `pytest tests/test_gamma.py` then...".
+  "Ensure all tests pass" not "run `pytest tests/test_bessel_contract.py` then...".
 - **Rules ≠ Skills.** Skills encode recipes (how). Rules encode preferences (what/what not).
   A skill should reference a rule, not re-state it.
 - **Completion criterion per step.** Each numbered step or phase states
   what "done" looks like in one line — a checkable predicate, not a
   restatement of the step. See `architect` and `interrogate` for the
   shape.
+
+## Current skills
+
+| Skill | When |
+|---|---|
+| `agent-maintenance` | New module, distribution, constant, design decision, or a docs audit |
+| `architect` | One-way-door structure; Phase B hands off |
+| `arena` | Hand-off reference; runner retired |
+| `docs-publish` | Build or publish the docs site |
+| `figure-it-out` | Explicit custom playbook; not implicit |
+| `git-conventions` | Commit, pull request, or release |
+| `how` | How the code works now |
+| `interrogate` | Bessel, solvers, EM, custom JVP, or an adversarial review |
+| `no-comments` | Review inline comments; report first |
+| `principles` | Design, verification, or refactor decisions |
+| `running-tests` | Run, select, or profile tests |
+| `show-me` | A visual explanation |
+| `tdd` | A reproducible bug with a cheap test |
+| `unslop` | Prose, docstrings, rules, skills, or PR text |
+| `why` | Design history |
 
 ## Before Creating a New Skill
 
@@ -62,3 +82,5 @@ and reference data. They encode multi-step workflows — recipes, not preference
 - **Don't re-state coding conventions.** Reference `.cursor/rules/coding-conventions.mdc` instead.
 - **Keep references one level deep.** Link directly from `SKILL.md` to reference files.
   Deeply nested references may not be followed.
+- Codex discovery uses directory symlinks in `.agents/skills/`.
+  Link the whole skill directory. Do not copy the skill.

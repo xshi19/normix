@@ -41,22 +41,15 @@ and code that constrain the sketch.
 
 ## Phase B: Sketch (hand-off)
 
-Prepare the hand-off package. Do not spawn candidates in this session.
+Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
+Do not spawn candidates in this session.
+The user relays the package. This session does not call Normix Engineer.
 
-The package contains:
+Stop when the package is ready.
+With no returned synthesis, the state is "ready for external review".
+Do not start Phase C until that synthesis is back.
 
-- the design task
-- the Phase A grounding
-- `references/runner-prompt.md`
-- `references/rationale-template.md`
-- a rubric of 3–6 gradeable criteria, per `.cursor/skills/arena/SKILL.md`
-
-Stop when the package is ready. Normix Engineer runs the external
-bake-off and returns one synthesized package. That package is shaped per
-`references/rationale-template.md`, with the synthesis decision filled in.
-
-Completion criterion: the package above is ready, and this session spawned
-no candidate.
+Completion criterion: the package is ready, this session spawned no candidate, and the state is ready for external review.
 
 ## Phase C: Agree (checkpoint by default)
 
