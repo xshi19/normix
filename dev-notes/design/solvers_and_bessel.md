@@ -304,3 +304,16 @@ three obvious methods attached.
   `../tech_notes/gig_rvs.md`.
 - Historical / archived: `../archive/design/solver_redesign.md`,
   `../archive/design/log_partition_triad.md`.
+
+## 7. Finance scenario quadrature (FIN-5)
+
+The finance rule reuses `_ab_coeffs` and `_edge` from the existing Bessel
+kernel, including exact zero coefficients at Gamma / inverse-gamma boundaries.
+The Bessel kernel and its geometry are unchanged. The scenario measure is a
+separate `eqx.Module` in `utils/quadrature.py`, following the DEC-5 table pattern.
+
+The distribution owns rule construction. Finance consumes only positive
+nodes, normalized log probabilities, and a source moment threshold. No
+family dispatch or subordinator ABC is needed. The approved design and
+rejected alternatives are recorded in the
+[published rationale](../../docs/design/quadrature_scenarios.md).

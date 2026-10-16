@@ -36,10 +36,12 @@ normix/                     # JAX implementation
 │   ├── optimization.py     # MeanRiskProblem, EfficientSurface, EfficientFrontier (2-D reduction)
 │   ├── transaction_costs.py # local-quadratic turnover QP (TransactionCostProblem)
 │   ├── diversification.py  # VarianceENB / GeneralizedENB (Meucci ENB); Torsion strategies
-│   └── _mc.py              # Rao-Blackwellised CDF / VaR bisection over Y (object + raw vectorizable cores)
+│   ├── _conditional.py     # weighted conditional-normal CDF / asinh quantile bisection
+│   └── _mc.py              # compatibility imports for equal-weight helper callers
 │                           # portfolio projection: NormalMixture.project(w) → Univariate*
 └── utils/
     ├── bessel.py            # log_kv, log_kv_moments (one kernel, jax|cpu)
+    ├── quadrature.py        # DiscreteMeasure: positive nodes, log probabilities, source tail index
     ├── constants.py         # LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_*, ...
     ├── gammainc.py          # gammaincinv (JAX equivalent of scipy.special.gammaincinv)
     ├── rvs.py               # Generic RVS: QuantileTable, build_pinv_table, rvs_pinv
@@ -239,6 +241,16 @@ GIG-specific sampling lives inline in `distributions/generalized_inverse_gaussia
 
 Neither method evaluates the Bessel normalising constant. See `tech_notes/gig_rvs.md`.
 
+## Conditional scenario quadrature
+
+`DiscreteMeasure(Y, log_p, tail_index)` is an immutable probability measure.
+`from_sample` assigns equal weights; `from_weights` validates and normalizes.
+`GIG.quadrature()` builds a sinh-mapped composite GL rule in log Y using
+`bessel._ab_coeffs` / `_edge`; those shared helpers and Bessel numerics are
+unchanged. Gamma / InverseGamma / InverseGaussian forward via `to_gig()`.
+Finance consumers default to quadrature; explicit arrays retain MC semantics.
+Rationale and limits: `../docs/design/quadrature_scenarios.md` (FIN-5).
+
 ## Numerical Constants (`utils/constants.py`)
 
 All shared numerical constants are defined in `utils/constants.py` and imported
@@ -270,6 +282,11 @@ from there. Never define magic numbers locally in distribution files.
 | `BESSEL_WINDOW_ITERS` | `40` | Bisection steps per window edge |
 | `BESSEL_WINDOW_HI_MAX` | `800` | Cap on \|x\| during window search |
 | `BESSEL_PANEL_FLOOR` | `1e-12` | Floor on each GL panel half-width |
+| `SCENARIO_QUAD_NODES` | `512` | Default positive scenario nodes |
+| `SCENARIO_QUAD_PANELS` | `8` | Sinh-coordinate GL panels, four per side |
+| `SCENARIO_WINDOW_TILTS` | `(0, 1)` | Density / first-moment window tilts below the source tail index |
+| `SCENARIO_LOG_Y_MAX` | `700` | Absolute representable log-node cap |
+| `CVAR_BISECT_STEPS` | `60` | Conditional quantile bisections in the asinh coordinate |
 | `TORSION_SPECTRAL_FLOOR` | `1e-12` | Relative spectral floor for Meucci torsion / ENB |
 | `MEAN_RISK_REACH_ATOL` | `1e-8` | Infinity-norm gap on \(M^\top w-c\) for a reduced target to be a portfolio |
 
@@ -306,10 +323,10 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
 | `design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
 | `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch, gradient-fitting vs EM/MLE comparison |
-| `docs/theory/` | Mathematical derivations (MyST `.md`) |
+| `docs/theory/` | Mathematical derivations (MyST `.md`), including `quadrature_scenarios.md` |
 | `docs/research/` | Published research notes (subordinator tracking); working notes in `research/` |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `references/gpjax_review.md` | GPJax survey: design, JAX usage, lessons for normix |
-| `asv_bench/` | ASV trend-tracking micro-suite (Bessel, GIG, E-step, EM, compile, sampling; cpu+cuda via `JAX_PLATFORMS`). Dashboard published at `/benchmarks/`. PR tripwire: `.github/workflows/asv.yml`. Deep-dive scripts stay in `benchmarks/`. Plan: `archive/plans/asv_benchmarking.md` |
+| `asv_bench/` | ASV trend-tracking micro-suite (Bessel, GIG, E-step, EM, compile, sampling, conditional CVaR; cpu+cuda via `JAX_PLATFORMS`). Dashboard published at `/benchmarks/`. PR tripwire: `.github/workflows/asv.yml`. Deep-dive scripts stay in `benchmarks/`. Plan: `archive/plans/asv_benchmarking.md` |
 | `archive/plans/finance_architecture.md` | `normix.finance` roadmap; Phases D–F implemented (Phase F: diversification / ENB); archived 2026-08-09 |
 | `archive/design/` | Implemented proposals retained for context (em_covariance_extensions, penalised_em, log_partition_triad, solver_redesign) |

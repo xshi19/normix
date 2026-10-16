@@ -72,11 +72,11 @@ model_syn = vg_cov_identity(g_star)
 assert np.allclose(model_syn.cov(), np.eye(5), atol=1e-12)
 
 w_eq = jnp.full(5, 0.2)
-Y_syn = model_syn.joint.subordinator().rvs(40_000, seed=0)
+Q_syn = model_syn.joint.subordinator().quadrature()
 cvar01 = CVaR(0.01)
 
 res_var = VarianceENB().evaluate(model_syn, w_eq)
-res_cvar = GeneralizedENB(cvar01).evaluate(model_syn, w_eq, Y_syn)
+res_cvar = GeneralizedENB(cvar01).evaluate(model_syn, w_eq, Q_syn)
 
 print(f"variance ENB = {float(res_var.enb):.3f}   vol  = {float(res_var.risk):.4f}")
 print(f"CVaR ENB     = {float(res_cvar.enb):.3f}   CVaR = {float(res_cvar.risk):.4f}")
@@ -113,13 +113,13 @@ labels = [r"$\gamma=0$ (symmetric)", r"$|\gamma|=0.6$",
 fig, ax = plt.subplots()
 for g, lab, color in zip(gammas, labels, COLOR_CYCLE):
     m = vg_cov_identity(g)
-    Y = m.joint.subordinator().rvs(20_000, seed=1)
+    Q = m.joint.subordinator().quadrature()
     gen = GeneralizedENB(cvar01)
     Ns = []
     for w0 in weights:
         rem = (1.0 - w0) / 4.0
         w = jnp.full(5, rem).at[0].set(float(w0))
-        Ns.append(float(gen.evaluate(m, w, Y).enb))
+        Ns.append(float(gen.evaluate(m, w, Q).enb))
     ax.plot(weights, Ns, "o-", color=color, lw=2, label=lab)
     print(f"{lab}: max ENB = {max(Ns):.3f} at w_0 = {weights[int(np.argmax(Ns))]:.3f}")
 
@@ -166,7 +166,7 @@ model = (GeneralizedHyperbolic.default_init(X)
          .regularize_a_eq_b())
 print(f"mean log-likelihood {float(model.marginal_log_likelihood(X)):.4f}")
 
-Y = model.joint.subordinator().rvs(8_000, seed=0)
+Q = model.joint.subordinator().quadrature()
 cvar = CVaR(0.05)
 var_enb = VarianceENB()
 cvar_enb = GeneralizedENB(cvar)
@@ -197,9 +197,9 @@ w_equal = jnp.full(d, 1.0 / d)
 w_var = optimize_long_only(
     lambda w: var_enb.evaluate(model, w).enb, d, maximize=True)
 w_min_cvar = optimize_long_only(
-    lambda w: cvar.value_w(model, w, Y), d, maximize=False)
+    lambda w: cvar.value_w(model, w, Q), d, maximize=False)
 w_cvar = optimize_long_only(
-    lambda w: cvar_enb.evaluate(model, w, Y).enb, d, maximize=True)
+    lambda w: cvar_enb.evaluate(model, w, Q).enb, d, maximize=True)
 
 portfolios = {
     "Equally weighted": w_equal,
@@ -241,8 +241,8 @@ for name, w in portfolios.items():
     rows.append({
         "Portfolio": name,
         "Variance-ENB": float(var_enb.evaluate(model, w).enb),
-        "CVaR-ENB": float(cvar_enb.evaluate(model, w, Y).enb),
-        "CVaR": float(cvar.value_w(model, w, Y)),
+        "CVaR-ENB": float(cvar_enb.evaluate(model, w, Q).enb),
+        "CVaR": float(cvar.value_w(model, w, Q)),
     })
 table = pd.DataFrame(rows).set_index("Portfolio")
 print(table.round(4).to_string())
@@ -269,10 +269,13 @@ print("T Cov T' ≈ I?",
 ```python
 from normix.finance import VarianceENB, GeneralizedENB, CVaR
 
-Y = model.joint.subordinator().rvs(n, seed=0)   # once; common random numbers
+Q = model.joint.subordinator().quadrature()
 res_var  = VarianceENB().evaluate(model, w)                 # no Y
-res_cvar = GeneralizedENB(CVaR(0.05)).evaluate(model, w, Y) # one CMC VaR solve
+res_cvar = GeneralizedENB(CVaR(0.05)).evaluate(model, w, Q)
 ```
 
 Both return the same `ENBResult` pytree (`enb`, `p`, `risk`, `v`, `d`, `T`,
 `eigenvalues`).
+
+Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+{doc}`08_quadrature_scenarios`.

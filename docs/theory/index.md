@@ -29,6 +29,7 @@ factor_analysis
 
 mean_risk_optimization
 cvar_derivatives
+quadrature_scenarios
 transaction_costs
 enb
 generalized_enb

@@ -2,8 +2,8 @@
 
 The `normix.finance` subpackage turns a fitted mixture into portfolio analytics.
 Because a normal variance-mean mixture is conditionally Gaussian given the latent
-$Y$, portfolio quantities — and crucially their gradients and Hessians — are
-computable by a fast conditional Monte Carlo over $Y$ alone.
+$Y$, portfolio quantities — their gradients and Hessians — are
+computed by quadrature over $Y$, with the conditional normal integrated exactly.
 
 ## Portfolio projection
 
@@ -29,13 +29,28 @@ probability `alpha`:
 from normix.finance import CVaR
 
 cvar = CVaR(0.05)                       # 5% tail probability
-Y = proj.subordinator().rvs(100_000, seed=0)  # conditional-MC draws
 var_95 = cvar.var(proj)                 # deterministic quantile
-cvar_95 = cvar.value(proj, Y)           # conditional Monte Carlo over Y
+cvar_95 = cvar.value(proj)
 ```
 
-Conditioning on $Y$ makes the estimator far lower-variance than sampling returns
-directly.
+The default uses 512 weighted nodes. Supply a sample or a weighted measure
+in the same positional slot to choose another scenario set:
+
+```python
+from normix.finance import DiscreteMeasure
+
+Y = proj.subordinator().rvs(20_000, seed=0)
+mc = cvar.value(proj, Y)
+Q = proj.subordinator().quadrature(1024)
+value = cvar.value(proj, Q)
+resolution = cvar.step_resolution(proj, Q)
+Q_hist = DiscreteMeasure.from_weights(Y, historical_weights)
+```
+
+The resolution diagnostic is a heuristic. Small values call for more nodes;
+finite-moment requirements remain separate. See
+{doc}`../tutorials/finance/08_quadrature_scenarios` and
+{doc}`../design/quadrature_scenarios`.
 
 ## Differentiable risk
 
@@ -43,15 +58,15 @@ The payoff for the exponential-family structure is analytic risk sensitivities,
 in both the projected scalar parametrization and the portfolio weights:
 
 ```python
-cvar.gradient_scalar(proj, Y)   # ∂CVaR/∂(μ̃, γ̃, σ̃)
-cvar.hessian_scalar(proj, Y)    # 3×3 Hessian
-cvar.gradient_w(model, w, Y)    # ∇_w CVaR  (chain rule through the projection)
-cvar.hessian_w(model, w, Y)     # weight-space Hessian
+cvar.gradient_scalar(proj)   # ∂CVaR/∂(μ̃, γ̃, σ̃)
+cvar.hessian_scalar(proj)    # 3×3 Hessian
+cvar.gradient_w(model, w)
+cvar.hessian_w(model, w)
 ```
 
-These match finite differences to machine precision and plug straight into
+These are checked against finite differences and can be used in
 gradient- or Newton-based portfolio optimizers. The `WeightFunctional` helper
-bundles a risk measure, model, and `Y` into a callable with `.grad` and `.hess`.
+bundles a risk measure, model, and a fixed scenario measure into a callable with `.grad` and `.hess`.
 See {doc}`../tutorials/finance/04_cvar_optimization` for verification and a
 worked CVaR-reduction loop.
 
@@ -66,19 +81,18 @@ $(\tilde\mu, \tilde\gamma) = (w^\top\mu, w^\top\gamma)$:
 from normix.finance import MeanRiskProblem, CVaR
 
 prob = MeanRiskProblem(model, CVaR(0.05))
-Y = model.joint.subordinator().rvs(20_000, seed=0)
 
 prob.weights(mu_t, gamma_t)        # min-dispersion weights for a target (μ̃, γ̃)
 prob.min_dispersion_point()        # reduced coords of the global min-dispersion portfolio
 
-surface = prob.efficient_surface(mu_grid, gamma_grid, Y)   # CVaR over a (μ̃, γ̃) grid
-frontier = prob.efficient_frontier(targets, Y, gamma_bounds=(lo, hi))  # min risk per return
+surface = prob.efficient_surface(mu_grid, gamma_grid)
+frontier = prob.efficient_frontier(targets, gamma_bounds=(lo, hi))
 frontier.weights                   # realised portfolio weights along the frontier
 ```
 
 The `efficient_surface` is the convex surface of {ref}`Shi2016 <shi2016>`
 (Fig. 8); the `efficient_frontier` is the classical risk–return frontier of
-Fig. 9. See {doc}`../tutorials/finance/05_mean_risk_optimization` for a worked
+Fig. 9: it minimizes risk at each target expected return. See {doc}`../tutorials/finance/05_mean_risk_optimization` for a worked
 replication across all four mixture families.
 
 ## Transaction costs
@@ -92,9 +106,8 @@ import jax.numpy as jnp
 from normix.finance import TransactionCostProblem, CVaR
 
 tc = TransactionCostProblem(model, CVaR(0.05), c1=5.0, c2=5e-2)
-Y = model.joint.subordinator().rvs(15_000, seed=0)
 A = -jnp.eye(model.d)              # optional long-only
-result = tc.solve(w0, Y, A=A, b=jnp.zeros(model.d))
+result = tc.solve(w0, A=A, b=jnp.zeros(model.d))
 
 result.weights                     # w* (or w0 if the approx. gain is ≤ 0)
 result.turnover                    # ‖w* − w0‖₁

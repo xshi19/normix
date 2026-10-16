@@ -233,3 +233,16 @@ Mixtures of multivariate generalized hyperbolic distributions.
 **WilsonHilferty1931.** Wilson, E. B. & Hilferty, M. M. (1931). The distribution
 of chi-square. *Proceedings of the National Academy of Sciences*, 17(12),
 684–688.
+
+(davisrabinowitz1984)=
+**DavisRabinowitz1984.** Davis, P. J. & Rabinowitz, P. (1984).
+*Methods of Numerical Integration*, 2nd ed. Academic Press.
+
+(rockafellaruryasev2002)=
+**RockafellarUryasev2002.** Rockafellar, R. T. & Uryasev, S. (2002).
+Conditional value-at-risk for general loss distributions.
+*Journal of Banking & Finance*, 26(7), 1443–1471.
+
+(trefethen2013)=
+**Trefethen2013.** Trefethen, L. N. (2013).
+*Approximation Theory and Approximation Practice*. SIAM.
