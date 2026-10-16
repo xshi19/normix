@@ -20,6 +20,7 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 
+from normix.utils.quadrature import DiscreteMeasure
 from normix.finance.risk import RiskMeasure
 from normix.mixtures.marginal import NormalMixture
 from normix.utils.constants import LOG_EPS, TORSION_SPECTRAL_FLOOR
@@ -208,7 +209,7 @@ class GeneralizedENB(eqx.Module):
     For 1-homogeneous :math:`\rho`, diagonalizes
     :math:`H_{r^2}(w) = 2\nabla r\,\nabla r^\top + 2 r H_r` where
     :math:`(r, \nabla r, H_r)` come from **one** call to
-    ``risk.value_grad_hess_w(model, w, Y)``. Meaningful only for
+    ``risk.value_grad_hess_w(model, w, scenarios)``. Meaningful only for
     :math:`r(w) > 0` (else :math:`r^2` is not convex at ``w`` and ``enb``
     is NaN).
     """
@@ -217,16 +218,14 @@ class GeneralizedENB(eqx.Module):
     torsion: Torsion = MinimumTorsion()
 
     @eqx.filter_jit
-    def evaluate(self, model: NormalMixture, w: Array, Y: Array) -> ENBResult:
-        r"""ENB at ``w`` under subordinator sample ``Y`` (common random numbers).
+    def evaluate(self, model: NormalMixture, w: Array, scenarios: DiscreteMeasure | Array | None = None) -> ENBResult:
+        r"""ENB at ``w`` under a fixed subordinator measure.
 
-        ``Y`` is mandatory — draw once via
-        ``model.joint.subordinator().rvs(n, seed)`` and share across finance
-        evaluations. Not promised vmap-able over ``w``: the fused bundle seeds
-        its CMC bracket from the PINV ``ppf``.
+        Defaults to subordinator quadrature. Pass a shared measure or sample
+        to reuse it across evaluations. Supports ``vmap`` over weights.
         """
         w = jnp.asarray(w, dtype=jnp.float64)
-        r, g, H_r = self.risk.value_grad_hess_w(model, w, Y)
+        r, g, H_r = self.risk.value_grad_hess_w(model, w, scenarios)
         H2 = 2.0 * jnp.outer(g, g) + 2.0 * r * H_r
         dec = self.torsion.decompose(H2)
         return _enb_core(dec, w, r, risk_positive=r > 0.0)

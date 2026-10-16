@@ -7,8 +7,9 @@ parameter space :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)` and the
 portfolio-weight space :math:`w \in \mathbb{R}^d`. Formulas follow
 ``docs/theory/cvar_derivatives.md``.
 
-Monte Carlo for CVaR value and derivatives is conditional over the
-subordinator :math:`Y` (common random numbers). Deterministic VaR uses
+CVaR integrates the conditional normal analytically over a positive
+scenario measure of :math:`Y`. The default is deterministic quadrature;
+an array supplies equal-weight Monte Carlo draws. Deterministic VaR uses
 the ``Univariate*`` PINV :meth:`~normix.mixtures.marginal._UnivariateNormalMixtureMixin.ppf`.
 """
 from __future__ import annotations
@@ -19,7 +20,8 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.finance._mc import bracket_cmc_raw, quantile_cmc, quantile_cmc_raw
+from normix.finance._conditional import bracket_raw, quantile, quantile_raw
+from normix.utils.quadrature import DiscreteMeasure
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 
 
@@ -31,12 +33,15 @@ class RiskMeasure(eqx.Module):
     """Abstract base for portfolio risk measures."""
 
     @abc.abstractmethod
-    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
+    def value(
+        self, univariate: _UnivariateNormalMixtureMixin,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
         """Risk of the univariate normal mixture represented by ``univariate``."""
 
     @abc.abstractmethod
     def value_reduced(
-        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, Y: jax.Array,
+        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, scenarios: DiscreteMeasure | jax.Array,
     ) -> jax.Array:
         r"""Risk from raw scalar parameters :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)`.
 
@@ -45,17 +50,17 @@ class RiskMeasure(eqx.Module):
         :meth:`value`, this signature takes plain scalars (no distribution
         object) and must be Bessel-/PINV-free so it can be
         :func:`jax.vmap`-ed across an efficient-surface grid that shares the
-        subordinator draws ``Y``.
+        scenario measure ``scenarios``.
         """
 
     def value_grad_hess_w(
-        self, model: NormalMixture, w: jax.Array, Y: jax.Array,
+        self, model: NormalMixture, w: jax.Array, scenarios: DiscreteMeasure | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array]:
-        r"""Fused :math:`(r(w), \nabla_w r, H_r(w))` under one CRN sample ``Y``.
+        r"""Fused :math:`(r(w), \nabla_w r, H_r(w))` under one shared scenario measure.
 
         Consumed by :mod:`~normix.finance.transaction_costs` and
         :mod:`~normix.finance.diversification`. Concrete measures override
-        with an analytically fused implementation (CVaR shares one CMC VaR
+        with an analytically fused implementation (CVaR shares one conditional VaR
         solve); the base raises — a value-only measure cannot participate in
         the derivative-consuming layers.
         """
@@ -64,7 +69,7 @@ class RiskMeasure(eqx.Module):
         )
 
 class CVaR(RiskMeasure):
-    r"""Conditional Value at Risk at confidence :math:`\alpha \in (0, 1)`.
+    r"""Conditional Value at Risk at tail probability :math:`\alpha \in (0, 1)`.
 
     For a univariate normal mixture :math:`X = \tilde\mu + \tilde\gamma Y
     + \tilde\sigma \sqrt{Y} Z`, the value is computed in closed form
@@ -78,13 +83,14 @@ class CVaR(RiskMeasure):
 
     where :math:`z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)
     / (\tilde\sigma \sqrt{Y})` and :math:`x_\alpha = -\operatorname{VaR}_\alpha`
-    is found by bisection on the conditional Monte Carlo CDF (same ``Y`` as
-    the integral, for common random numbers).
+    is found by transformed bisection on the conditional CDF under the same
+    measure as the integral. ``scenarios=None`` uses subordinator quadrature.
+    See :doc:`/theory/quadrature_scenarios` for accuracy and moment domains.
     """
 
     alpha: float = eqx.field(static=True)
 
-    def __init__(self, alpha: float):
+    def __init__(self, alpha: float) -> None:
         if not (0.0 < float(alpha) < 1.0):
             raise ValueError(f"alpha must be in (0, 1), got {alpha}")
         object.__setattr__(self, 'alpha', float(alpha))
@@ -98,10 +104,11 @@ class CVaR(RiskMeasure):
         return -univariate.ppf(self.alpha)
 
     def _var_cmc(
-        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+        self, univariate: _UnivariateNormalMixtureMixin, scenarios: DiscreteMeasure | jax.Array | None = None,
     ) -> jax.Array:
-        r""":math:`\operatorname{VaR}_\alpha` consistent with CMC ``Y`` samples."""
-        return -quantile_cmc(univariate, self.alpha, Y)
+        r""":math:`\operatorname{VaR}_\alpha` under the supplied scenario measure."""
+        Q = DiscreteMeasure.coerce(scenarios, univariate.subordinator())
+        return -quantile(univariate, self.alpha, Q)
 
     # ------------------------------------------------------------------
     # Scalar-space value and derivatives
@@ -109,27 +116,32 @@ class CVaR(RiskMeasure):
 
     def _cvar_from_quantile(
         self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array,
-        x_alpha: jax.Array, Y: jax.Array,
+        x_alpha: jax.Array, scenarios: DiscreteMeasure,
     ) -> jax.Array:
-        r"""CVaR integral given the conditional-MC quantile :math:`x_\alpha`.
+        r"""CVaR integral given the conditional quantile :math:`x_\alpha`.
 
         :math:`\operatorname{CVaR}_\alpha = -\frac{1}{\alpha} E_Y[(\tilde\mu
         + \tilde\gamma Y)\Phi(z_Y) - \tilde\sigma\sqrt{Y}\varphi(z_Y)]` with
         :math:`z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)/(\tilde\sigma
-        \sqrt{Y})`. Shared by :meth:`value` and :meth:`value_reduced`.
+        \sqrt{Y})`. The equivalent Rockafellar–Uryasev objective at the
+        frozen root preserves first derivatives in subordinator parameters.
+        Shared by :meth:`value` and :meth:`value_reduced`.
         """
+        Y, p = scenarios.Y, scenarios.p
         sqY = jnp.sqrt(Y)
         z = (x_alpha - mu - gamma * Y) / (sigma * sqY)
         Phi = jax.scipy.stats.norm.cdf(z)
         phi = _phi(z)
-        integral = jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi)
-        return -integral / self.alpha
+        value = -x_alpha + p @ ((x_alpha - mu - gamma * Y) * Phi + sigma * sqY * phi) / self.alpha
+        divergent = ((gamma < 0) & (scenarios.tail_index <= 1)) | (
+            (gamma == 0) & (scenarios.tail_index <= 0.5))
+        return jnp.where(divergent, jnp.inf, value)
 
     def _scalar_bundle(
-        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+        self, univariate: _UnivariateNormalMixtureMixin, scenarios: DiscreteMeasure,
         v: jax.Array,
     ) -> tuple[jax.Array, jax.Array, jax.Array]:
-        r"""CVaR value, 3-vector gradient, and 3×3 Hessian at a fixed CMC VaR.
+        r"""CVaR value, 3-vector gradient, and 3×3 Hessian at a fixed conditional VaR.
 
         Shares the single quantile solve ``v = VaR_α`` across value and both
         derivative orders (see :meth:`value_grad_hess_w`).
@@ -137,23 +149,27 @@ class CVaR(RiskMeasure):
         mu = univariate._mu_scalar
         gamma = univariate._gamma_scalar
         sigma = univariate._sigma_scalar
+        Y, p = scenarios.Y, scenarios.p
         sqY = jnp.sqrt(Y)
         z = (-v - mu - gamma * Y) / (sigma * sqY)
         Phi = jax.scipy.stats.norm.cdf(z)
         phi = _phi(z)
 
-        rcvar = -jnp.mean((mu + gamma * Y) * Phi - sigma * sqY * phi) / self.alpha
+        rcvar = self._cvar_from_quantile(mu, gamma, sigma, -v, scenarios)
         d_mu = jnp.asarray(-1.0, dtype=jnp.float64)
-        d_gamma = -jnp.mean(Y * Phi) / self.alpha
-        d_sigma = (rcvar + mu - gamma * d_gamma) / sigma
+        d_gamma = -(p @ (Y * Phi)) / self.alpha
+        d_gamma = jnp.where((gamma <= 0) & (scenarios.tail_index <= 1), -jnp.inf, d_gamma)
+        d_sigma = (p @ (sqY * phi)) / self.alpha
+        d_sigma = jnp.where((gamma == 0) & (scenarios.tail_index <= 0.5), jnp.inf, d_sigma)
         g = jnp.stack([d_mu, d_gamma, d_sigma])
 
-        num = jnp.mean(sqY * phi)
-        den = jnp.mean(phi / sqY)
+        num = p @ (sqY * phi)
+        den = p @ (phi / sqY)
         dvar_dgamma = -num / den
-        d2_gg = jnp.mean(sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma)
+        d2_gg = p @ (sqY * phi * (dvar_dgamma + Y)) / (self.alpha * sigma)
         d2_gs = -(gamma / sigma) * d2_gg
         d2_ss = -(gamma / sigma) * d2_gs
+        d2_gg = jnp.where((gamma == 0) & (scenarios.tail_index <= 1.5), jnp.inf, d2_gg)
         H = jnp.zeros((3, 3), dtype=jnp.float64)
         H = H.at[1, 1].set(d2_gg)
         H = H.at[1, 2].set(d2_gs)
@@ -161,49 +177,56 @@ class CVaR(RiskMeasure):
         H = H.at[2, 2].set(d2_ss)
         return rcvar, g, H
 
-    def value(self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array) -> jax.Array:
-        x_alpha = -self._var_cmc(univariate, Y)
+    def value(
+        self, univariate: _UnivariateNormalMixtureMixin,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
+        Q = DiscreteMeasure.coerce(scenarios, univariate.subordinator())
+        x_alpha = -self._var_cmc(univariate, Q)
         return self._cvar_from_quantile(
             univariate._mu_scalar, univariate._gamma_scalar,
-            univariate._sigma_scalar, x_alpha, Y,
+            univariate._sigma_scalar, x_alpha, Q,
         )
 
     def value_reduced(
-        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, Y: jax.Array,
+        self, mu: jax.Array, gamma: jax.Array, sigma: jax.Array, scenarios: DiscreteMeasure | jax.Array,
     ) -> jax.Array:
         r"""CVaR from raw scalar parameters, vectorizable over a surface grid.
 
-        Inverts the conditional-MC CDF for :math:`x_\alpha` by bisection on
+        Inverts the conditional CDF for :math:`x_\alpha` by bisection on
         the component-quantile bracket :math:`[\min_i q_i, \max_i q_i]`,
         :math:`q_i = \tilde\mu + \tilde\gamma Y_i + \tilde\sigma\sqrt{Y_i}\,
-        \Phi^{-1}(\alpha)`. The bracket contains the root for every sample
-        ``Y``. No PINV table and no Bessel evaluation; the CVaR integral is
+        \Phi^{-1}(\alpha)`. The bracket contains the root for every positive scenario measure.
+        No PINV table and no Bessel evaluation; the CVaR integral is
         :meth:`_cvar_from_quantile`.
 
         Raises
         ------
         equinox.EquinoxRuntimeError
-            If the result is not finite, also under ``jit`` and ``vmap``.
+            If the result is NaN, also under ``jit`` and ``vmap``. Divergent
+            moments return infinity.
         """
-        lo, hi = bracket_cmc_raw(self.alpha, mu, gamma, sigma, Y)
-        x_alpha = quantile_cmc_raw(self.alpha, mu, gamma, sigma, Y, lo, hi)
-        value = self._cvar_from_quantile(mu, gamma, sigma, x_alpha, Y)
+        Q = DiscreteMeasure.coerce(scenarios)
+        lo, hi = bracket_raw(self.alpha, mu, gamma, sigma, Q)
+        x_alpha = quantile_raw(self.alpha, mu, gamma, sigma, Q, lo, hi)
+        value = self._cvar_from_quantile(mu, gamma, sigma, x_alpha, Q)
         return eqx.error_if(
-            value, ~jnp.isfinite(value),
+            value, jnp.isnan(value),
             "CVaR.value_reduced: non-finite CVaR; mu, gamma, sigma and Y "
             "must be finite with sigma * sqrt(Y) > 0")
 
     def gradient_scalar(
-        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+        self, univariate: _UnivariateNormalMixtureMixin, scenarios: DiscreteMeasure | jax.Array | None = None,
     ) -> jax.Array:
         r"""Return :math:`(\partial r / \partial \tilde\mu,
         \partial r / \partial \tilde\gamma, \partial r / \partial \tilde\sigma)`."""
-        v = self._var_cmc(univariate, Y)
-        _, g, _ = self._scalar_bundle(univariate, Y, v)
+        Q = DiscreteMeasure.coerce(scenarios, univariate.subordinator())
+        v = self._var_cmc(univariate, Q)
+        _, g, _ = self._scalar_bundle(univariate, Q, v)
         return g
 
     def hessian_scalar(
-        self, univariate: _UnivariateNormalMixtureMixin, Y: jax.Array,
+        self, univariate: _UnivariateNormalMixtureMixin, scenarios: DiscreteMeasure | jax.Array | None = None,
     ) -> jax.Array:
         r"""Return the :math:`3 \times 3` Hessian in :math:`(\tilde\mu, \tilde\gamma, \tilde\sigma)`.
 
@@ -211,8 +234,9 @@ class CVaR(RiskMeasure):
         non-trivial blocks follow ``docs/theory/cvar_derivatives.md``
         :eq:`cvar-nm-hessian`.
         """
-        v = self._var_cmc(univariate, Y)
-        _, _, H = self._scalar_bundle(univariate, Y, v)
+        Q = DiscreteMeasure.coerce(scenarios, univariate.subordinator())
+        v = self._var_cmc(univariate, Q)
+        _, _, H = self._scalar_bundle(univariate, Q, v)
         return H
 
     # ------------------------------------------------------------------
@@ -229,7 +253,7 @@ class CVaR(RiskMeasure):
         j = model._joint
         w = jnp.asarray(w, dtype=jnp.float64)
         Sigma_w = j.sigma() @ w
-        return g[0] * j.mu + g[1] * j.gamma + g[2] * Sigma_w / uni._sigma_scalar
+        return g[0] * j.mu + jnp.where(j.gamma == 0, 0.0, g[1] * j.gamma) + g[2] * Sigma_w / uni._sigma_scalar
 
     def _hess_w_from_scalar(
         self,
@@ -247,7 +271,8 @@ class CVaR(RiskMeasure):
         sigma2 = sigma ** 2
         sigma3 = sigma ** 3
         return (
-            jnp.outer(j.gamma, j.gamma) * H_s[1, 1]
+            jnp.where(jnp.outer(j.gamma, j.gamma) == 0, 0.0,
+                      jnp.outer(j.gamma, j.gamma) * H_s[1, 1])
             + (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma))
               * H_s[1, 2] / sigma
             + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma2
@@ -256,38 +281,75 @@ class CVaR(RiskMeasure):
         )
 
     @eqx.filter_jit
-    def value_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
-        return self.value(model.project(w), Y)
+    def value_w(
+        self, model: NormalMixture, w: jax.Array,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
+        return self.value(model.project(w), scenarios)
 
     @eqx.filter_jit
-    def gradient_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
+    def gradient_w(
+        self, model: NormalMixture, w: jax.Array,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
         r"""Gradient :math:`\nabla_w r_{\operatorname{CVaR}_\alpha}(w)`."""
         uni = model.project(w)
-        v = self._var_cmc(uni, Y)
-        _, g, _ = self._scalar_bundle(uni, Y, v)
+        Q = DiscreteMeasure.coerce(scenarios, model.subordinator())
+        v = self._var_cmc(uni, Q)
+        _, g, _ = self._scalar_bundle(uni, Q, v)
         return self._grad_w_from_scalar(model, w, uni, g)
 
     @eqx.filter_jit
-    def hessian_w(self, model: NormalMixture, w: jax.Array, Y: jax.Array) -> jax.Array:
+    def hessian_w(
+        self, model: NormalMixture, w: jax.Array,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
         r"""Hessian :math:`H_{r_{\operatorname{CVaR}_\alpha}}(w)`."""
         uni = model.project(w)
-        v = self._var_cmc(uni, Y)
-        _, g, H_s = self._scalar_bundle(uni, Y, v)
+        Q = DiscreteMeasure.coerce(scenarios, model.subordinator())
+        v = self._var_cmc(uni, Q)
+        _, g, H_s = self._scalar_bundle(uni, Q, v)
         return self._hess_w_from_scalar(model, w, uni, g, H_s)
 
     @eqx.filter_jit
     def value_grad_hess_w(
-        self, model: NormalMixture, w: jax.Array, Y: jax.Array,
+        self, model: NormalMixture, w: jax.Array, scenarios: DiscreteMeasure | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array]:
-        r"""Fused :math:`(r, \nabla_w r, H_r)` with one CMC VaR solve.
+        r"""Fused :math:`(r, \nabla_w r, H_r)` with one conditional VaR solve.
 
         Equivalent to calling :meth:`value_w`, :meth:`gradient_w`, and
         :meth:`hessian_w` separately, but projects once and bisects the
-        conditional-MC CDF once.
+        conditional CDF once.
         """
         uni = model.project(w)
-        v = self._var_cmc(uni, Y)
-        value, g, H_s = self._scalar_bundle(uni, Y, v)
+        Q = DiscreteMeasure.coerce(scenarios, model.subordinator())
+        v = self._var_cmc(uni, Q)
+        value, g, H_s = self._scalar_bundle(uni, Q, v)
         grad_w = self._grad_w_from_scalar(model, w, uni, g)
         hess_w = self._hess_w_from_scalar(model, w, uni, g, H_s)
         return value, grad_w, hess_w
+
+    def step_resolution(
+        self, univariate: _UnivariateNormalMixtureMixin,
+        scenarios: DiscreteMeasure | jax.Array | None = None,
+    ) -> jax.Array:
+        r"""Transition width divided by local node spacing in :math:`\log Y`.
+
+        Reports :math:`R=1/(\rho_{loc}\,h)` at the conditional-CDF step.
+        A small value suggests increasing the node count; this is a
+        heuristic, not an error bound. Returns infinity when there is no
+        positive step, and zero when the step lies outside the node range.
+        Duplicate and zero-mass nodes do not improve resolution.
+        """
+        Q = DiscreteMeasure.coerce(scenarios, univariate.subordinator())
+        x = quantile(univariate, self.alpha, Q)
+        gamma, sigma = univariate._gamma_scalar, univariate._sigma_scalar
+        yc = (x - univariate._mu_scalar) / jnp.where(gamma != 0, gamma, 1.0)
+        sc = jnp.log(jnp.where(yc > 0, yc, 1.0))
+        s = jnp.log(Q.Y)
+        active = jnp.isfinite(Q.log_p)
+        left = jnp.max(jnp.where(active & (s < sc), s, -jnp.inf))
+        right = jnp.min(jnp.where(active & (s >= sc), s, jnp.inf))
+        rho = jnp.abs(gamma) * jnp.sqrt(jnp.maximum(yc, 0.0)) / sigma
+        resolution = 1.0 / (rho * (right - left))
+        return jnp.where((gamma == 0) | (yc <= 0), jnp.inf, resolution)

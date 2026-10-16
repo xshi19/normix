@@ -149,3 +149,10 @@ TORSION_SPECTRAL_FLOOR: float = 1e-12
 # and 0.03. The same absolute gap decides whether expected return is
 # constant along a rank-2 reachable line.
 MEAN_RISK_REACH_ATOL: float = 1e-8
+
+
+SCENARIO_QUAD_NODES: int = 512
+SCENARIO_QUAD_PANELS: int = 8
+SCENARIO_WINDOW_TILTS: tuple[float, ...] = (0.0, 1.0)
+SCENARIO_LOG_Y_MAX: float = 700.0
+CVAR_BISECT_STEPS: int = 60

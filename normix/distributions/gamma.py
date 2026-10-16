@@ -30,6 +30,8 @@ from __future__ import annotations
 import jax
 import jax.numpy as jnp
 
+from normix.utils.quadrature import DiscreteMeasure
+from normix.utils.constants import SCENARIO_QUAD_NODES
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import LOG_EPS
 from normix.utils.gammainc import gammaincinv
@@ -118,6 +120,10 @@ class Gamma(ExponentialFamily):
 
     def var(self) -> jax.Array:
         return self.alpha / self.beta**2
+
+    def quadrature(self, n_nodes: int = SCENARIO_QUAD_NODES) -> DiscreteMeasure:
+        r"""Probability quadrature in :math:`\log Y`; see :meth:`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature`."""
+        return self.to_gig().quadrature(n_nodes)
 
     def raw_moment(self, k: jax.Array) -> jax.Array:
         r"""Raw moment :math:`E[X^k] = \Gamma(\alpha+k)/(\Gamma(\alpha)\,\beta^k)`.

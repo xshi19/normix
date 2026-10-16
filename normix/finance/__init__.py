@@ -20,6 +20,8 @@ See ``docs/theory/cvar_derivatives.md``,
 """
 from __future__ import annotations
 
+from normix.utils.quadrature import DiscreteMeasure
+
 from normix.finance.diversification import (
     ENBResult,
     GeneralizedENB,
@@ -41,6 +43,7 @@ from normix.finance.transaction_costs import (
 )
 
 __all__ = [
+    "DiscreteMeasure",
     "RiskMeasure",
     "CVaR",
     "WeightFunctional",
