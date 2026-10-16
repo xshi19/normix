@@ -22,3 +22,17 @@ uv run python benchmarks/compare.py benchmarks/results/OLD.json benchmarks/resul
 | `bench_incremental_em.py` | Incremental EM Python loop vs `lax.scan` |
 | `bench_gh_paths.py` | GH batch vs incremental, CPU vs JAX, by $(n, d)$ |
 | `bench_gradient_fitting.py` | EF MLE / EM vs likelihood gradient descent |
+
+| `bench_quadrature_cvar.py` | Independent-reference VaR/CVaR/mean/derivative errors, MC seed RMSE, warm CPU costs, equal-accuracy counts, optimized portfolios and near-step diagnostics |
+| `quadrature_reference.py` | Independent NumPy/SciPy adaptive integrals; regenerates `tests/data/quadrature_cvar_reference.json` |
+| `compare_finance_demos.py` | Executes finance MyST pages 04–07 and saves numeric before/after snapshots |
+
+```bash
+uv run python benchmarks/bench_quadrature_cvar.py --save --output /tmp/quadrature-cvar.json
+uv run python benchmarks/compare_finance_demos.py --output /tmp/finance-demos.json
+```
+
+The CVaR benchmark records generation and evaluation separately. Compilation
+is excluded; each timed result is synchronized. A missing equal-accuracy
+count means the target was not reached in the measured sweep. MC RMSE uses
+eight seeds by default; increase `--seeds` for a sampling-error study.
