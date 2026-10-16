@@ -53,11 +53,15 @@ fit
   `sequenceDiagram`, `stateDiagram`, `classDiagram`, `erDiagram`,
   `xychart`. `timeline`, `gantt`, `mindmap`, `pie`, `gitGraph` fall
   back to a syntax error — use a flowchart or an HTML artifact.
+  The Mermaid type list is Cursor-only.
+  On Codex, use pseudocode, a call tree, a file tree, a diff, or HTML.
 - **What changes**, when the surrounding shape already exists → a
   `diff` of that shape (call tree, file tree, pseudocode, or code),
   not a wall of new prose.
 - **Formulas** → LaTeX in chat (`$...$` / `$$...$$`). Cursor chat
-  renders it. Reach for KaTeX-in-HTML only when several formulas
+  renders it. On Codex, leave the LaTeX in the reply.
+  Do not assume a Cursor math preview.
+  Reach for KaTeX-in-HTML only when several formulas
   must sit next to each other or next to a diagram (e.g. the three
   parametrizations across GIG / NIG / VG).
 - **Distribution plots, traces, benchmark curves** → matplotlib PNG
@@ -76,11 +80,32 @@ The visual carries the structure; each sentence carries one fact.
 
 ## Delivering an HTML artifact
 
-Write the file **outside the git tree**. Local: `/tmp/show-me/`.
-Cloud agent: `/opt/cursor/artifacts/` (HTML) and
-`/opt/cursor/artifacts/screenshots/` (PNGs). Never commit a
-conversation report; promote the content to `docs/` or `dev-notes/`
-if it should last.
+Write the file outside the git tree.
+Never commit a conversation report.
+If the page should last, promote it to `docs/` or `dev-notes/`.
+
+### Codex
+
+Do not use the Cursor branch below.
+Do not assume Cursor menus, Mermaid, or `/opt/cursor/artifacts/`.
+Write the HTML on a path this session can write.
+Prefer `/tmp/show-me/<name>.html` when `/tmp` is writable.
+If the sandbox blocks `/tmp`, pick another writable path outside the git tree.
+Give that absolute path as an ordinary markdown link.
+
+Text views stay in the reply.
+
+Codex completion criterion: the reply links to HTML outside the git tree.
+Or the reply contains a text view.
+
+### Cursor
+
+The table below is Cursor-only.
+The menu steps below are Cursor-only.
+The screenshot command below is Cursor-only.
+Local HTML goes in `/tmp/show-me/`.
+Cloud HTML goes in `/opt/cursor/artifacts/`.
+Cloud PNGs go in `/opt/cursor/artifacts/screenshots/`.
 
 Then pick the path that matches where the user will look:
 
@@ -103,17 +128,17 @@ Use `--timeout=20000`, not `--virtual-time-budget` (the latter hung
 the process). Mermaid must be the UMD build (`mermaid.min.js`), not
 the ESM module — `file://` pages can't import ESM from a CDN.
 
-Completion criterion: the user can see the visual on the surface
-they're actually using, without a `file://` omnibar URL and without
-an HTML file sitting untracked in the repo.
+Cursor completion criterion: the user can open the visual without a `file://` omnibar URL.
+No HTML file sits untracked in the repo.
 
 ## Gotchas
 
 - Cursor's **classic** markdown preview (`Cmd+Shift+V`) renders
   KaTeX; the newer inline **Preview \| Markdown** tab does not.
   Don't tell the user to "just preview the `.md`" for math.
-- Chat mermaid diagrams can vanish when switching threads; an HTML
-  file (or its screenshot) is the stable copy.
+- Cursor chat Mermaid can vanish when you switch threads.
+  An HTML file, or its screenshot, is the stable copy.
+  On Codex, do not rely on Mermaid.
 - One file, one point. A slide deck of everything you know is the
   failure mode.
 - CDN assets need network. That's fine on cloud VMs and desktops;

@@ -72,12 +72,17 @@ The state is "ready for external review".
 
    Completion criterion: Cursor ran three `grok-4.7-xhigh` reviewers on distinct lenses, or Codex recorded a preliminary pass.
    Otherwise the escalation package is ready for external review.
-4. **Synthesize.** Deduplicate findings that reviewers describe in
-   different words. Mark a consensus finding when 2 or more reviewers
-   raise it. List explicit disagreements.
+4. **Synthesize.**
+   **Cursor.** Deduplicate findings that reviewers describe in different words.
+   Mark a consensus finding when 2 or more reviewers raise it.
+   List explicit disagreements.
+   **Codex.** You used one model.
+   Do not mark consensus.
+   Do not write an agreement map.
+   This pass is not cross-family review.
 
-   Completion criterion: consensus findings are marked, and disagreements
-   are listed.
+   Completion criterion: Cursor marks consensus and lists disagreements.
+   Codex lists lenses checked and does not claim reviewer agreement.
 5. **Lead judgment.** You are a pragmatic lead, not an aggregator.
    Reviewers saw a slice; you have `design.md`, the conversation, and the
    call sites. Filter: hypotheticals whose input path can't occur (trace
@@ -92,6 +97,8 @@ The state is "ready for external review".
 
 ## Output
 
+**Cursor.** The bullets below are the three-reviewer tier.
+
 - **Intent** — the paragraph from step 2
 - **Reviewers** — one line each: lens, model, and finding count
 - **Act on** — real correctness or maintainability issues. Name the
@@ -104,8 +111,20 @@ The state is "ready for external review".
 - **Agreement map** — where reviewers agreed and diverged, and what the
   pattern says
 
+**Codex preliminary output.** Start with `Preliminary. One model. Not cross-family review.`
+One host model checked the lenses.
+Do not name independent reviewers.
+Do not write an agreement map.
+
+- **Intent** — the paragraph from step 2
+- **Lenses checked** — one line each: the lens, and whether it raised a finding
+- **Act on** — correctness or maintainability issues from those lenses
+- **Consider** — legitimate, but the cost is unclear
+- **Noted** — valid, and low priority
+- **Dismissed** — one-line reasons
+
 Completion criterion: the user can act on the Act-on list without
-re-reading the reviewer transcripts.
+re-reading the lens notes or the reviewer transcripts.
 
 ## Gotchas
 

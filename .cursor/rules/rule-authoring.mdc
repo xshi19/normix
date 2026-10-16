@@ -10,14 +10,17 @@ alwaysApply: true
 - **Navigator**: link to rules, docs, and design docs — not a rule itself
 - **High-level design principles**: one-line bullets, no code examples or formulas
 - **Commands and commit conventions**: quick reference only
-- **<= 100 lines**; if longer, move content to `docs/` or split into rules
+- **Length**: target 80–120 lines.
+  Over 120 lines, move detail to a rule or a doc.
 
 ## .cursor/rules
 
 - **Boundaries**: what the agent should and should not do in a specific area
 - **Scoped**: use `globs` so rules apply only to relevant files
 - **No duplication**: never repeat AGENTS.md principles or content already in docs
-- **<= 100 lines per rule**; if longer, split or move details to `docs/`
+- **Length**: target under 150 lines.
+  A rule over 150 lines must not grow.
+  Before the next addition, split the rule or move detail to `docs/` or `dev-notes/`.
 - **Concrete**: prefer "do X / don't do Y" over explanations of how things work
 
 ## Wording (AGENTS.md, rules, skills)
