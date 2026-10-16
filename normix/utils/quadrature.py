@@ -12,6 +12,8 @@ from jax.scipy.special import logsumexp
 
 from normix.exponential_family import ExponentialFamily
 
+__all__ = ["DiscreteMeasure"]
+
 
 class DiscreteMeasure(eqx.Module):
     r"""Probability measure :math:`Q=\sum_j p_j\delta_{Y_j}` on positive nodes.
