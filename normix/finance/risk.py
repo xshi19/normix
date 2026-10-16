@@ -29,6 +29,11 @@ def _phi(z: jax.Array) -> jax.Array:
     return jnp.exp(-0.5 * z * z) / jnp.sqrt(2.0 * jnp.pi)
 
 
+def _chain(coef: jax.Array, derivative: jax.Array) -> jax.Array:
+    r"""Apply the chain rule with structural :math:`0\cdot(\pm\infty)=0`."""
+    return jnp.where(coef == 0, 0.0, coef * derivative)
+
+
 class RiskMeasure(eqx.Module):
     """Abstract base for portfolio risk measures."""
 
@@ -86,6 +91,15 @@ class CVaR(RiskMeasure):
     is found by transformed bisection on the conditional CDF under the same
     measure as the integral. ``scenarios=None`` uses subordinator quadrature.
     See :doc:`/theory/quadrature_scenarios` for accuracy and moment domains.
+
+    Notes
+    -----
+    At zero skew with divergent CVaR, derivatives represent limits under
+    tail truncation, not classical derivatives of an infinite-valued function.
+    The scalar scale derivative is :math:`+\infty`; its second derivative
+    is zero because each truncated risk is linear in scale. Portfolio
+    chain-rule terms preserve exact zero coefficients and otherwise retain
+    the sign of the product with an infinite derivative.
     """
 
     alpha: float = eqx.field(static=True)
@@ -253,7 +267,11 @@ class CVaR(RiskMeasure):
         j = model._joint
         w = jnp.asarray(w, dtype=jnp.float64)
         Sigma_w = j.sigma() @ w
-        return g[0] * j.mu + jnp.where(j.gamma == 0, 0.0, g[1] * j.gamma) + g[2] * Sigma_w / uni._sigma_scalar
+        return (
+            _chain(j.mu, g[0])
+            + _chain(j.gamma, g[1])
+            + _chain(Sigma_w / uni._sigma_scalar, g[2])
+        )
 
     def _hess_w_from_scalar(
         self,
@@ -271,13 +289,13 @@ class CVaR(RiskMeasure):
         sigma2 = sigma ** 2
         sigma3 = sigma ** 3
         return (
-            jnp.where(jnp.outer(j.gamma, j.gamma) == 0, 0.0,
-                      jnp.outer(j.gamma, j.gamma) * H_s[1, 1])
-            + (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma))
-              * H_s[1, 2] / sigma
-            + jnp.outer(Sigma_w, Sigma_w) * H_s[2, 2] / sigma2
-            + (sigma2 * Sigma - jnp.outer(Sigma_w, Sigma_w))
-              * g[2] / sigma3
+            _chain(jnp.outer(j.gamma, j.gamma), H_s[1, 1])
+            + _chain(
+                (jnp.outer(j.gamma, Sigma_w) + jnp.outer(Sigma_w, j.gamma)) / sigma,
+                H_s[1, 2],
+            )
+            + _chain(jnp.outer(Sigma_w, Sigma_w) / sigma2, H_s[2, 2])
+            + _chain((sigma2 * Sigma - jnp.outer(Sigma_w, Sigma_w)) / sigma3, g[2])
         )
 
     @eqx.filter_jit

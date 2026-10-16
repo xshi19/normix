@@ -14,7 +14,7 @@ from scipy.stats import norm, norminvgauss, t
 
 from normix import (
     Gamma, GeneralizedInverseGaussian, InverseGamma, InverseGaussian,
-    NormalInverseGaussian, UnivariateNormalInverseGamma,
+    NormalInverseGamma, NormalInverseGaussian, UnivariateNormalInverseGamma,
     UnivariateNormalInverseGaussian, UnivariateGeneralizedHyperbolic,
 )
 from normix.finance import (
@@ -176,6 +176,45 @@ def test_moment_domains(shape, gamma, infinite):
         assert H[1, 2] == 0 and H[2, 2] == 0
     if shape <= 1:
         assert jnp.isneginf(risk.gradient_scalar(model, Q)[1])
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("shape", [0.25, 0.5])
+@pytest.mark.parametrize("w,expected_grad,expected_hess", [
+    ([1.0, 0.0, 0.0], [np.inf, 0.0, 0.0],
+     [[0.0, 0.0, 0.0], [0.0, np.inf, 0.0], [0.0, 0.0, np.inf]]),
+    ([-1.0, 0.0, 0.0], [-np.inf, 0.0, 0.0],
+     [[0.0, 0.0, 0.0], [0.0, np.inf, 0.0], [0.0, 0.0, np.inf]]),
+    ([3.0, 4.0, 0.0], [np.inf, np.inf, 0.0],
+     [[np.inf, -np.inf, 0.0], [-np.inf, np.inf, 0.0], [0.0, 0.0, np.inf]]),
+    ([-3.0, 4.0, 0.0], [-np.inf, np.inf, 0.0],
+     [[np.inf, np.inf, 0.0], [np.inf, np.inf, 0.0], [0.0, 0.0, np.inf]]),
+])
+def test_divergent_zero_skew_portfolio_derivatives(shape, w, expected_grad, expected_hess):
+    r"""Preserve zeros and infinity signs in limits of truncated-tail derivatives.
+
+    With zero location and skew and :math:`\Sigma=I`, truncated CVaR is
+    :math:`c\lVert w\rVert`, where :math:`c\to+\infty` for shape at most
+    :math:`1/2`. Gradient signs follow the weights; Hessian off-diagonal
+    signs oppose their products. Radial curvature and uncoupled entries
+    stay exactly zero. These limits are not classical derivatives of an
+    infinite-valued function.
+    """
+    model = NormalInverseGamma.from_classical(
+        mu=jnp.zeros(3), gamma=jnp.zeros(3), sigma=jnp.eye(3),
+        alpha=shape, beta=0.5)
+    risk, w = CVaR(0.05), jnp.asarray(w)
+    Q = model.subordinator().quadrature()
+    assert Q.tail_index <= 0.5
+    grad = risk.gradient_w(model, w, Q)
+    hess = risk.hessian_w(model, w, Q)
+    value, fused_grad, fused_hess = risk.value_grad_hess_w(model, w, Q)
+    assert np.isposinf(value)
+    assert np.isposinf(risk.value_w(model, w, Q))
+    for actual, expected in [(grad, expected_grad), (hess, expected_hess),
+                             (fused_grad, expected_grad), (fused_hess, expected_hess)]:
+        assert not np.isnan(actual).any()
+        np.testing.assert_array_equal(actual, expected)
 
 
 def test_default_measure_through_finance_consumers():
