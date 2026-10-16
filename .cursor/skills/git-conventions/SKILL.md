@@ -83,6 +83,7 @@ Config and workflows:
 - `.release-please-manifest.json`
 - `.github/workflows/release-please.yml`
 - `.github/workflows/publish.yml`
+- `.github/workflows/docs-full.yml`
 
 How it works:
 
@@ -90,8 +91,20 @@ How it works:
    The title pattern is `chore: release X.Y.Z`.
 2. Merging the Release PR bumps `pyproject.toml` and `normix/__init__.py`, updates
    `CHANGELOG.md`, and pushes a `vX.Y.Z` tag.
-3. The `vX.Y.Z` tag triggers `.github/workflows/publish.yml`, which builds and
-   publishes the package to PyPI via Trusted Publishing.
+3. `release-please.yml` dispatches `publish.yml` and `docs-full.yml` on that tag.
+   `publish.yml` builds the package and publishes it to PyPI with Trusted Publishing.
+   `docs-full.yml` rebuilds the docs site from the tag.
+4. Manual recovery: `gh workflow run publish.yml --ref vX.Y.Z`.
+   Use `docs-full.yml` in that command to rebuild the release docs.
+
+`publish.yml` and `docs-full.yml` still trigger on a `v*` tag push.
+release-please creates the tag with `GITHUB_TOKEN`.
+GitHub skips `on: push` for that tag, so the dispatch is the only run.
+A tag pushed with a PAT starts those workflows from the tag trigger alone.
+If the release-please step uses a PAT, delete the dispatch step first.
+
+Versions 0.2.1 through 0.3.0 are absent from PyPI.
+Backfill of those versions is a manual owner decision.
 
 **Version bump rules (pre-1.0).** Both `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` are true.
 These bumps apply while the version is below 1.0.0.
@@ -113,6 +126,7 @@ Observed on this repo: v0.2.2 was a `feat` patch, v0.2.4 was a `docs` patch, and
 
 ## Gotchas
 
+- **`GITHUB_TOKEN` tags skip `on: push`.** `release-please.yml` dispatches `publish.yml` and `docs-full.yml`. Recover a release with `gh workflow run publish.yml --ref vX.Y.Z`.
 - **Don't commit generated files** (`.pyc`, `__pycache__/`, `.ipynb_checkpoints/`).
 - **Don't commit secrets** (`.env`, credentials, API keys).
 - **One logical change per commit.** Don't mix a bug fix with a refactor.
