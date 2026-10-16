@@ -175,7 +175,7 @@ class MarginalMixture(eqx.Module):
         r"""Prior log-partition in the GIG convention that matches
         :math:`\psi_{\mathrm{post}}`.
 
-        :meth:`~normix.mixtures.joint.JointNormalMixture._compute_posterior_expectations`
+        ``JointNormalMixture._compute_posterior_expectations``
         evaluates :math:`\psi_{\mathrm{post}}` from GIG
         :math:`\log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a)`
         (base measure :math:`h\equiv 1`). InverseGaussian stores
@@ -200,7 +200,7 @@ class MarginalMixture(eqx.Module):
         :math:`\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|
         + \gamma^\top\Sigma^{-1}(x-\mu)`. :math:`\psi` is the
         subordinator log-partition in the GIG convention (shared across
-        the batch; see :meth:`_conjugacy_psi_prior`);
+        the batch; see ``_conjugacy_psi_prior``);
         :math:`\psi_{\mathrm{post}}` is the posterior GIG log-partition.
         """
         log_h = (
@@ -277,12 +277,12 @@ class MarginalMixture(eqx.Module):
         Keyword arguments other than ``alpha_min`` are forwarded to
         :class:`~normix.fitting.em.BatchEMFitter` (``algorithm``,
         ``track_ll``, ``eta_update``, ``m_step_kwargs``, backends, …).
-        Family-specific defaults come from :meth:`_fit_defaults` and are
+        Family-specific defaults come from ``_fit_defaults`` and are
         overridden by any explicitly supplied kwarg.
 
         Parameters
         ----------
-        alpha_min : float or {'density', 'inverse_moment'}, optional
+        alpha_min : float, 'density' or 'inverse_moment', optional
             Opt-in lower bound on the Gamma subordinator shape :math:`\alpha`
             (Variance Gamma only — the unique family whose marginal
             likelihood is unbounded at :math:`x=\mu`). Restricts the
@@ -403,7 +403,7 @@ class NormalMixture(MarginalMixture):
         """Stored subordinator field names on the joint, e.g. ``('alpha', 'beta')``.
 
         Used by :meth:`replace` to dispatch updates between the normal
-        block (:attr:`_NORMAL_KEYS`) and the subordinator block.
+        block (``_NORMAL_KEYS``) and the subordinator block.
         """
 
     @classmethod
@@ -789,7 +789,7 @@ class NormalMixture(MarginalMixture):
         - normal parameters: ``mu``, ``gamma``, ``L_Sigma``;
         - dispersion alias ``sigma`` — converted to ``L_Sigma`` via
           Cholesky (mutually exclusive with ``L_Sigma``);
-        - subordinator parameters declared by :meth:`_subordinator_keys`
+        - subordinator parameters declared by ``_subordinator_keys``
           (e.g. ``alpha, beta`` for VG / NInvG, ``mu_ig, lam`` for NIG,
           ``p, a, b`` for GH).
 
@@ -841,7 +841,7 @@ class NormalMixture(MarginalMixture):
         Pushes the scale ``s`` through every parameter so the joint
         distribution is unchanged: :math:`\Sigma \to \Sigma/s`,
         :math:`\gamma \to \gamma/s`, and the subordinator-side rescale
-        is delegated to :meth:`_build_rescaled` (e.g.
+        is delegated to ``_build_rescaled`` (e.g.
         :math:`(a, b) \to (a/s, b\cdot s)` for GIG).
         """
         j = self._joint
@@ -855,7 +855,7 @@ class NormalMixture(MarginalMixture):
         r"""Rescale to enforce :math:`\log|\Sigma| = \mathrm{target\_log\_det}`.
 
         Picks :math:`s = \exp((\log|\Sigma| - \tau)/d)` and applies
-        :meth:`_rescale`. The default ``target_log_det = 0`` recovers the
+        ``_rescale``. The default ``target_log_det = 0`` recovers the
         :math:`|\Sigma| = 1` convention; passing the log-determinant of
         an initial reference Σ implements the ``det_sigma_x`` family.
         """

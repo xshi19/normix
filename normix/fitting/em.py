@@ -267,7 +267,8 @@ class BatchEMFitter:
 
         Parameters
         ----------
-        model : NormalMixture subclass (used as initial parameters)
+        model : NormalMixture
+            Instance of a NormalMixture subclass, used as initial parameters.
         X : jax.Array
             Data array, shape ``(n, d)``.
 
@@ -330,7 +331,7 @@ class BatchEMFitter:
         Returns ``(new_model, max_change, eta_state, objective)``.
         ``objective`` is :math:`\\ell_n(\\theta_t)` from the E-step (MCECM:
         first E-step of the cycle), plus the MAP penalty when
-        :meth:`_penalized_objective` applies.
+        ``_penalized_objective`` applies.
         """
         if self.algorithm == 'mcecm':
             return self._mcecm_step(model, X, eta_state, target_log_det=target_log_det)
@@ -391,7 +392,7 @@ class BatchEMFitter:
         return model, max_change, eta_state, objective
 
     def _map_penalty_applies(self, model) -> bool:
-        r"""True when :meth:`_penalized_objective` adds the MAP term.
+        r"""True when ``_penalized_objective`` adds the MAP term.
 
         Scalar-:math:`\tau` :class:`~normix.fitting.eta_rules.Shrinkage`
         wrapping :class:`~normix.fitting.eta_rules.IdentityUpdate` on a
@@ -417,7 +418,7 @@ class BatchEMFitter:
     def _penalized_objective(self, model, log_lik: jax.Array) -> jax.Array:
         r"""MAP objective :math:`\ell_n + \tau(\theta\cdot\eta_0 - \psi)` when it is maximised.
 
-        See :meth:`_map_penalty_applies`. Otherwise returns :math:`\ell_n`.
+        See ``_map_penalty_applies``. Otherwise returns :math:`\ell_n`.
         """
         if not self._map_penalty_applies(model):
             return log_lik
@@ -1054,7 +1055,7 @@ def _param_change(new_params, old_params) -> jax.Array:
     ``rms(new - old) / (1 + rms(old))`` with
     ``rms(v) = ||v||_2 / sqrt(m)``; the overall measure is the maximum
     across leaves. Stored in :attr:`EMResult.param_changes` as a
-    diagnostic; stopping uses :func:`_aitken_remaining`.
+    diagnostic; stopping uses ``_aitken_remaining``.
 
     RMS (rather than raw L2) keeps a fixed ``tol`` roughly dimension-free:
     the same per-coordinate drift yields the same leaf score for

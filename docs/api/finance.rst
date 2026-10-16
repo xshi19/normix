@@ -23,6 +23,7 @@ Mean-Risk Optimization
 .. automodule:: normix.finance.optimization
    :members:
    :undoc-members:
+   :exclude-members: Array
    :show-inheritance:
 
 Transaction Costs
@@ -31,6 +32,7 @@ Transaction Costs
 .. automodule:: normix.finance.transaction_costs
    :members:
    :undoc-members:
+   :exclude-members: Array, m_tilde, H_tilde, e_tilde, approx, m
    :show-inheritance:
 
 Weight Functional
@@ -47,6 +49,7 @@ Diversification
 .. automodule:: normix.finance.diversification
    :members:
    :undoc-members:
+   :exclude-members: Array
    :show-inheritance:
 
 Scenario measures

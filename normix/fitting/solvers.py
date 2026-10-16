@@ -112,22 +112,30 @@ def solve_bregman(
 
     Parameters
     ----------
-    f : convex function θ → scalar  (e.g. log-partition ψ)
-    eta : target vector  (e.g. expectation parameters η)
-    theta0 : initial guess
-    backend : 'jax' (JIT-able) or 'cpu' (scipy, not JIT-able)
+    f : Callable
+        Convex function θ → scalar (e.g. log-partition ψ).
+    eta : jax.Array
+        Target vector (e.g. expectation parameters η).
+    theta0 : jax.Array
+        Initial guess.
+    backend : 'jax' or 'cpu'
+        ``'jax'`` is JIT-able; ``'cpu'`` uses scipy and is not JIT-able.
     method : 'lbfgs', 'bfgs', or 'newton'
     bounds : tuple of jax.Array, or None
         ``(lower, upper)`` pair, each shape ``(d,)``; ``None`` → unconstrained.
         For backend='jax': enforced via reparameterization.
         For backend='cpu': converted to scipy format internally.
-    max_steps : iteration budget
-    tol : convergence tolerance on ‖∇f(θ) − η‖∞
-    grad_fn : θ → ∇f(θ).
+    max_steps : int
+        Iteration budget.
+    tol : float
+        Convergence tolerance on ‖∇f(θ) − η‖∞.
+    grad_fn : Callable, optional
+        θ → ∇f(θ).
         For backend='cpu': must accept and return numpy arrays.
         For backend='jax', method='newton': must be JAX-traceable.
         If None with backend='cpu': falls back to jax.grad (hybrid mode).
-    hess_fn : θ → ∇²f(θ).
+    hess_fn : Callable, optional
+        θ → ∇²f(θ).
         Required for method='newton'.
         For backend='cpu': must accept numpy arrays and return numpy array.
         For backend='jax', method='newton': must be JAX-traceable.
@@ -205,9 +213,9 @@ def solve_bregman_multistart(
 
     Parameters
     ----------
-    theta0_batch : (K, dim) jax.Array for backend='jax', method='newton'
-                   (parallel via vmap); list of arrays otherwise
-                   (sequential for-loop).
+    theta0_batch : jax.Array or list of jax.Array
+        ``(K, dim)`` array for ``backend='jax'``, ``method='newton'``
+        (parallel via vmap); list of arrays otherwise (sequential for-loop).
     verbose : int
         0 = silent, >= 1 = print summary.
     """
@@ -423,7 +431,7 @@ def _jax_newton_raw(
     The returned ``grad_norm`` is the natural residual
     :math:`\lVert g_\theta\rVert_\infty`. Convergence uses the same
     residual after dropping components a finite bound blocks
-    (:func:`_kkt_residual`). :math:`\lVert g_\phi\rVert_\infty` is not the
+    (``_kkt_residual``). :math:`\lVert g_\phi\rVert_\infty` is not the
     stop: it can be tiny near a bound while a free coordinate of
     :math:`g_\theta` is still :math:`O(1)`. At a bound optimum the
     multiplier stays in ``grad_norm`` and does not by itself fail the solve.
@@ -599,7 +607,8 @@ def make_jit_newton_solver(
 
     Parameters
     ----------
-    f : convex objective ψ(θ) → scalar (must be JAX-traceable).
+    f : Callable
+        Convex objective ψ(θ) → scalar (must be JAX-traceable).
     grad_fn : Callable
         :math:`\nabla\psi(\theta) \to \mathbb{R}^d`.
     hess_fn : Callable

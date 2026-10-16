@@ -212,7 +212,7 @@ class CVaR(RiskMeasure):
         :math:`q_i = \tilde\mu + \tilde\gamma Y_i + \tilde\sigma\sqrt{Y_i}\,
         \Phi^{-1}(\alpha)`. The bracket contains the root for every positive scenario measure.
         No PINV table and no Bessel evaluation; the CVaR integral is
-        :meth:`_cvar_from_quantile`.
+        ``_cvar_from_quantile``.
 
         Raises
         ------

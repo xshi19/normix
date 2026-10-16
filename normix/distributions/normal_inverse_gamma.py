@@ -354,7 +354,7 @@ class FactorNormalInverseGamma(FactorNormalMixture):
         return log_C + zw + log_integral
 
     def _subordinator_expectations(self):
-        r"""Prior InverseGamma moments; see :meth:`NormalInverseGamma._subordinator_expectations`."""
+        r"""Prior InverseGamma moments; see ``NormalInverseGamma._subordinator_expectations``."""
         E_log_Y = jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha)
         E_inv_Y = self.alpha / self.beta
         E_Y = self.beta / jnp.maximum(self.alpha - 1.0, ALPHA_MOMENT_MARGIN)

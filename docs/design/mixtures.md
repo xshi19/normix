@@ -195,7 +195,7 @@ sibling family keeps each story clean.
 All Σ-related linear algebra goes through Woodbury at $O(d r^2 + r^3)$,
 never forming a dense $d \times d$ solve:
 
-```python
+```text
 def _M(self):           return I_r + Fᵀ D⁻¹ F                    # (r, r)
 def _solve(self, x):    return D⁻¹ x − D⁻¹ F · M⁻¹ · Fᵀ D⁻¹ x    # Σ⁻¹ x
 def _quad_form(self,x): return x · _solve(x)

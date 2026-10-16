@@ -81,12 +81,12 @@ class FactorNormalMixture(MarginalMixture):
     Subclasses define the subordinator family (via the instance stored in
     ``_subordinator``, which supplies the shared posterior map through
     ``to_gig()``) and implement :meth:`log_prob`,
-    :meth:`_subordinator_from_eta`, and a few forwarders / initialisers.
-    The prior-to-posterior GIG conjugacy (:meth:`_posterior_gig_params`)
+    ``_subordinator_from_eta``, and a few forwarders / initialisers.
+    The prior-to-posterior GIG conjugacy (``_posterior_gig_params``)
     is uniform across families and lives on the base. The linear algebra for
     :math:`\Sigma^{-1}` and :math:`\log|\Sigma|` is shared via
-    Woodbury helpers (:meth:`_M`, :meth:`_solve`, :meth:`_quad_form`,
-    :meth:`_log_det_sigma`, :meth:`_beta`).
+    Woodbury helpers (``_M``, ``_solve``, ``_quad_form``,
+    ``_log_det_sigma``, ``_beta``).
 
     Notes
     -----
@@ -201,16 +201,16 @@ class FactorNormalMixture(MarginalMixture):
         return self._log_det_sigma()
 
     def mean(self) -> jax.Array:
-        r""":math:`E[X] = \mu + \gamma\,E[Y]` (see :meth:`NormalMixture.mean`)."""
+        r""":math:`E[X] = \mu + \gamma\,E[Y]` (see :meth:`~normix.mixtures.marginal.NormalMixture.mean`)."""
         return _normal_mixture_mean(self.mu, self.gamma, self.subordinator())
 
     def cov(self) -> jax.Array:
         r""":math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`
-        (see :meth:`NormalMixture.cov`)."""
+        (see :meth:`~normix.mixtures.marginal.NormalMixture.cov`)."""
         return _normal_mixture_cov(self.gamma, self.sigma(), self.subordinator())
 
     def skewness(self) -> jax.Array:
-        r"""Component-wise skewness of :math:`X` (see :meth:`NormalMixture.skewness`)."""
+        r"""Component-wise skewness of :math:`X` (see :meth:`~normix.mixtures.marginal.NormalMixture.skewness`)."""
         m1, m2, m3, m4 = self._subordinator.raw_moments(
             jnp.array([1.0, 2.0, 3.0, 4.0]))
         sigma_diag = jnp.sum(self.F ** 2, axis=1) + self.D
@@ -219,7 +219,7 @@ class FactorNormalMixture(MarginalMixture):
         return skew
 
     def kurtosis(self) -> jax.Array:
-        r"""Component-wise excess kurtosis of :math:`X` (see :meth:`NormalMixture.kurtosis`)."""
+        r"""Component-wise excess kurtosis of :math:`X` (see :meth:`~normix.mixtures.marginal.NormalMixture.kurtosis`)."""
         m1, m2, m3, m4 = self._subordinator.raw_moments(
             jnp.array([1.0, 2.0, 3.0, 4.0]))
         sigma_diag = jnp.sum(self.F ** 2, axis=1) + self.D
@@ -267,9 +267,9 @@ class FactorNormalMixture(MarginalMixture):
         where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`
         are the subordinator's exact GIG coordinates
         (``subordinator().to_gig()``).
-        See :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`
+        See ``JointNormalMixture._posterior_gig_params``
         for the per-family table. Stays **pure**; the :math:`b_{\mathrm{post}}`
-        floor lives in :meth:`_floored_posterior_gig_params`.
+        floor lives in ``_floored_posterior_gig_params``.
         """
         gig = self._subordinator.to_gig()
         return gig.p - self.d / 2.0, gig.a + w2, gig.b + z2
@@ -277,7 +277,7 @@ class FactorNormalMixture(MarginalMixture):
     def _floored_posterior_gig_params(
         self, z2: jax.Array, w2: jax.Array,
     ) -> Tuple[jax.Array, jax.Array, jax.Array]:
-        r"""E-step entry point: :meth:`_posterior_gig_params` with
+        r"""E-step entry point: ``_posterior_gig_params`` with
         :math:`b_{\mathrm{post}}` floored at
         :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;
         only binds for VG, prior :math:`b=0`)."""
@@ -426,7 +426,7 @@ class FactorNormalMixture(MarginalMixture):
         :math:`(s_7, s_8, s_9, s_{10})`.
 
         Computed at the *current* model parameters (μ, γ, F, β); β is
-        evaluated once via :meth:`_beta`.
+        evaluated once via ``_beta``.
         """
         mu = self.mu
         gamma = self.gamma
@@ -634,7 +634,7 @@ class FactorNormalMixture(MarginalMixture):
         subordinator: :math:`\gamma \to \gamma/s`,
         :math:`F \to F/\sqrt{s}`, :math:`D \to D/s` (so
         :math:`\Sigma \to \Sigma/s`); the subordinator-side rescale is
-        delegated to :meth:`_build_rescaled`.
+        delegated to ``_build_rescaled``.
         """
         F_new = self.F / jnp.sqrt(scale)
         D_new = self.D / scale
@@ -736,7 +736,7 @@ class FactorNormalMixture(MarginalMixture):
     def replace(self, **updates) -> "FactorNormalMixture":
         r"""Return a new model with selected top-level fields replaced.
 
-        Accepts any subset of :attr:`_NORMAL_KEYS`. The public key
+        Accepts any subset of ``_NORMAL_KEYS``. The public key
         ``subordinator`` updates the private ``_subordinator`` field.
         Subclass-specific subordinator parameter shortcuts (e.g.
         ``alpha=...``) are not supported on the FA family — use

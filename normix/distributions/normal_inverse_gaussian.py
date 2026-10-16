@@ -132,7 +132,7 @@ class JointNormalInverseGaussian(JointNormalMixture):
         Unlike the VG / NInvG joints (whose shape :math:`p` is a free
         coordinate read back from :math:`\theta_1`), this class fixes
         :math:`p=-1/2` and drops :math:`\theta_1` from
-        :meth:`_log_partition_from_theta` (using :math:`K_{-1/2}`). The
+        ``_log_partition_from_theta`` (using :math:`K_{-1/2}`). The
         density-power scaling :math:`\theta\mapsto\alpha\theta` moves
         :math:`\theta_1` (i.e. the GIG order) off :math:`-1/2`, so the
         constant-base-measure formula in

@@ -447,7 +447,7 @@ class JointNormalMixture(ExponentialFamily):
             b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),
 
         with the family-specific prior :math:`(p, a, b)` resolved by
-        :meth:`_posterior_gig_params`. Returns a dict with keys
+        ``_posterior_gig_params``. Returns a dict with keys
         ``E_log_Y``, ``E_inv_Y``, ``E_Y``, plus ``psi_post`` (posterior
         GIG log-partition) and ``zw`` (:math:`\gamma^\top\Sigma^{-1}(x-\mu)`)
         for the conjugacy identity
@@ -511,13 +511,13 @@ class JointNormalMixture(ExponentialFamily):
         ============= ============================================ ===================================
 
         This map stays **pure** (no floor); the :math:`b_{\mathrm{post}}` floor
-        is applied by :meth:`_floored_posterior_gig_params`.
+        is applied by ``_floored_posterior_gig_params``.
         """
         gig = self.subordinator().to_gig()
         return gig.p - self.d / 2.0, gig.a + w2, gig.b + z2
 
     def _floored_posterior_gig_params(self, z2: jax.Array, w2: jax.Array):
-        r"""E-step entry point: :meth:`_posterior_gig_params` with
+        r"""E-step entry point: ``_posterior_gig_params`` with
         :math:`b_{\mathrm{post}}` floored at
         :data:`~normix.utils.constants.B_POST_FLOOR`.
 
@@ -572,7 +572,7 @@ class JointNormalMixture(ExponentialFamily):
     ) -> jax.Array:
         r"""
         Assemble the full :math:`\theta` vector from subordinator scalars
-        and precomputed precision components (from :meth:`_precision_quantities`).
+        and precomputed precision components (from ``_precision_quantities``).
         """
         return jnp.concatenate([
             jnp.array([theta_1, theta_2, theta_3]),
@@ -648,7 +648,7 @@ class JointNormalMixture(ExponentialFamily):
         - :class:`~normix.fitting.eta.NormalMixtureEta` — the natural η
           pytree of the joint normal-variance-mean mixture; uses the
           closed-form M-step (:math:`\mu, \gamma, \Sigma` analytical;
-          subordinator via :meth:`_subordinator_from_eta`).
+          subordinator via ``_subordinator_from_eta``).
         - flat ``jax.Array`` — the generic Bregman solver inherited from
           :class:`~normix.exponential_family.ExponentialFamily`.
 
@@ -663,7 +663,7 @@ class JointNormalMixture(ExponentialFamily):
             Expectation parameters.
         **kwargs
             For the pytree path: forwarded to
-            :meth:`_subordinator_from_eta` (e.g. ``backend``, ``method``,
+            ``_subordinator_from_eta`` (e.g. ``backend``, ``method``,
             ``maxiter``, ``theta0`` for warm-starting GIG).
             For the flat-array path: forwarded to the parent solver.
         """

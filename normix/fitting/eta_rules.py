@@ -182,7 +182,7 @@ class Shrinkage(EtaUpdateRule):
     eta0 : NormalMixtureEta
         Prior expectation parameters (shrinkage target). Must be a complete
         stats pytree of the same type as ``eta_prev`` / ``eta_new``.
-    tau : float, jax.Array, or stats pytree
+    tau : float, jax.Array, or NormalMixtureEta
         Shrinkage strength.
 
         * **scalar** — uniform shrinkage on every sufficient statistic;

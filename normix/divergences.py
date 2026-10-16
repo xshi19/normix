@@ -116,7 +116,7 @@ def kl_divergence_from_eta(
         Natural parameters in gauge coordinates.
     eta_fin, m, v : jax.Array
         Tail-split of :math:`\eta_p` (see
-        :meth:`~normix.exponential_family.ExponentialFamily._divergence_eta`).
+        ``ExponentialFamily._divergence_eta``).
     """
     dtheta = theta_q - theta_p
     A = jnp.maximum(-jnp.dot(dtheta, v), 0.0)
