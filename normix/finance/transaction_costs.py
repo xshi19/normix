@@ -32,6 +32,7 @@ import numpy as np
 from jax import Array
 from scipy.optimize import LinearConstraint, minimize
 
+from normix.utils.quadrature import DiscreteMeasure
 from normix.finance.risk import RiskMeasure
 from normix.mixtures.marginal import NormalMixture
 from normix.utils.constants import HESSIAN_DAMPING
@@ -137,15 +138,15 @@ def build_quadratic_approximation(
     risk: RiskMeasure,
     model: NormalMixture,
     w0: Array,
-    Y: Array,
+    scenarios: DiscreteMeasure | Array | None = None,
 ) -> QuadraticApproximation:
     r"""Evaluate :math:`r(w_0)`, :math:`\nabla r(w_0)`, and :math:`H_r(w_0)`.
 
     Uses :meth:`~normix.finance.risk.RiskMeasure.value_grad_hess_w` so the
-    CMC VaR bisection runs once rather than three times.
+    conditional VaR bisection runs once rather than three times.
     """
     w0 = jnp.asarray(w0, dtype=jnp.float64)
-    value, gradient, hessian = risk.value_grad_hess_w(model, w0, Y)
+    value, gradient, hessian = risk.value_grad_hess_w(model, w0, scenarios)
     return QuadraticApproximation(
         w0=w0, value=value, gradient=gradient, hessian=hessian,
     )
@@ -304,7 +305,7 @@ class TransactionCostProblem(eqx.Module):
         risk: RiskMeasure,
         c1: float,
         c2: float,
-    ):
+    ) -> None:
         if float(c1) <= 0.0 or float(c2) <= 0.0:
             raise ValueError(f"c1 and c2 must be positive, got c1={c1}, c2={c2}")
         object.__setattr__(self, "model", model)
@@ -316,14 +317,14 @@ class TransactionCostProblem(eqx.Module):
         r"""Asset expected returns :math:`m = E[X] = \mu + \gamma\, E[Y]`."""
         return self.model.mean()
 
-    def approximate(self, w0: Array, Y: Array) -> QuadraticApproximation:
-        """Local Taylor model of risk at ``w0`` under subordinator sample ``Y``."""
-        return build_quadratic_approximation(self.risk, self.model, w0, Y)
+    def approximate(self, w0: Array, scenarios: DiscreteMeasure | Array | None = None) -> QuadraticApproximation:
+        """Local Taylor model of risk at ``w0`` under subordinator scenarios."""
+        return build_quadratic_approximation(self.risk, self.model, w0, scenarios)
 
     def build_qp(
         self,
         w0: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure | Array | None = None,
         *,
         m: Array | None = None,
         A: Array | None = None,
@@ -335,7 +336,7 @@ class TransactionCostProblem(eqx.Module):
         ``m`` defaults to :meth:`expected_return_vector`. Optional ``A``, ``b``
         encode :math:`A w \le b` (e.g. long-only via ``A = -I``, ``b = 0``).
         """
-        approx = self.approximate(w0, Y)
+        approx = self.approximate(w0, scenarios)
         if m is None:
             m = self.expected_return_vector()
         return build_transaction_cost_qp(
@@ -345,7 +346,7 @@ class TransactionCostProblem(eqx.Module):
     def solve(
         self,
         w0: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure | Array | None = None,
         *,
         m: Array | None = None,
         A: Array | None = None,
@@ -354,14 +355,14 @@ class TransactionCostProblem(eqx.Module):
         options: dict[str, Any] | None = None,
     ) -> TransactionCostResult:
         """Build and solve the local QP; see :func:`solve_transaction_cost_qp`."""
-        qp = self.build_qp(w0, Y, m=m, A=A, b=b, hess_reg=hess_reg)
+        qp = self.build_qp(w0, scenarios, m=m, A=A, b=b, hess_reg=hess_reg)
         return solve_transaction_cost_qp(qp, options=options)
 
     def true_objective_at(
         self,
         w: Array,
         w0: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure | Array | None = None,
         m: Array | None = None,
     ) -> Array:
         r"""Exact objective :math:`w^\top m - c_1 r(w) - c_2 \|w - w_0\|_1`."""
@@ -369,5 +370,5 @@ class TransactionCostProblem(eqx.Module):
         w0 = jnp.asarray(w0, dtype=jnp.float64)
         if m is None:
             m = self.expected_return_vector()
-        r = self.risk.value_w(self.model, w, Y)
+        r = self.risk.value_w(self.model, w, scenarios)
         return w @ m - self.c1 * r - self.c2 * jnp.sum(jnp.abs(w - w0))

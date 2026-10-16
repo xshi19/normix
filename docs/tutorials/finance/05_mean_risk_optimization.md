@@ -22,9 +22,8 @@ $$
 \quad\text{s.t.}\quad w^\top e = 1,\quad E[w^\top X] \ge m .
 $$
 
-For a general distribution this is a $d$-dimensional optimization that must be
-solved by Monte Carlo. The normal-mixture structure collapses it to **two
-dimensions**. Because $w^\top X$ is again a univariate mixture with parameters
+For a general distribution this is a $d$-dimensional optimization. The
+normal-mixture structure collapses it to **two dimensions**. Because $w^\top X$ is again a univariate mixture with parameters
 $(\tilde\mu, \tilde\gamma, \tilde\sigma) = (w^\top\mu,\, w^\top\gamma,\,
 \sqrt{w^\top\Sigma w})$, and because any coherent $\rho$ is *decreasing* in
 $\tilde\mu$, *non-increasing* in $\tilde\gamma$, and *non-decreasing* in
@@ -124,12 +123,12 @@ print(f"dispersion g = {float(prob.dispersion(mv_mu, mv_gamma)):.4e}"
 
 Each point of the surface is the $\operatorname{CVaR}_{95\%}$ of the
 minimum-dispersion portfolio realising $(\tilde\mu, \tilde\gamma)$, evaluated
-over a single shared sample of $Y$ (common random numbers). We frame the grid
+over one shared probability measure of $Y$. We frame the grid
 around the efficient frontier — the band of returns a manager actually operates
 in — by first solving for the frontier and bracketing the coordinates it visits.
 
 ```{code-cell} python
-Y = gh.joint.subordinator().rvs(20_000, seed=0)
+Q = gh.joint.subordinator().quadrature()
 E_Y = float(prob.E_Y())
 mv_ret = float(prob.expected_return(mv_mu, mv_gamma))
 
@@ -138,7 +137,7 @@ targets = jnp.linspace(mv_ret - 2.0e-4, mv_ret + 4.5e-4, 40)
 ga_a = np.asarray(gh.gamma)
 ga_search = 2.0 * max(ga_a.max() - ga_a.min(), 4e-4)
 frontier = prob.efficient_frontier(
-    targets, Y, gamma_bounds=(float(mv_gamma) - ga_search, float(mv_gamma) + ga_search),
+    targets, Q, gamma_bounds=(float(mv_gamma) - ga_search, float(mv_gamma) + ga_search),
     n_iter=48)
 
 # 2. bracket the frontier's (μ̃, γ̃) to set a tight, relevant surface window
@@ -150,7 +149,7 @@ ga_lo, ga_hi = _pad(float(frontier.gamma_tilde.min()), float(frontier.gamma_tild
 mu_grid = jnp.linspace(mu_lo, mu_hi, 41)
 ga_grid = jnp.linspace(ga_lo, ga_hi, 41)
 
-surface = prob.efficient_surface(mu_grid, ga_grid, Y)
+surface = prob.efficient_surface(mu_grid, ga_grid, Q)
 print(f"CVaR over the grid ∈ [{float(surface.risk.min()):.4f}, {float(surface.risk.max()):.4f}]")
 ```
 
@@ -268,10 +267,10 @@ frontiers = {}
 fig, ax = plt.subplots(figsize=(9, 5.6))
 for name, m in models.items():
     p = MeanRiskProblem(m, cvar)
-    Ym = m.joint.subordinator().rvs(15_000, seed=0)
+    Qm = m.joint.subordinator().quadrature()
     g_mv = float(p.min_dispersion_point()[1])
     span = 1.5 * max(np.asarray(m.gamma).max() - np.asarray(m.gamma).min(), 4e-4)
-    fr = p.efficient_frontier(targets_cmp, Ym, gamma_bounds=(g_mv - span, g_mv + span), n_iter=46)
+    fr = p.efficient_frontier(targets_cmp, Qm, gamma_bounds=(g_mv - span, g_mv + span), n_iter=46)
     frontiers[name] = fr
     ax.plot(np.asarray(fr.risk), np.asarray(fr.expected_return) * 1e4, "o-", ms=3, label=name)
 
@@ -316,7 +315,7 @@ pd.DataFrame(weights, index=basket).round(3)
   with optimal weights, dispersion, and projected return in closed form.
 - `efficient_surface` reproduces the convex efficient surface (Fig. 8) and
   `efficient_frontier` the geometry and the classical frontier (Fig. 9), all
-  from one fitted mixture and one shared subordinator sample.
+  from one fitted mixture and one shared subordinator measure.
 - Swapping the subordinator family leaves the frontier's shape intact but
   moves its level: tail assumptions translate directly into tail-risk-optimal
   allocations.
@@ -326,3 +325,6 @@ For the mathematics — the monotonicity theorem and the reduction proof — see
 QP) is covered in {doc}`06_transaction_costs`. Effective number of bets is
 derived in {doc}`../../theory/enb` and {doc}`../../theory/generalized_enb`
 (see {doc}`07_diversification` for Meucci ENB).
+
+Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+{doc}`08_quadrature_scenarios`.

@@ -59,10 +59,13 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from normix.utils.bessel import log_kv, log_kv_moments
+from normix.utils.bessel import log_kv, log_kv_moments, _ab_coeffs, _edge
+from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.rvs import QuantileTable, build_pinv_table
 from normix.exponential_family import ExponentialFamily
 from normix.utils.constants import (
+    SCENARIO_QUAD_NODES, SCENARIO_QUAD_PANELS,
+    SCENARIO_WINDOW_TILTS, SCENARIO_LOG_Y_MAX,
     LOG_EPS, TINY, GIG_DEGEN_THRESHOLD, BESSEL_QUAD_LOG_DROP,
     BESSEL_WINDOW_ITERS, BESSEL_WINDOW_HI_MAX,
     THETA_FLOOR, GIG_THETA_PERTURB,
@@ -720,6 +723,64 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \eta_3` from expectation parameters."""
         return self.expectation_params()[2]
+
+    def quadrature(self, n_nodes: int = SCENARIO_QUAD_NODES) -> DiscreteMeasure:
+        r"""Construct a probability rule in :math:`s=\log Y`.
+
+        Uses positive Gauss–Legendre weights on eight sinh-mapped panels,
+        four on each side of the mode. ``n_nodes`` must be a positive
+        multiple of eight. Density and first-moment tilts determine the
+        window, with a log-density drop of 40 and representable log nodes
+        restricted to :math:`[-700,700]`.
+
+        Nodes and geometric weights are frozen under autodiff; normalized
+        density weights remain live. The rule includes the Gamma and
+        inverse-gamma boundaries exactly, without a Bessel normalizer.
+        First parameter derivatives of expectations are supported; see
+        :doc:`/theory/quadrature_scenarios` for the envelope argument and
+        the limitations of a fixed rule near a conditional-CDF step.
+        """
+        if n_nodes < SCENARIO_QUAD_PANELS or n_nodes % SCENARIO_QUAD_PANELS:
+            raise ValueError("n_nodes must be a positive multiple of eight")
+        nu, a, b = jax.lax.stop_gradient((self.p, self.a, self.b))
+        kappa, ac, bc = _ab_coeffs(nu, jnp.sqrt(a) * jnp.sqrt(b), jnp)
+        s0 = jnp.where(
+            nu >= 0,
+            jnp.log(jnp.where(ac > 0, ac, 1.0))
+            - jnp.log(jnp.where(a > 0, a / 2, 1.0)),
+            jnp.log(jnp.where(b > 0, b / 2, 1.0))
+            - jnp.log(jnp.where(bc > 0, bc, 1.0)),
+        )
+        tail_index = jnp.where(self.a > 0, jnp.inf, -self.p)
+        lo = -_edge(nu, ac, bc, -1.0, 0.0,
+                    BESSEL_QUAD_LOG_DROP, jnp, BESSEL_WINDOW_ITERS)
+        hi = jnp.zeros_like(nu)
+        for tilt in SCENARIO_WINDOW_TILTS:
+            k = jnp.where(tilt < jax.lax.stop_gradient(tail_index), tilt, 0.0)
+            hi = jnp.maximum(hi, _edge(
+                nu, ac, bc, 1.0, k, BESSEL_QUAD_LOG_DROP, jnp, BESSEL_WINDOW_ITERS))
+        lo = jnp.maximum(lo, -SCENARIO_LOG_Y_MAX - s0)
+        hi = jnp.minimum(hi, SCENARIO_LOG_Y_MAX - s0)
+        c = jax.lax.rsqrt(kappa)
+        half = SCENARIO_QUAD_PANELS // 2
+        cuts = jnp.concatenate([
+            jnp.linspace(jnp.arcsinh(lo / c), 0.0, half + 1),
+            jnp.linspace(0.0, jnp.arcsinh(hi / c), half + 1)[1:],
+        ])
+        t, w = np.polynomial.legendre.leggauss(n_nodes // SCENARIO_QUAD_PANELS)
+        widths = 0.5 * jnp.diff(cuts)
+        t_nodes = (0.5 * (cuts[:-1] + cuts[1:]))[:, None] + widths[:, None] * t
+        x = (c * jnp.sinh(t_nodes)).ravel()
+        log_w = (jnp.log(widths[:, None] * w) + jnp.log(c)
+                 + jnp.log(jnp.cosh(t_nodes))).ravel()
+        s0, x, log_w = jax.lax.stop_gradient((s0, x, log_w))
+        s = s0 + x
+        ac_live = (self.a / 2) * jnp.exp(s0)
+        bc_live = (self.b / 2) * jnp.exp(-s0)
+        log_density = (self.p * x
+                       - ac_live * jnp.expm1(jnp.minimum(x, SCENARIO_LOG_Y_MAX))
+                       - bc_live * jnp.expm1(jnp.minimum(-x, SCENARIO_LOG_Y_MAX)))
+        return DiscreteMeasure(jnp.exp(s), log_w + log_density, tail_index)
 
     def raw_moment(self, k: jax.Array) -> jax.Array:
         r"""Raw moment :math:`E[X^k] = (b/a)^{k/2}\,K_{p+k}(\sqrt{ab})/K_p(\sqrt{ab})`.

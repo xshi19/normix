@@ -19,6 +19,7 @@
 
 | Question | Where to read |
 |---|---|
+| Why weighted quadrature for portfolio risk? | `../../docs/design/quadrature_scenarios.md`; row FIN-5 |
 | Why two classes for each mixture distribution? | `mixtures.md` § 1 |
 | Why is the joint a public exponential family? | `mixtures.md` § 2 |
 | Why three classmethod tiers for the log-partition? | `exponential_family.md` § 2 |

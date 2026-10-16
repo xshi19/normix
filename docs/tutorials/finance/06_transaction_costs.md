@@ -53,7 +53,7 @@ model = (GeneralizedHyperbolic.default_init(X)
          .fit(X, max_iter=100, tol=1e-4, e_step_backend="cpu").model
          .regularize_a_eq_b())
 cvar = CVaR(0.05)
-Y = model.joint.subordinator().rvs(15_000, seed=0)
+Q = model.joint.subordinator().quadrature()
 print(f"mean log-likelihood {float(model.marginal_log_likelihood(X)):.4f}")
 ```
 
@@ -70,7 +70,7 @@ ga = float(mv_gamma)
 span = 1.5 * max(float(np.asarray(model.gamma).max()
                       - np.asarray(model.gamma).min()), 4e-4)
 frontier = prob.efficient_frontier(
-    targets, Y, gamma_bounds=(ga - span, ga + span), n_iter=40)
+    targets, Q, gamma_bounds=(ga - span, ga + span), n_iter=40)
 k = int(np.argmin(np.asarray(frontier.risk)))
 w0 = frontier.weights[k]
 print(f"anchor return {float(frontier.expected_return[k]):.3e}  "
@@ -95,14 +95,14 @@ buy/sell variables $v = (v^+; v^-)$.
 tc = TransactionCostProblem(model, cvar, c1=5.0, c2=5e-2)
 A = -jnp.eye(len(basket), dtype=jnp.float64)   # long-only: -w ≤ 0
 b = jnp.zeros(len(basket), dtype=jnp.float64)
-result = tc.solve(w0, Y, A=A, b=b)
+result = tc.solve(w0, Q, A=A, b=b)
 
 print(f"improved over hold?  {bool(result.improved)}")
 print(f"turnover ‖Δw‖₁      {float(result.turnover):.4f}")
 print(f"approx obj  hold → * {float(result.hold_objective):.6e} → "
       f"{float(result.approx_objective):.6e}")
-print(f"exact  obj  hold → * {float(tc.true_objective_at(w0, w0, Y)):.6e} → "
-      f"{float(tc.true_objective_at(result.weights, w0, Y)):.6e}")
+print(f"exact  obj  hold → * {float(tc.true_objective_at(w0, w0, Q)):.6e} → "
+      f"{float(tc.true_objective_at(result.weights, w0, Q)):.6e}")
 ```
 
 The matrices themselves are available for an external QP solver if needed:
@@ -124,14 +124,14 @@ c2_grid = np.geomspace(1e-3, 2e-1, 12)
 rows = []
 for c2 in c2_grid:
     r = TransactionCostProblem(model, cvar, c1=5.0, c2=float(c2)).solve(
-        w0, Y, A=A, b=b)
+        w0, Q, A=A, b=b)
     rows.append({
         "c2": c2,
         "turnover": float(r.turnover),
         "approx_gain": float(r.approx_objective - r.hold_objective),
         "exact_gain": float(
-            tc.true_objective_at(r.weights, w0, Y)
-            - tc.true_objective_at(w0, w0, Y)
+            tc.true_objective_at(r.weights, w0, Q)
+            - tc.true_objective_at(w0, w0, Q)
         ) if bool(r.improved) else 0.0,
     })
 sweep = pd.DataFrame(rows)
@@ -149,7 +149,7 @@ sweep.round(5)
 At large $c_2$ the solver correctly returns the hold ($w^\star = w_0$). At small
 $c_2$ the quadratic model can recommend a large move — outside the regime where
 the Taylor expansion is trustworthy — so in practice one verifies that the
-**exact** Monte Carlo objective also improves, exactly as the theory note warns.
+**unapproximated** quadrature CVaR objective also improves, exactly as the theory note warns.
 
 ```{code-cell} python
 cmp = pd.DataFrame(
@@ -174,3 +174,6 @@ cmp.round(3)
 See {doc}`../../theory/transaction_costs` for the QP derivation and
 {doc}`05_mean_risk_optimization` for the frictionless surface this rebalancing
 starts from.
+
+Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+{doc}`08_quadrature_scenarios`.

@@ -47,6 +47,7 @@ from jax.scipy.linalg import solve_triangular
 
 from normix.finance.risk import RiskMeasure
 from normix.mixtures.marginal import NormalMixture
+from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.constants import MEAN_RISK_REACH_ATOL
 
 # Reciprocal golden ratio for golden-section search.
@@ -179,8 +180,11 @@ class MeanRiskProblem(eqx.Module):
 
     Bundles a fitted :class:`~normix.mixtures.marginal.NormalMixture` and a
     :class:`~normix.finance.risk.RiskMeasure`. All heavy evaluations share a
-    fixed subordinator sample ``Y`` (common random numbers); draw it once via
-    ``model.joint.subordinator().rvs(n, seed)``.
+    fixed probability measure of the subordinator. ``scenarios=None`` builds
+    quadrature once at construction. Supply an array for equal-weight Monte
+    Carlo, or a ``DiscreteMeasure`` for weighted scenarios. Per-call
+    overrides share one measure across the whole grid or frontier.
+    Expected returns continue to use the model law's mean.
 
     The whitened factorisation of :math:`M = [\mu\;\gamma\;e]` is computed
     once at construction. The Gram matrix :math:`A = M^\top\Sigma^{-1}M`
@@ -191,16 +195,19 @@ class MeanRiskProblem(eqx.Module):
 
     model: NormalMixture
     risk: RiskMeasure
+    scenarios: DiscreteMeasure
     A: Array
     S: Array
     Vh: Array
     LT_U: Array
     rank: int = eqx.field(static=True)
 
-    def __init__(self, model: NormalMixture, risk: RiskMeasure):
+    def __init__(self, model: NormalMixture, risk: RiskMeasure,
+                 scenarios: DiscreteMeasure | Array | None = None) -> None:
         A, S, Vh, LT_U, rank = _reduced_factors(model)
         object.__setattr__(self, 'model', model)
         object.__setattr__(self, 'risk', risk)
+        self.scenarios = DiscreteMeasure.coerce(scenarios, model.subordinator())
         object.__setattr__(self, 'A', A)
         object.__setattr__(self, 'S', S)
         object.__setattr__(self, 'Vh', Vh)
@@ -296,7 +303,7 @@ class MeanRiskProblem(eqx.Module):
         denom = self.A[2, 2]
         return self.A[0, 2] / denom, self.A[1, 2] / denom
 
-    def projection_at(self, mu_tilde: Array, gamma_tilde: Array):
+    def projection_at(self, mu_tilde: Array, gamma_tilde: Array) -> NormalMixture:
         r"""Univariate portfolio return at :math:`(\tilde\mu, \tilde\gamma)`.
 
         Projects the minimum-dispersion :meth:`weights`; the result is a
@@ -325,7 +332,7 @@ class MeanRiskProblem(eqx.Module):
     def _search_return_line(
         self,
         returns: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure,
         gamma_bounds: tuple[float, float],
         n_iter: int,
     ) -> tuple[Array, Array]:
@@ -335,7 +342,7 @@ class MeanRiskProblem(eqx.Module):
         hi = jnp.full_like(returns, gamma_bounds[1])
 
         def risk_of_gamma(gamma_vec: Array) -> Array:
-            return self._surface_risk(returns - gamma_vec * E_Y, gamma_vec, Y)
+            return self._surface_risk(returns - gamma_vec * E_Y, gamma_vec, scenarios)
 
         gamma_star = _golden_section_min(risk_of_gamma, lo, hi, n_iter)
         return returns - gamma_star * E_Y, gamma_star
@@ -343,7 +350,7 @@ class MeanRiskProblem(eqx.Module):
     def _degenerate_targets(
         self,
         returns: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure,
         gamma_bounds: tuple[float, float],
         n_iter: int,
     ) -> tuple[Array, Array]:
@@ -354,7 +361,7 @@ class MeanRiskProblem(eqx.Module):
         hi = float(gamma_bounds[1])
         if self.rank == 1:
             return self._point_targets(returns, returns_np, EY, lo, hi)
-        return self._line_targets(returns, returns_np, Y, EY, lo, hi, gamma_bounds, n_iter)
+        return self._line_targets(returns, returns_np, scenarios, EY, lo, hi, gamma_bounds, n_iter)
 
     def _point_targets(
         self,
@@ -385,7 +392,7 @@ class MeanRiskProblem(eqx.Module):
         self,
         returns: Array,
         returns_np: np.ndarray,
-        Y: Array,
+        scenarios: DiscreteMeasure,
         EY: float,
         lo: float,
         hi: float,
@@ -401,7 +408,7 @@ class MeanRiskProblem(eqx.Module):
                     "expected return is not attainable; on the reachable set "
                     f"the return is constant and equal to {m0}")
             # The return constraint contains S, so the line search stays on S.
-            return self._search_return_line(returns, Y, gamma_bounds, n_iter)
+            return self._search_return_line(returns, scenarios, gamma_bounds, n_iter)
         t = (returns_np - m0) / slope
         gamma_np = c0[1] + t * dc[1]
         if np.any(gamma_np < lo - MEAN_RISK_REACH_ATOL) or np.any(
@@ -420,7 +427,7 @@ class MeanRiskProblem(eqx.Module):
     # ------------------------------------------------------------------
 
     @eqx.filter_jit
-    def _surface_risk(self, mu_flat: Array, gamma_flat: Array, Y: Array) -> Array:
+    def _surface_risk(self, mu_flat: Array, gamma_flat: Array, scenarios: DiscreteMeasure) -> Array:
         r"""Risk over flattened reduced coordinates (vectorized, JIT-able)."""
         C = jnp.stack([mu_flat, gamma_flat, jnp.ones_like(mu_flat)], axis=-1)
         r = self.rank
@@ -428,23 +435,26 @@ class MeanRiskProblem(eqx.Module):
         g = jnp.sum(alpha * alpha, axis=-1)
         sigma = jnp.sqrt(g)
         return jax.vmap(self.risk.value_reduced, in_axes=(0, 0, 0, None))(
-            mu_flat, gamma_flat, sigma, Y)
+            mu_flat, gamma_flat, sigma, scenarios)
 
-    def risk_at(self, mu_tilde: Array, gamma_tilde: Array, Y: Array) -> Array:
+    def risk_at(self, mu_tilde: Array, gamma_tilde: Array,
+                scenarios: DiscreteMeasure | Array | None = None) -> Array:
         r"""Efficient-surface risk at a single :math:`(\tilde\mu, \tilde\gamma)`."""
+        scenarios = self.scenarios if scenarios is None else DiscreteMeasure.coerce(scenarios)
         sigma = jnp.sqrt(self.dispersion(mu_tilde, gamma_tilde))
         return self.risk.value_reduced(
             jnp.asarray(mu_tilde, dtype=jnp.float64),
-            jnp.asarray(gamma_tilde, dtype=jnp.float64), sigma, Y)
+            jnp.asarray(gamma_tilde, dtype=jnp.float64), sigma, scenarios)
 
     def efficient_surface(
-        self, mu_tilde: Array, gamma_tilde: Array, Y: Array,
+        self, mu_tilde: Array, gamma_tilde: Array,
+        scenarios: DiscreteMeasure | Array | None = None,
     ) -> EfficientSurface:
         r"""Evaluate the efficient surface over the grid ``mu_tilde × gamma_tilde``.
 
         ``mu_tilde`` and ``gamma_tilde`` are 1-D arrays; the returned
         ``risk`` has shape ``(len(mu_tilde), len(gamma_tilde))``. Memory
-        scales as ``len(mu_tilde) * len(gamma_tilde) * len(Y)``.
+        scales as ``len(mu_tilde) * len(gamma_tilde) * len(scenarios.Y)``.
         Every grid node must lie in the reachable set.
 
         Raises
@@ -452,12 +462,13 @@ class MeanRiskProblem(eqx.Module):
         ValueError
             If any node lies outside the reachable set.
         """
+        scenarios = self.scenarios if scenarios is None else DiscreteMeasure.coerce(scenarios)
         mu_tilde = jnp.asarray(mu_tilde, dtype=jnp.float64)
         gamma_tilde = jnp.asarray(gamma_tilde, dtype=jnp.float64)
         MU, GA = jnp.meshgrid(mu_tilde, gamma_tilde, indexing='ij')
         C = jnp.stack([MU.ravel(), GA.ravel(), jnp.ones(MU.size)], axis=-1)
         self._raise_if_any_unreachable(C)
-        risk = self._surface_risk(MU.ravel(), GA.ravel(), Y).reshape(MU.shape)
+        risk = self._surface_risk(MU.ravel(), GA.ravel(), scenarios).reshape(MU.shape)
         return EfficientSurface(
             mu_tilde=mu_tilde, gamma_tilde=gamma_tilde,
             risk=risk, expected_return=MU + GA * self.E_Y(),
@@ -466,7 +477,8 @@ class MeanRiskProblem(eqx.Module):
     def efficient_frontier(
         self,
         returns: Array,
-        Y: Array,
+        scenarios: DiscreteMeasure | Array | None = None,
+        *,
         gamma_bounds: tuple[float, float],
         n_iter: int = 48,
     ) -> EfficientFrontier:
@@ -488,16 +500,17 @@ class MeanRiskProblem(eqx.Module):
             If a target return is not attainable on the reachable set, or
             the feasible :math:`\tilde\gamma` lies outside ``gamma_bounds``.
         """
+        scenarios = self.scenarios if scenarios is None else DiscreteMeasure.coerce(scenarios)
         returns = jnp.asarray(returns, dtype=jnp.float64)
         if self.rank == 3:
             mu_star, gamma_star = self._search_return_line(
-                returns, Y, gamma_bounds, n_iter)
+                returns, scenarios, gamma_bounds, n_iter)
         else:
             mu_star, gamma_star = self._degenerate_targets(
-                returns, Y, gamma_bounds, n_iter)
+                returns, scenarios, gamma_bounds, n_iter)
         C = jnp.stack([mu_star, gamma_star, jnp.ones_like(mu_star)], axis=-1)
         self._raise_if_any_unreachable(C)
-        risk_star = self._surface_risk(mu_star, gamma_star, Y)
+        risk_star = self._surface_risk(mu_star, gamma_star, scenarios)
         weights = jax.vmap(self.weights)(mu_star, gamma_star)
         return EfficientFrontier(
             expected_return=returns, risk=risk_star,
