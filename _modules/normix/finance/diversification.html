@@ -213,6 +213,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -228,6 +229,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -239,6 +241,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -427,6 +430,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.quadrature</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance.risk</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">TORSION_SPECTRAL_FLOOR</span>
@@ -650,7 +654,7 @@
 <span class="sd">    For 1-homogeneous :math:`\rho`, diagonalizes</span>
 <span class="sd">    :math:`H_{r^2}(w) = 2\nabla r\,\nabla r^\top + 2 r H_r` where</span>
 <span class="sd">    :math:`(r, \nabla r, H_r)` come from **one** call to</span>
-<span class="sd">    ``risk.value_grad_hess_w(model, w, Y)``. Meaningful only for</span>
+<span class="sd">    ``risk.value_grad_hess_w(model, w, scenarios)``. Meaningful only for</span>
 <span class="sd">    :math:`r(w) &gt; 0` (else :math:`r^2` is not convex at ``w`` and ``enb``</span>
 <span class="sd">    is NaN).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -661,16 +665,14 @@
 <div class="viewcode-block" id="GeneralizedENB.evaluate">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.diversification.GeneralizedENB.evaluate">[docs]</a>
     <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ENBResult</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ENB at ``w`` under subordinator sample ``Y`` (common random numbers).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">scenarios</span><span class="p">:</span> <span class="n">DiscreteMeasure</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ENBResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;ENB at ``w`` under a fixed subordinator measure.</span>
 
-<span class="sd">        ``Y`` is mandatory — draw once via</span>
-<span class="sd">        ``model.joint.subordinator().rvs(n, seed)`` and share across finance</span>
-<span class="sd">        evaluations. Not promised vmap-able over ``w``: the fused bundle seeds</span>
-<span class="sd">        its CMC bracket from the PINV ``ppf``.</span>
+<span class="sd">        Defaults to subordinator quadrature. Pass a shared measure or sample</span>
+<span class="sd">        to reuse it across evaluations. Supports ``vmap`` over weights.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">H_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_grad_hess_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">H_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_grad_hess_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">scenarios</span><span class="p">)</span>
         <span class="n">H2</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">r</span> <span class="o">*</span> <span class="n">H_r</span>
         <span class="n">dec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">torsion</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span><span class="n">H2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_enb_core</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">risk_positive</span><span class="o">=</span><span class="n">r</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span></div>

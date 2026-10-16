@@ -216,6 +216,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -231,6 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -242,6 +244,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -463,6 +466,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_base_measure"><code class="docutils literal notranslate"><span class="pre">Gamma.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.mean"><code class="docutils literal notranslate"><span class="pre">Gamma.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.var"><code class="docutils literal notranslate"><span class="pre">Gamma.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.quadrature"><code class="docutils literal notranslate"><span class="pre">Gamma.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">Gamma.log_density_power()</span></code></a></li>
@@ -486,6 +490,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_base_measure"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.mean"><code class="docutils literal notranslate"><span class="pre">InverseGamma.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.var"><code class="docutils literal notranslate"><span class="pre">InverseGamma.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.quadrature"><code class="docutils literal notranslate"><span class="pre">InverseGamma.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_density_power()</span></code></a></li>
@@ -510,6 +515,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.quadrature"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
@@ -536,6 +542,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.expectation_params_batch()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.mean()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moment"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moments"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.var()</span></code></a></li>
@@ -853,6 +860,20 @@ x^{\alpha-1} e^{-\beta x}, \quad x &gt; 0\]</div>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.quadrature">
+<span class="sig-name descname"><span class="pre">quadrature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.quadrature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.quadrature" title="Link to this definition">#</a></dt>
+<dd><p>Probability quadrature in <span class="math notranslate nohighlight">\(\log Y\)</span>; see <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature"><code class="xref py py-meth docutils literal notranslate"><span class="pre">quadrature()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="finance.html#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.gamma.Gamma.raw_moment">
 <span class="sig-name descname"><span class="pre">raw_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/gamma.html#Gamma.raw_moment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.gamma.Gamma.raw_moment" title="Link to this definition">#</a></dt>
 <dd><p>Raw moment <span class="math notranslate nohighlight">\(E[X^k] = \Gamma(\alpha+k)/(\Gamma(\alpha)\,\beta^k)\)</span>.</p>
@@ -1123,6 +1144,20 @@ pole at <span class="math notranslate nohighlight">\(\alpha=1\)</span> from prod
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gamma.InverseGamma.quadrature">
+<span class="sig-name descname"><span class="pre">quadrature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gamma.html#InverseGamma.quadrature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gamma.InverseGamma.quadrature" title="Link to this definition">#</a></dt>
+<dd><p>Probability quadrature in <span class="math notranslate nohighlight">\(\log Y\)</span>; see <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature"><code class="xref py py-meth docutils literal notranslate"><span class="pre">quadrature()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="finance.html#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1415,6 +1450,20 @@ route through this method) are evaluated on the GIG embedding.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.quadrature">
+<span class="sig-name descname"><span class="pre">quadrature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.quadrature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.quadrature" title="Link to this definition">#</a></dt>
+<dd><p>Probability quadrature in <span class="math notranslate nohighlight">\(\log Y\)</span>; see <a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature"><code class="xref py py-meth docutils literal notranslate"><span class="pre">quadrature()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="finance.html#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1751,6 +1800,31 @@ backend=’cpu’ : one batched <code class="docutils literal notranslate"><span
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature">
+<span class="sig-name descname"><span class="pre">quadrature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.quadrature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature" title="Link to this definition">#</a></dt>
+<dd><p>Construct a probability rule in <span class="math notranslate nohighlight">\(s=\log Y\)</span>.</p>
+<p>Uses positive Gauss–Legendre weights on eight sinh-mapped panels,
+four on each side of the mode. <code class="docutils literal notranslate"><span class="pre">n_nodes</span></code> must be a positive
+multiple of eight. Density and first-moment tilts determine the
+window, with a log-density drop of 40 and representable log nodes
+restricted to <span class="math notranslate nohighlight">\([-700,700]\)</span>.</p>
+<p>Nodes and geometric weights are frozen under autodiff; normalized
+density weights remain live. The rule includes the Gamma and
+inverse-gamma boundaries exactly, without a Bessel normalizer.
+First parameter derivatives of expectations are supported; see
+<a class="reference internal" href="../theory/quadrature_scenarios.html"><span class="doc">Quadrature scenarios for mixture CVaR</span></a> for the envelope argument and
+the limitations of a fixed rule near a conditional-CDF step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="finance.html#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3464,6 +3538,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_base_measure"><code class="docutils literal notranslate"><span class="pre">Gamma.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.mean"><code class="docutils literal notranslate"><span class="pre">Gamma.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.var"><code class="docutils literal notranslate"><span class="pre">Gamma.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.quadrature"><code class="docutils literal notranslate"><span class="pre">Gamma.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">Gamma.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.gamma.Gamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">Gamma.log_density_power()</span></code></a></li>
@@ -3487,6 +3562,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_base_measure"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.mean"><code class="docutils literal notranslate"><span class="pre">InverseGamma.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.var"><code class="docutils literal notranslate"><span class="pre">InverseGamma.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.quadrature"><code class="docutils literal notranslate"><span class="pre">InverseGamma.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGamma.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gamma.InverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGamma.log_density_power()</span></code></a></li>
@@ -3511,6 +3587,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.log_density_power"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mean()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.var()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.quadrature"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.raw_moment"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.raw_moments"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.inverse_gaussian.InverseGaussian.mode"><code class="docutils literal notranslate"><span class="pre">InverseGaussian.mode()</span></code></a></li>
@@ -3537,6 +3614,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_base_measure"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.log_base_measure()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.expectation_params_batch"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.expectation_params_batch()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.mean()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.quadrature"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.quadrature()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moment"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.raw_moment()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moments"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.raw_moments()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var"><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.var()</span></code></a></li>

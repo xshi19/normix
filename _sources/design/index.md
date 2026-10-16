@@ -12,6 +12,7 @@ mixtures
 em_framework
 solvers_and_bessel
 why_not_gradient_descent
+quadrature_scenarios
 ```
 
 ## Quick lookups

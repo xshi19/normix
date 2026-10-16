@@ -1,0 +1,750 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Quadrature scenarios for portfolio CVaR &#8212; normix 0.3.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=6512192e"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/finance/08_quadrature_scenarios';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Mathematical Background" href="../../theory/index.html" />
+    <link rel="prev" title="Diversification: variance ENB vs CVaR ENB" href="07_diversification.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.3.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Quadrature scenarios for portfolio CVaR</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../research/subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../research/subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../research/mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../asv.html">Benchmark trends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Ftutorials/finance/08_quadrature_scenarios.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/tutorials/finance/08_quadrature_scenarios.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Quadrature scenarios for portfolio CVaR</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#an-independent-reference">An independent reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-same-measure-throughout-optimization">The same measure throughout optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-narrow-transition-needs-more-nodes">A narrow transition needs more nodes</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="quadrature-scenarios-for-portfolio-cvar">
+<h1>Quadrature scenarios for portfolio CVaR<a class="headerlink" href="#quadrature-scenarios-for-portfolio-cvar" title="Link to this heading">#</a></h1>
+<p>We compare deterministic quadrature with conditional Monte Carlo for one NIG
+portfolio. Both methods integrate the conditional normal exactly and differ
+only in their measure of the mixing variable <span class="math notranslate nohighlight">\(Y\)</span>. The value is the
+<a class="reference internal" href="../../references.html#rockafellaruryasev2000"><span class="std std-ref">Rockafellar–Uryasev</span></a> objective; its derivation
+and quadrature error analysis are in <a class="reference internal" href="../../theory/quadrature_scenarios.html"><span class="doc">Quadrature scenarios for mixture CVaR</span></a>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.integrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">quad</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norminvgauss</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalInverseGaussian</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance</span><span class="w"> </span><span class="kn">import</span> <span class="n">CVaR</span><span class="p">,</span> <span class="n">DiscreteMeasure</span><span class="p">,</span> <span class="n">MeanRiskProblem</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
+    <span class="n">mu</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.01</span><span class="p">]),</span>
+    <span class="n">gamma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">]),</span>
+    <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]]),</span>
+    <span class="n">mu_ig</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+<span class="n">risk</span> <span class="o">=</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;nodes: </span><span class="si">{</span><span class="n">Q</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">, probability sum: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">Q</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">:</span><span class="s2">.15f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CVaR: </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">))</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nodes: 512, probability sum: 1.000000000000000
+CVaR: 1.087113302837
+</pre></div>
+</div>
+</div>
+</div>
+<section id="an-independent-reference">
+<h2>An independent reference<a class="headerlink" href="#an-independent-reference" title="Link to this heading">#</a></h2>
+<p>We use <a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> to integrate the NIG return
+density. For this subordinator, <span class="math notranslate nohighlight">\(\mu_Y=\lambda=1\)</span>, so the NIG shape parameters
+are <span class="math notranslate nohighlight">\(a=\sqrt{1+(\tilde\gamma/\tilde\sigma)^2}\)</span> and
+<span class="math notranslate nohighlight">\(b=\tilde\gamma/\tilde\sigma\)</span>, with scale <span class="math notranslate nohighlight">\(\tilde\sigma\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">_mu_scalar</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">_gamma_scalar</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">_sigma_scalar</span><span class="p">))</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">/</span> <span class="n">sigma</span>
+<span class="n">reference_law</span> <span class="o">=</span> <span class="n">norminvgauss</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">b</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
+<span class="n">x_alpha</span> <span class="o">=</span> <span class="n">reference_law</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+<span class="n">reference</span> <span class="o">=</span> <span class="o">-</span><span class="n">quad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">*</span> <span class="n">reference_law</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">x_alpha</span><span class="p">,</span>
+                  <span class="n">epsabs</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">,</span> <span class="n">epsrel</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">risk</span><span class="o">.</span><span class="n">alpha</span>
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">q</span><span class="p">))</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;quadrature&quot;</span><span class="p">,</span> <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">&quot;CVaR&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                 <span class="s2">&quot;relative error&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span> <span class="o">/</span> <span class="n">reference</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)})</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">20_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">mc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span>
+<span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;conditional MC&quot;</span><span class="p">,</span> <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="s2">&quot;CVaR&quot;</span><span class="p">:</span> <span class="n">mc</span><span class="p">,</span>
+             <span class="s2">&quot;relative error&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">mc</span> <span class="o">/</span> <span class="n">reference</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)})</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;independent reference: </span><span class="si">{</span><span class="n">reference</span><span class="si">:</span><span class="s2">.12f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Q</span><span class="p">),</span> <span class="n">reference</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-11</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>independent reference: 1.087113302836
+        method  nodes     CVaR  relative error
+    quadrature     64 1.087113    1.278610e-08
+    quadrature    128 1.087113    9.594547e-13
+    quadrature    256 1.087113    9.603429e-13
+    quadrature    512 1.087113    9.605650e-13
+conditional MC  20000 1.091867    4.372920e-03
+</pre></div>
+</div>
+</div>
+</div>
+<p>The MC error in this table belongs to one seed. The repository benchmark
+reports RMSE over multiple seeds. An array still supplies equal-weight draws;
+weighted observations use <code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.from_weights(Y,</span> <span class="pre">weights)</span></code>.</p>
+</section>
+<section id="the-same-measure-throughout-optimization">
+<h2>The same measure throughout optimization<a class="headerlink" href="#the-same-measure-throughout-optimization" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem</span></code> retains one quadrature measure for the surface and frontier.
+Expected returns use the original model’s subordinator mean. We compare the
+optimized weights with the explicit MC path at the same target returns.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">problem</span> <span class="o">=</span> <span class="n">MeanRiskProblem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">risk</span><span class="p">)</span>
+<span class="n">targets</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">frontier</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+<span class="n">mc_frontier</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+<span class="n">comparison</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">targets</span><span class="p">),</span>
+    <span class="s2">&quot;quadrature CVaR&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frontier</span><span class="o">.</span><span class="n">risk</span><span class="p">),</span>
+    <span class="s2">&quot;MC CVaR&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mc_frontier</span><span class="o">.</span><span class="n">risk</span><span class="p">),</span>
+    <span class="s2">&quot;max weight difference&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">frontier</span><span class="o">.</span><span class="n">weights</span> <span class="o">-</span> <span class="n">mc_frontier</span><span class="o">.</span><span class="n">weights</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">comparison</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">frontier</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span> target  quadrature CVaR  MC CVaR  max weight difference
+   0.01         0.824289 0.827389               0.000211
+   0.02         0.800278 0.803171               0.000205
+   0.03         0.782166 0.784879               0.000200
+   0.04         0.769902 0.772462               0.000197
+   0.05         0.763318 0.765752               0.000195
+</pre></div>
+</div>
+</div>
+</div>
+<p>The objective and its derivatives share the same measure. First derivatives
+of the value agree with the analytic weight gradient:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gradient</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="k">lambda</span> <span class="n">weights</span><span class="p">:</span> <span class="n">risk</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">Q</span><span class="p">))(</span><span class="n">w</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">gradient</span><span class="p">,</span> <span class="n">risk</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Q</span><span class="p">),</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-11</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;gradient:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gradient</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;step resolution:&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">step_resolution</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Q</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>gradient: [2.02911693 0.63809878 0.28012298]
+step resolution: 51.94088925228036
+</pre></div>
+</div>
+</div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">risk.hessian_w</span></code> for the Hessian. Applying autodiff twice to the value
+would omit quantile motion because the root is frozen for the envelope derivative.</p>
+</section>
+<section id="a-narrow-transition-needs-more-nodes">
+<h2>A narrow transition needs more nodes<a class="headerlink" href="#a-narrow-transition-needs-more-nodes" title="Link to this heading">#</a></h2>
+<p>Reducing conditional variance makes the CDF transition narrower in <span class="math notranslate nohighlight">\(\log Y\)</span>.
+The diagnostic compares its width with local node spacing; it is not an error
+bound. This example deliberately enters that regime.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sharp</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">gamma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.5</span><span class="p">]),</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.003</span><span class="p">]]))</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">8192</span><span class="p">):</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">sharp</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;nodes=</span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">5d</span><span class="si">}</span><span class="s2">  R=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">step_resolution</span><span class="p">(</span><span class="n">sharp</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="p">))</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;CVaR=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">sharp</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="p">))</span><span class="si">:</span><span class="s2">.10f</span><span class="si">}</span><span class="s2">  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;H_gamma_gamma=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">risk</span><span class="o">.</span><span class="n">hessian_scalar</span><span class="p">(</span><span class="n">sharp</span><span class="p">,</span><span class="w"> </span><span class="n">q</span><span class="p">)[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">])</span><span class="si">:</span><span class="s2">.8f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>nodes=  512  R=0.180  CVaR=2.0983775622  H_gamma_gamma=0.00000001
+nodes= 2048  R=0.738  CVaR=2.0984125499  H_gamma_gamma=0.00017842
+nodes= 8192  R=2.931  CVaR=2.0984125500  H_gamma_gamma=0.00017859
+</pre></div>
+</div>
+</div>
+</div>
+<p>The Hessian can change appreciably after the value appears stable. Inspect
+resolution and convergence before using such curvature in a transaction-cost
+QP or generalized ENB. Moment existence is a separate condition: an
+inverse-gamma law can have finite CVaR and infinite skew curvature at zero skew.
+See <a class="reference internal" href="../../design/quadrature_scenarios.html"><span class="doc">Probability measures for portfolio scenarios</span></a> for the supported defaults and limits.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="07_diversification.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Diversification: variance ENB vs CVaR ENB</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../theory/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Mathematical Background</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#an-independent-reference">An independent reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-same-measure-throughout-optimization">The same measure throughout optimization</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-narrow-transition-needs-more-nodes">A narrow transition needs more nodes</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -15,8 +15,9 @@ The payoff of modelling returns with a normal variance-mean mixture is that
 Gaussian, so the Conditional Value-at-Risk $\operatorname{CVaR}_\alpha$
 ({ref}`RockafellarUryasev2000 <rockafellaruryasev2000>`) — and its gradient and
 Hessian in the portfolio weights ({ref}`Tasche1999 <tasche1999>`,
-{ref}`RauHasanov2004 <rauhasanov2004>`) — can be computed by a fast conditional
-Monte Carlo over $Y$ alone. This tutorial fits a mixture, computes CVaR,
+{ref}`RauHasanov2004 <rauhasanov2004>`) — can be computed by a positive weighted
+sum over $Y$. Quadrature supplies the default scenarios. This tutorial fits a
+mixture, computes CVaR,
 verifies the analytic derivatives, and takes a few gradient steps to reduce
 risk. Formal derivations: {doc}`../../theory/cvar_derivatives`.
 
@@ -54,28 +55,29 @@ cvar = CVaR(alpha)
 print(f"portfolio mean {float(proj.mean()):+.5f}, std {float(proj.std()):.5f}")
 ```
 
-## VaR, CVaR, and conditional Monte Carlo
+## VaR, CVaR, and quadrature
 
-VaR is a deterministic quantile via the projected `ppf`. CVaR uses a conditional
-Monte Carlo over the subordinator draws $Y$ — far lower variance than sampling
-returns directly:
+VaR is a deterministic quantile via the projected `ppf`. CVaR integrates
+over a deterministic quadrature measure of $Y$:
 
 ```{code-cell} python
-Y = proj.subordinator().rvs(100_000, seed=0)
+Q = proj.subordinator().quadrature()
 var_a = float(cvar.var(proj))
-cvar_a = float(cvar.value(proj, Y))
+cvar_a = float(cvar.value(proj, Q))
+Y_mc = proj.subordinator().rvs(100_000, seed=0)
+print(f"conditional-MC CVaR = {float(cvar.value(proj, Y_mc)):.8f}")
 print(f"VaR_{1-alpha:.0%}  = {var_a:.5f}")
 print(f"CVaR_{1-alpha:.0%} = {cvar_a:.5f}")
 ```
 
 We validate against a brute-force quantile estimate from one million return
-draws — agreement confirms the conditional-MC estimator:
+draws — agreement checks the tail-risk scale:
 
 ```{code-cell} python
 draws = jnp.sort(proj.rvs(1_000_000, seed=1))
 k = int(alpha * draws.shape[0])
 cvar_brute = float(-draws[:k].mean())
-print(f"conditional-MC CVaR : {cvar_a:.5f}")
+print(f"quadrature CVaR     : {cvar_a:.5f}")
 print(f"brute-force MC CVaR : {cvar_brute:.5f}")
 ```
 
@@ -83,7 +85,7 @@ print(f"brute-force MC CVaR : {cvar_brute:.5f}")
 
 `CVaR` differentiates the risk analytically in the projected parameters
 $(\tilde\mu, \tilde\gamma, \tilde\sigma)$. We check the gradient against a
-central finite difference using common random numbers (the same $Y$):
+central finite difference using the same fixed measure $Q$:
 
 ```{code-cell} python
 sub = proj.subordinator()
@@ -93,13 +95,13 @@ def rebuild(m, g, s):
     return UnivariateNormalInverseGaussian.from_classical(
         mu=m, gamma=g, sigma=s ** 2, mu_ig=float(sub.mu), lam=float(sub.lam))
 
-g_analytic = np.asarray(cvar.gradient_scalar(proj, Y))
+g_analytic = np.asarray(cvar.gradient_scalar(proj, Q))
 eps = 1e-5
 g_fd = []
 for i, base in enumerate((mt, gt, st)):
     hi, lo = [mt, gt, st], [mt, gt, st]
     hi[i] += eps; lo[i] -= eps
-    g_fd.append((float(cvar.value(rebuild(*hi), Y)) - float(cvar.value(rebuild(*lo), Y))) / (2 * eps))
+    g_fd.append((float(cvar.value(rebuild(*hi), Q)) - float(cvar.value(rebuild(*lo), Q))) / (2 * eps))
 
 print("∂CVaR/∂(μ̃, γ̃, σ̃) analytic:", g_analytic)
 print("∂CVaR/∂(μ̃, γ̃, σ̃) FD      :", np.array(g_fd))
@@ -114,31 +116,31 @@ and `hessian_w` apply the chain rule through the projection; we verify the
 gradient against a finite difference of `value_w`:
 
 ```{code-cell} python
-gw_analytic = np.asarray(cvar.gradient_w(model, w, Y))
+gw_analytic = np.asarray(cvar.gradient_w(model, w, Q))
 gw_fd = []
 for i in range(len(w)):
     hi, lo = w.at[i].add(eps), w.at[i].add(-eps)
-    gw_fd.append((float(cvar.value_w(model, hi, Y)) - float(cvar.value_w(model, lo, Y))) / (2 * eps))
+    gw_fd.append((float(cvar.value_w(model, hi, Q)) - float(cvar.value_w(model, lo, Q))) / (2 * eps))
 
 print("∇_w CVaR analytic:", gw_analytic)
 print("∇_w CVaR FD      :", np.array(gw_fd))
-print("Hessian_w shape  :", np.asarray(cvar.hessian_w(model, w, Y)).shape)
+print("Hessian_w shape  :", np.asarray(cvar.hessian_w(model, w, Q)).shape)
 ```
 
 ## A few risk-reducing steps
 
 Projected gradient descent on the weights (keeping $\sum_i w_i = 1$) reduces the
-portfolio CVaR. We hold $Y$ fixed across steps for a clean comparison:
+portfolio CVaR. We hold $Q$ fixed across steps for a clean comparison:
 
 ```{code-cell} python
 w_opt = w
-path = [float(cvar.value_w(model, w_opt, Y))]
+path = [float(cvar.value_w(model, w_opt, Q))]
 lr = 0.5
 for _ in range(15):
-    g = cvar.gradient_w(model, w_opt, Y)
+    g = cvar.gradient_w(model, w_opt, Q)
     g = g - g.mean()                       # project onto the simplex tangent (Σ Δw = 0)
     w_opt = w_opt - lr * g
-    path.append(float(cvar.value_w(model, w_opt, Y)))
+    path.append(float(cvar.value_w(model, w_opt, Q)))
 
 print(f"start weights : {np.asarray(w)}")
 print(f"final weights : {np.asarray(w_opt)}  (sum {float(w_opt.sum()):.4f})")
@@ -160,13 +162,14 @@ constrained optimizer; the analytic Hessian enables second-order methods.
 
 ## Takeaways
 
-- A fitted mixture yields portfolio VaR and CVaR through a low-variance
-  conditional Monte Carlo over the subordinator $Y$ — validated against
-  brute-force sampling.
+- A fitted mixture yields portfolio VaR through PINV and CVaR through
+  quadrature over the subordinator $Y$, checked against brute-force sampling.
 - `CVaR` provides analytic gradients/Hessians in both $(\tilde\mu, \tilde\gamma,
-  \tilde\sigma)$ and the weights $w$, matching finite differences to machine
-  precision.
+  \tilde\sigma)$ and the weights $w$, checked against finite differences.
 - Those weight-space derivatives drive gradient-based CVaR optimization.
 
 Next: {doc}`05_mean_risk_optimization` turns this into a full mean-risk
 optimizer, reducing the problem to a two-dimensional efficient surface.
+
+Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+{doc}`08_quadrature_scenarios`.

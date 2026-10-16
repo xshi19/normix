@@ -1,0 +1,910 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Quadrature scenarios for mixture CVaR &#8212; normix 0.3.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=6512192e"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'theory/quadrature_scenarios';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Portfolio Optimization with Transaction Costs" href="transaction_costs.html" />
+    <link rel="prev" title="CVaR Derivatives for Normal Mixture Distributions" href="cvar_derivatives.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.3.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Quadrature scenarios for mixture CVaR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../asv.html">Benchmark trends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Ftheory/quadrature_scenarios.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/theory/quadrature_scenarios.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Quadrature scenarios for mixture CVaR</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-returns-and-losses">Portfolio returns and losses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rockafellaruryasev-and-conditioning">Rockafellar–Uryasev and conditioning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-envelope-and-parameter-derivatives">The envelope and parameter derivatives</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scenarios-as-a-probability-measure">Scenarios as a probability measure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gausslegendre-quadrature">Gauss–Legendre quadrature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#log-coordinates-windows-and-heavy-tails">Log coordinates, windows, and heavy tails</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#truncation-with-moment-tilts">Truncation with moment tilts</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-near-step-regime">The near-step regime</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="quadrature-scenarios-for-mixture-cvar">
+<h1>Quadrature scenarios for mixture CVaR<a class="headerlink" href="#quadrature-scenarios-for-mixture-cvar" title="Link to this heading">#</a></h1>
+<p>We derive deterministic scenarios for the normal variance-mean mixtures of
+<a class="reference internal" href="gh.html"><span class="doc">The Generalized Hyperbolic Distribution</span></a>. The portfolio notation and loss convention follow
+<a class="reference internal" href="mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a>; the derivative formulas are developed in
+<a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>. A worked comparison is in
+<a class="reference internal" href="../tutorials/finance/08_quadrature_scenarios.html"><span class="doc">Quadrature scenarios for portfolio CVaR</span></a>.</p>
+<section id="portfolio-returns-and-losses">
+<h2>Portfolio returns and losses<a class="headerlink" href="#portfolio-returns-and-losses" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(\mathbf X=\mu+\gamma Y+\sqrt{Y}Z\)</span>, where <span class="math notranslate nohighlight">\(Y&gt;0\)</span>,
+<span class="math notranslate nohighlight">\(Z\sim N(0,\Sigma)\)</span> is independent of <span class="math notranslate nohighlight">\(Y\)</span>, and <span class="math notranslate nohighlight">\(\Sigma\succ0\)</span>.
+For portfolio weights <span class="math notranslate nohighlight">\(w\ne0\)</span>, define</p>
+<div class="math notranslate nohighlight">
+\[X=w^\top\mathbf X
+\stackrel{d}{=}\tilde\mu+\tilde\gamma Y+\tilde\sigma\sqrt{Y}\,Z_0,
+\qquad
+\tilde\mu=w^\top\mu,\quad
+\tilde\gamma=w^\top\gamma,\quad
+\tilde\sigma=\sqrt{w^\top\Sigma w},\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z_0\sim N(0,1)\)</span> is independent of <span class="math notranslate nohighlight">\(Y\)</span>. The portfolio loss is <span class="math notranslate nohighlight">\(L=-X\)</span>.
+For tail probability <span class="math notranslate nohighlight">\(\alpha\in(0,1)\)</span>, write <span class="math notranslate nohighlight">\(x_\alpha=F_X^{-1}(\alpha)\)</span>.
+Then <span class="math notranslate nohighlight">\(\operatorname{VaR}_\alpha=-x_\alpha\)</span> and
+<span class="math notranslate nohighlight">\(\operatorname{CVaR}_\alpha=-E[X\mid X\le x_\alpha]\)</span>. Positive risk denotes a loss.</p>
+<p>Given <span class="math notranslate nohighlight">\(Y=y\)</span>, put <span class="math notranslate nohighlight">\(m_y=\tilde\mu+\tilde\gamma y\)</span>,
+<span class="math notranslate nohighlight">\(s_y=\tilde\sigma\sqrt y\)</span>, and <span class="math notranslate nohighlight">\(z_y(x)=(x-m_y)/s_y\)</span>.
+With <span class="math notranslate nohighlight">\(\Phi\)</span> and <span class="math notranslate nohighlight">\(\varphi\)</span> denoting the standard normal CDF and density,</p>
+<div class="math notranslate nohighlight">
+\[F_X(x)=E[\Phi(z_Y(x))],\qquad
+f_X(x)=E[\varphi(z_Y(x))/s_Y].\]</div>
+<p>The CDF is continuous and strictly increasing by dominated convergence and
+strict increase of every conditional CDF. Its quantile is unique. Density
+and derivative formulas below assume that the displayed expectations are
+finite at the quantile. The density can be unbounded at the location for
+some Gamma mixing laws; continuity of the CDF does not require a bounded density.</p>
+</section>
+<section id="rockafellaruryasev-and-conditioning">
+<h2>Rockafellar–Uryasev and conditioning<a class="headerlink" href="#rockafellaruryasev-and-conditioning" title="Link to this heading">#</a></h2>
+<p><strong>Proposition.</strong> Suppose <span class="math notranslate nohighlight">\(E|L|&lt;\infty\)</span> and <span class="math notranslate nohighlight">\(F_L\)</span> is continuous. The function</p>
+<div class="math notranslate nohighlight">
+\[G(t)=t+\alpha^{-1}E[(L-t)^+]\]</div>
+<p>is convex, has derivative <span class="math notranslate nohighlight">\(G'(t)=1-\alpha^{-1}\mathbb P(L&gt;t)\)</span>, and attains
+its minimum at the <span class="math notranslate nohighlight">\((1-\alpha)\)</span>-quantiles of <span class="math notranslate nohighlight">\(L\)</span>. Its minimum is CVaR
+(<a class="reference internal" href="../references.html#rockafellaruryasev2000"><span class="std std-ref">RockafellarUryasev2000</span></a>).</p>
+<p><em>Proof.</em> Each function <span class="math notranslate nohighlight">\(t\mapsto(\ell-t)^+\)</span> is convex. Also,
+<span class="math notranslate nohighlight">\(E[(L-t)^+]=\int_t^\infty\mathbb P(L&gt;u)\,du\)</span>, so differentiation gives
+the stated derivative. At a minimizer <span class="math notranslate nohighlight">\(t_*\)</span>, <span class="math notranslate nohighlight">\(\mathbb P(L&gt;t_*)=\alpha\)</span>;
+expanding the positive part gives
+<span class="math notranslate nohighlight">\(G(t_*)=\alpha^{-1}E[L\mathbf1_{\{L&gt;t_*\}}]\)</span>. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>For loss distributions with atoms, the same minimum defines expected
+shortfall with the appropriate fraction of mass at the quantile
+(<a class="reference internal" href="../references.html#rockafellaruryasev2002"><span class="std std-ref">RockafellarUryasev2002</span></a>). Here only <span class="math notranslate nohighlight">\(Y\)</span> will
+be discretized: the normal component keeps the return distribution continuous.</p>
+<p>Substituting <span class="math notranslate nohighlight">\(t=-x\)</span> gives the return form</p>
+<div class="math notranslate nohighlight" id="equation-quad-ru">
+<span class="eqno">(1)<a class="headerlink" href="#equation-quad-ru" title="Link to this equation">#</a></span>\[\operatorname{RU}(x)=-x+\alpha^{-1}E[(x-X)^+],\qquad
+\operatorname{RU}'(x)=-1+F_X(x)/\alpha.\]</div>
+<p><strong>Lemma.</strong> For <span class="math notranslate nohighlight">\(V\sim N(m,s^2)\)</span>, <span class="math notranslate nohighlight">\(s&gt;0\)</span>, and <span class="math notranslate nohighlight">\(z=(x-m)/s\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[E[(x-V)^+]=(x-m)\Phi(z)+s\varphi(z),\qquad
+E[V\mathbf1_{\{V\le x\}}]=m\Phi(z)-s\varphi(z).\]</div>
+<p><em>Proof.</em> Write <span class="math notranslate nohighlight">\(V=m+sZ_0\)</span> and integrate
+<span class="math notranslate nohighlight">\(\int_{-\infty}^z(z-u)\varphi(u)\,du\)</span>.
+Since <span class="math notranslate nohighlight">\(\varphi'(u)=-u\varphi(u)\)</span>, the integral equals
+<span class="math notranslate nohighlight">\(z\Phi(z)+\varphi(z)\)</span>. The second identity follows by the same integration. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>Thus conditioning on <span class="math notranslate nohighlight">\(Y\)</span> integrates the normal variable exactly. Define</p>
+<div class="math notranslate nohighlight">
+\[h_x(y)=(x-m_y)\Phi(z_y(x))+s_y\varphi(z_y(x)).\]</div>
+<p>The tower property gives <span class="math notranslate nohighlight">\(\operatorname{RU}(x)=-x+\alpha^{-1}E[h_x(Y)]\)</span>.
+At <span class="math notranslate nohighlight">\(F_X(x_\alpha)=\alpha\)</span> this becomes</p>
+<div class="math notranslate nohighlight" id="equation-quad-cvar">
+<span class="eqno">(2)<a class="headerlink" href="#equation-quad-cvar" title="Link to this equation">#</a></span>\[\operatorname{CVaR}_\alpha
+=-\alpha^{-1}E[m_Y\Phi(z_Y(x_\alpha))-s_Y\varphi(z_Y(x_\alpha))].\]</div>
+<p>Whenever second moments exist, conditioning also reduces Monte Carlo variance:
+<span class="math notranslate nohighlight">\(\operatorname{Var}(E[(x-X)^+\mid Y])\le\operatorname{Var}((x-X)^+)\)</span>.
+The conditional integrand is smooth, even though the positive part has a kink.</p>
+<section id="the-envelope-and-parameter-derivatives">
+<h3>The envelope and parameter derivatives<a class="headerlink" href="#the-envelope-and-parameter-derivatives" title="Link to this heading">#</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(\theta\)</span> be a model parameter and assume differentiation under the
+expectation is valid. At the minimizing root, <span class="math notranslate nohighlight">\(\partial_x\operatorname{RU}=0\)</span>;
+hence</p>
+<div class="math notranslate nohighlight">
+\[\frac{d\operatorname{CVaR}_\alpha}{d\theta}
+=\left.\partial_\theta\operatorname{RU}(x;\theta)\right|_{x=x_\alpha}.\]</div>
+<p>The root can therefore be held fixed for a first derivative. The expression
+<span class="math notranslate nohighlight">\(C(x)=-\alpha^{-1}E[m_Y\Phi(z_Y)-s_Y\varphi(z_Y)]\)</span> instead satisfies
+<span class="math notranslate nohighlight">\(C(x)=\operatorname{RU}(x)-x(F_X(x)-\alpha)/\alpha\)</span>.
+Its derivative at a frozen root contains the extra term
+<span class="math notranslate nohighlight">\(-x\partial_\theta F_X/\alpha\)</span>. Equality of values at a root does not imply
+equality of their frozen-root derivatives.</p>
+<p>Differentiating the conditional positive part gives</p>
+<div class="math notranslate nohighlight">
+\[\partial_{\tilde\mu}\operatorname{CVaR}_\alpha=-1,\qquad
+\partial_{\tilde\gamma}\operatorname{CVaR}_\alpha=-\alpha^{-1}E[Y\Phi(z_Y)],\qquad
+\partial_{\tilde\sigma}\operatorname{CVaR}_\alpha=\alpha^{-1}E[\sqrt Y\varphi(z_Y)].\]</div>
+<p>The analytic Hessian and the chain rule to <span class="math notranslate nohighlight">\(w\)</span> are in
+<a class="reference internal" href="cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>, following <a class="reference internal" href="../references.html#tasche1999"><span class="std std-ref">Tasche1999</span></a> and
+<a class="reference internal" href="../references.html#rauhasanov2004"><span class="std std-ref">RauHasanov2004</span></a>. A frozen-root <em>second</em> derivative
+omits the motion of the minimizer. It must not replace that Hessian.</p>
+</section>
+</section>
+<section id="scenarios-as-a-probability-measure">
+<h2>Scenarios as a probability measure<a class="headerlink" href="#scenarios-as-a-probability-measure" title="Link to this heading">#</a></h2>
+<p><strong>Definition.</strong> A scenario measure is
+<span class="math notranslate nohighlight">\(Q=\sum_{j=1}^N p_j\delta_{Y_j}\)</span>, with <span class="math notranslate nohighlight">\(Y_j&gt;0\)</span>, <span class="math notranslate nohighlight">\(p_j\ge0\)</span>, and <span class="math notranslate nohighlight">\(\sum_jp_j=1\)</span>.
+Write <span class="math notranslate nohighlight">\(E_Q[g]=\sum_jp_jg(Y_j)\)</span> and let
+<span class="math notranslate nohighlight">\(X_Q=\tilde\mu+\tilde\gamma Y_Q+\tilde\sigma\sqrt{Y_Q}Z_0\)</span>, where <span class="math notranslate nohighlight">\(Y_Q\sim Q\)</span>.
+An i.i.d. sample has <span class="math notranslate nohighlight">\(p_j=1/N\)</span>. Quadrature supplies deterministic nodes and
+nonuniform probabilities. Weighted historical scenarios are another instance.</p>
+<p><strong>Proposition.</strong> Every conditional CDF, CVaR, gradient, and Hessian identity
+above holds exactly for <span class="math notranslate nohighlight">\(X_Q\)</span> with <span class="math notranslate nohighlight">\(E\)</span> replaced by <span class="math notranslate nohighlight">\(E_Q\)</span>. In particular,
+<span class="math notranslate nohighlight">\(F_Q\)</span> is continuous and strictly increasing. If
+<span class="math notranslate nohighlight">\(q_j=m_{Y_j}+s_{Y_j}\Phi^{-1}(\alpha)\)</span> for the positive-mass atoms, then</p>
+<div class="math notranslate nohighlight">
+\[F_Q(\min_j q_j)\le\alpha\le F_Q(\max_j q_j).\]</div>
+<p><em>Proof.</em> <span class="math notranslate nohighlight">\(X_Q\)</span> is a probability mixture of normals. At the minimum component
+quantile every component CDF is at most <span class="math notranslate nohighlight">\(\alpha\)</span>, and at the maximum every
+component CDF is at least <span class="math notranslate nohighlight">\(\alpha\)</span>. Taking a convex combination preserves both
+inequalities. All conditional identities follow from the same tower property. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>CVaR remains coherent and convex in <span class="math notranslate nohighlight">\(w\)</span> for this fixed law
+(<a class="reference internal" href="../references.html#artzner1999"><span class="std std-ref">Artzner1999</span></a>). The efficient-surface reduction of
+<a class="reference internal" href="mean_risk_optimization.html"><span class="doc">Mean-Risk Optimization for Normal Mixture Distributions</span></a> therefore holds for <span class="math notranslate nohighlight">\(X_Q\)</span> as well. Negative
+weights need not define a CDF and destroy this argument.</p>
+<p><strong>Proposition (error transfer).</strong> If both risks are finite, then</p>
+<div class="math notranslate nohighlight">
+\[|\operatorname{CVaR}_\alpha(X_Q)-\operatorname{CVaR}_\alpha(X)|
+\le\alpha^{-1}\max_{x\in\{x_\alpha,x_{\alpha,Q}\}}
+|(E_Q-E)[h_x(Y)]|.\]</div>
+<p><em>Proof.</em> Evaluate <span class="math notranslate nohighlight">\(\operatorname{RU}_Q\)</span> at the minimizer of
+<span class="math notranslate nohighlight">\(\operatorname{RU}\)</span> to bound one difference; interchange the two functions
+for the reverse inequality. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>To first order the quantile error is
+<span class="math notranslate nohighlight">\(x_{\alpha,Q}-x_\alpha\simeq-(F_Q-F_X)(x_\alpha)/f_X(x_\alpha)\)</span>.
+CVaR stationarity removes this root error to first order, whereas derivative
+errors also depend on the root shift.</p>
+<p>For i.i.d. nodes, <span class="math notranslate nohighlight">\(\operatorname{Var}(E_Q[g])=\operatorname{Var}(g(Y))/N\)</span> when
+that variance exists. The usual <span class="math notranslate nohighlight">\(N^{-1/2}\)</span> rate does not use smoothness. For
+inverse-gamma shape at most two and negative skew, the second moment of the
+CVaR integrand diverges; this rate is then unjustified.</p>
+</section>
+<section id="gausslegendre-quadrature">
+<h2>Gauss–Legendre quadrature<a class="headerlink" href="#gausslegendre-quadrature" title="Link to this heading">#</a></h2>
+<p>The Legendre polynomial
+<span class="math notranslate nohighlight">\(P_M(t)=(2^M M!)^{-1}(d/dt)^M(t^2-1)^M\)</span> is orthogonal to every polynomial
+of degree below <span class="math notranslate nohighlight">\(M\)</span> on <span class="math notranslate nohighlight">\([-1,1]\)</span>. Its <span class="math notranslate nohighlight">\(M\)</span> roots <span class="math notranslate nohighlight">\(t_j\)</span> are distinct and interior
+(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a>, <a class="reference external" href="https://dlmf.nist.gov/18.3">§18.3</a>).
+Let <span class="math notranslate nohighlight">\(\ell_j(t)=\prod_{k\ne j}(t-t_k)/(t_j-t_k)\)</span> and
+<span class="math notranslate nohighlight">\(w_j=\int_{-1}^1\ell_j(t)\,dt\)</span>.</p>
+<p><strong>Proposition.</strong> The rule <span class="math notranslate nohighlight">\(\sum_jw_jh(t_j)\)</span> is exact for polynomials of
+degree at most <span class="math notranslate nohighlight">\(2M-1\)</span>. Its weights satisfy</p>
+<div class="math notranslate nohighlight">
+\[w_j=\int_{-1}^1\ell_j(t)^2\,dt
+=\frac{2}{(1-t_j^2)[P_M'(t_j)]^2}&gt;0,\qquad \sum_jw_j=2.\]</div>
+<p><em>Proof.</em> Divide a polynomial <span class="math notranslate nohighlight">\(q\)</span> of degree at most <span class="math notranslate nohighlight">\(2M-1\)</span> as <span class="math notranslate nohighlight">\(q=P_Mr+s\)</span>,
+with <span class="math notranslate nohighlight">\(\deg r,\deg s&lt;M\)</span>. Orthogonality gives <span class="math notranslate nohighlight">\(\int q=\int s\)</span>, and <span class="math notranslate nohighlight">\(q=s\)</span>
+at the nodes. Interpolation integrates <span class="math notranslate nohighlight">\(s\)</span> exactly. Applying this result to
+<span class="math notranslate nohighlight">\(\ell_j^2\)</span> proves positivity; applying it to 1 gives the sum. The closed
+form follows from the Legendre Christoffel–Darboux identity and
+<span class="math notranslate nohighlight">\((1-t^2)P_M'(t)=M(P_{M-1}(t)-tP_M(t))\)</span>
+(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a>, <a class="reference external" href="https://dlmf.nist.gov/18.2">§18.2</a> and
+<a class="reference external" href="https://dlmf.nist.gov/18.9">§18.9</a>). <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>No <span class="math notranslate nohighlight">\(M\)</span>-node rule can integrate every degree-<span class="math notranslate nohighlight">\(2M\)</span> polynomial: the nonnegative
+polynomial <span class="math notranslate nohighlight">\(\prod_j(t-t_j)^2\)</span> vanishes at all nodes and has positive integral.
+For <span class="math notranslate nohighlight">\(M=2\)</span>, <span class="math notranslate nohighlight">\(t_j=\pm1/\sqrt3\)</span> and <span class="math notranslate nohighlight">\(w_j=1\)</span>. Cubics integrate exactly;
+the error on <span class="math notranslate nohighlight">\(t^4\)</span> is <span class="math notranslate nohighlight">\(2/5-2/9=8/45\)</span>.</p>
+<p>For <span class="math notranslate nohighlight">\(h\in C^{2M}[-1,1]\)</span>, the remainder is</p>
+<div class="math notranslate nohighlight">
+\[\int_{-1}^1h(t)\,dt-\sum_jw_jh(t_j)
+=\frac{2^{2M+1}(M!)^4}{(2M+1)[(2M)!]^3}h^{(2M)}(\xi)\]</div>
+<p>for some <span class="math notranslate nohighlight">\(\xi\in(-1,1)\)</span> (<a class="reference internal" href="../references.html#davisrabinowitz1984"><span class="std std-ref">DavisRabinowitz1984</span></a>).
+To obtain the constant, subtract the Hermite interpolant matching <span class="math notranslate nohighlight">\(h,h'\)</span>
+at the roots. Bound its remainder above and below by the extreme values
+of <span class="math notranslate nohighlight">\(h^{(2M)}\)</span> times <span class="math notranslate nohighlight">\(\prod_j(t-t_j)^2/(2M)!\)</span>, then use continuity.
+The leading coefficient of <span class="math notranslate nohighlight">\(P_M\)</span> is <span class="math notranslate nohighlight">\((2M)!/(2^M(M!)^2)\)</span> and
+<span class="math notranslate nohighlight">\(\int_{-1}^1P_M^2=2/(2M+1)\)</span>.</p>
+<p>More generally, if <span class="math notranslate nohighlight">\(E_n(h)\)</span> is the best uniform polynomial approximation
+error of degree <span class="math notranslate nohighlight">\(n\)</span>, positivity and exactness imply
+<span class="math notranslate nohighlight">\(|\int h-\sum_jw_jh(t_j)|\le4E_{2M-1}(h)\)</span>.
+Analyticity in a Bernstein ellipse with parameter <span class="math notranslate nohighlight">\(\rho&gt;1\)</span> gives geometric
+convergence in <span class="math notranslate nohighlight">\(M\)</span>; the bound also depends on the maximum magnitude in that
+ellipse (<a class="reference internal" href="../references.html#trefethen2013"><span class="std std-ref">Trefethen2013</span></a>). Entire integrands can still
+require many nodes when they vary rapidly near the real axis.</p>
+</section>
+<section id="log-coordinates-windows-and-heavy-tails">
+<h2>Log coordinates, windows, and heavy tails<a class="headerlink" href="#log-coordinates-windows-and-heavy-tails" title="Link to this heading">#</a></h2>
+<p>Set <span class="math notranslate nohighlight">\(s=\log y\)</span>. Then <span class="math notranslate nohighlight">\(f_s(s)=f_Y(e^s)e^s\)</span> and all four mixing laws have</p>
+<div class="math notranslate nohighlight">
+\[\log f_s(s)=\nu s-Ae^s-Be^{-s}+\text{constant}.\]</div>
+<p>Here <span class="math notranslate nohighlight">\(A,B\ge0\)</span>. We use <span class="math notranslate nohighlight">\(a_Y\)</span> for Gamma or inverse-gamma shape to distinguish
+it from the tail probability <span class="math notranslate nohighlight">\(\alpha\)</span>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Law</p></th>
+<th class="head text-right"><p><span class="math notranslate nohighlight">\(\nu\)</span></p></th>
+<th class="head text-right"><p><span class="math notranslate nohighlight">\(A\)</span></p></th>
+<th class="head text-right"><p><span class="math notranslate nohighlight">\(B\)</span></p></th>
+<th class="head"><p>Positive moments</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Gamma<span class="math notranslate nohighlight">\((a_Y,\beta)\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(a_Y\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(\beta\)</span></p></td>
+<td class="text-right"><p>0</p></td>
+<td><p>all</p></td>
+</tr>
+<tr class="row-odd"><td><p>InverseGamma<span class="math notranslate nohighlight">\((a_Y,\beta)\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(-a_Y\)</span></p></td>
+<td class="text-right"><p>0</p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(\beta\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(k&lt;a_Y\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>InverseGaussian<span class="math notranslate nohighlight">\((\mu_Y,\lambda)\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(-1/2\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(\lambda/(2\mu_Y^2)\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(\lambda/2\)</span></p></td>
+<td><p>all</p></td>
+</tr>
+<tr class="row-odd"><td><p>GIG<span class="math notranslate nohighlight">\((p,a,b)\)</span>, <span class="math notranslate nohighlight">\(a,b&gt;0\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(p\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(a/2\)</span></p></td>
+<td class="text-right"><p><span class="math notranslate nohighlight">\(b/2\)</span></p></td>
+<td><p>all</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The log density is strictly concave. At its mode <span class="math notranslate nohighlight">\(s_0\)</span>, let
+<span class="math notranslate nohighlight">\(A_c=Ae^{s_0}\)</span>, <span class="math notranslate nohighlight">\(B_c=Be^{-s_0}\)</span>, and <span class="math notranslate nohighlight">\(u=s-s_0\)</span>. Then</p>
+<div class="math notranslate nohighlight">
+\[A_c-B_c=\nu,\qquad A_cB_c=AB,\qquad
+g_c(u)=\nu u-A_c\operatorname{expm1}(u)-B_c\operatorname{expm1}(-u).\]</div>
+<p>A quadrature rule on a finite window, including its change-of-variable
+Jacobian in <span class="math notranslate nohighlight">\(\omega_j&gt;0\)</span>, yields
+<span class="math notranslate nohighlight">\(Y_j=e^{s_0+u_j}\)</span> and <span class="math notranslate nohighlight">\(p_j\propto\omega_j e^{g_c(u_j)}\)</span>.
+Normalization removes the unknown density constant, so no Bessel normalizer
+is needed. The sinh coordinate <span class="math notranslate nohighlight">\(u=c\sinh t\)</span>, with
+<span class="math notranslate nohighlight">\(c=(A_c+B_c)^{-1/2}\)</span>, concentrates nodes near the mode.</p>
+<section id="truncation-with-moment-tilts">
+<h3>Truncation with moment tilts<a class="headerlink" href="#truncation-with-moment-tilts" title="Link to this heading">#</a></h3>
+<p>For an integrand growing as <span class="math notranslate nohighlight">\(y^k\)</span>, the relevant exponent is <span class="math notranslate nohighlight">\(g_c(u)+ku\)</span>.
+A right endpoint where this exponent has dropped by <span class="math notranslate nohighlight">\(P\)</span> controls that
+moment’s tail, provided the moment exists. Density truncation alone does
+not control <span class="math notranslate nohighlight">\(Y\)</span>-weighted tail integrals.</p>
+<p><strong>Lemma.</strong> Let <span class="math notranslate nohighlight">\(\psi(s)=\log f_s(s)\)</span>. If <span class="math notranslate nohighlight">\(\lambda_b=\psi'(b)+k&lt;0\)</span>, then</p>
+<div class="math notranslate nohighlight">
+\[\int_b^\infty e^{ks}f_s(s)\,ds
+\le \frac{e^{kb}f_s(b)}{|\lambda_b|}.\]</div>
+<p><em>Proof.</em> Concavity places <span class="math notranslate nohighlight">\(\psi(s)+ks\)</span> below its tangent at <span class="math notranslate nohighlight">\(b\)</span>.
+Exponentiate that tangent and integrate. <span class="math notranslate nohighlight">\(\square\)</span></p>
+<p>For inverse-gamma shape <span class="math notranslate nohighlight">\(a_Y\)</span>, the right tail in <span class="math notranslate nohighlight">\(s\)</span> decays like
+<span class="math notranslate nohighlight">\(e^{-a_Ys}\)</span>; a <span class="math notranslate nohighlight">\(k\)</span>-tilted window has length roughly <span class="math notranslate nohighlight">\(P/(a_Y-k)\)</span>.
+The <span class="math notranslate nohighlight">\(k=1\)</span> tilt covers CVaR and its skew derivative for negative skew.
+At zero skew the skew Hessian requires <span class="math notranslate nohighlight">\(E[Y^{3/2}]\)</span>. Gamma with small shape
+has a long <em>left</em> exponential tail. Interior GIG and inverse Gaussian have
+double-exponential walls in <span class="math notranslate nohighlight">\(s\)</span>; near the inverse-gamma boundary a long
+exponential stretch precedes the right wall.</p>
+<p>Writing <span class="math notranslate nohighlight">\(k_+=\sup\{k\ge0:E[Y^k]&lt;\infty\}\)</span>, the inverse-gamma domain
+conditions give:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Quantity</p></th>
+<th class="head"><p>Divergence condition</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CVaR</p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde\gamma&lt;0\)</span>, <span class="math notranslate nohighlight">\(k_+\le1\)</span>; or <span class="math notranslate nohighlight">\(\tilde\gamma=0\)</span>, <span class="math notranslate nohighlight">\(k_+\le1/2\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(+\infty\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\partial_{\tilde\gamma}\operatorname{CVaR}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde\gamma\le0\)</span>, <span class="math notranslate nohighlight">\(k_+\le1\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(-\infty\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\partial^2_{\tilde\gamma}\operatorname{CVaR}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(\tilde\gamma=0\)</span>, <span class="math notranslate nohighlight">\(k_+\le3/2\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\(+\infty\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Every finite rule has finite moments. Increasing its node count cannot
+establish existence of moments of the original law. These domain conditions
+must accompany any truncation-based computation.</p>
+</section>
+</section>
+<section id="the-near-step-regime">
+<h2>The near-step regime<a class="headerlink" href="#the-near-step-regime" title="Link to this heading">#</a></h2>
+<p>If <span class="math notranslate nohighlight">\(y_c=(x_\alpha-\tilde\mu)/\tilde\gamma&gt;0\)</span>, put <span class="math notranslate nohighlight">\(s_c=\log y_c\)</span>.
+Differentiation gives</p>
+<div class="math notranslate nohighlight">
+\[\left.\frac{d z_{e^s}(x_\alpha)}{ds}\right|_{s=s_c}
+=-\frac{\tilde\gamma\sqrt{y_c}}{\tilde\sigma},\qquad
+\rho_{\mathrm{loc}}=\frac{|\tilde\gamma|\sqrt{y_c}}{\tilde\sigma},\qquad
+\delta_s=1/\rho_{\mathrm{loc}}.\]</div>
+<p>Thus the conditional CDF changes over log width <span class="math notranslate nohighlight">\(\delta_s\)</span>. The density
+factor in the Hessian is a narrow peak on the same scale. A fixed rule can
+resolve the CVaR value while missing most of this peak. For inverse-gamma
+mixing and negative skew, small tail probabilities move <span class="math notranslate nohighlight">\(y_c\)</span> outward;
+in the drift-dominated limit <span class="math notranslate nohighlight">\(\rho_{\mathrm{loc}}\asymp\alpha^{-1/(2a_Y)}\)</span>.</p>
+<p>The ratio <span class="math notranslate nohighlight">\(R=\delta_s/h(s_c)\)</span>, where <span class="math notranslate nohighlight">\(h(s_c)\)</span> is the local log-node spacing,
+measures resolution. It is a heuristic, not a bound. Agreement of two node
+counts can also miss an unresolved peak. Increasing the node count or
+placing panel boundaries near <span class="math notranslate nohighlight">\(s_c\)</span> improves resolution. Boundaries that
+move with <span class="math notranslate nohighlight">\(x\)</span> or <span class="math notranslate nohighlight">\(w\)</span> no longer define one fixed discrete law over an
+optimization surface; convexity then holds only up to integration error.</p>
+<p>Finally, the component-quantile bracket can be enormous when a log window
+contains very large <span class="math notranslate nohighlight">\(Y_j\)</span>. A monotone coordinate <span class="math notranslate nohighlight">\(x=c+h\sinh t\)</span>, <span class="math notranslate nohighlight">\(h&gt;0\)</span>,
+compresses the bracket before bisection. This changes neither the root nor
+the bracketing proof. The center and scale must themselves remain near the
+relevant probability mass: a truncated mean of an infinite-mean law does
+not supply such a center.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="cvar_derivatives.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">CVaR Derivatives for Normal Mixture Distributions</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="transaction_costs.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Portfolio Optimization with Transaction Costs</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#portfolio-returns-and-losses">Portfolio returns and losses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rockafellaruryasev-and-conditioning">Rockafellar–Uryasev and conditioning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-envelope-and-parameter-derivatives">The envelope and parameter derivatives</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scenarios-as-a-probability-measure">Scenarios as a probability measure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gausslegendre-quadrature">Gauss–Legendre quadrature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#log-coordinates-windows-and-heavy-tails">Log coordinates, windows, and heavy tails</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#truncation-with-moment-tilts">Truncation with moment tilts</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-near-step-regime">The near-step regime</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

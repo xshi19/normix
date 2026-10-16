@@ -160,8 +160,10 @@ and
 {\partial \gamma \, \partial \sigma}.
 ```
 
-All derivatives can be computed via Monte Carlo by generating i.i.d. samples
-of the mixing variable $Y$.
+All derivatives can be computed by replacing expectations with one positive
+weighted scenario measure of $Y$. Equal-weight i.i.d. samples give conditional
+Monte Carlo; deterministic quadrature is developed in {doc}`quadrature_scenarios`.
+The value and derivatives must use the same measure and quantile.
 
 ## Portfolio CVaR Gradient and Hessian
 

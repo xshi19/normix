@@ -213,6 +213,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -228,6 +229,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -239,6 +241,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -409,7 +412,7 @@
 <span class="sd">Risk measures as JIT-able functions of portfolio weights.</span>
 
 <span class="sd">:class:`WeightFunctional` bundles a :class:`~normix.finance.risk.RiskMeasure`,</span>
-<span class="sd">a multivariate normal-mixture model, and a fixed subordinator sample ``Y`` into</span>
+<span class="sd">a multivariate normal-mixture model, and a fixed subordinator measure into</span>
 <span class="sd">a callable ``w -&gt; ℝ`` with gradient and Hessian companions for optimisation.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -417,6 +420,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.quadrature</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.finance.risk</span><span class="w"> </span><span class="kn">import</span> <span class="n">RiskMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
 
@@ -424,33 +428,39 @@
 <div class="viewcode-block" id="WeightFunctional">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.functional.WeightFunctional">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WeightFunctional</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Risk measure as a function of weights, with frozen model and ``Y``.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Risk measure as a function of weights, with frozen model and scenarios.</span>
 
 <span class="sd">    Bundles a :class:`RiskMeasure`, a :class:`NormalMixture` model, and a</span>
-<span class="sd">    realisation ``Y`` of the subordinator into JIT-able callables intended</span>
+<span class="sd">    probability measure of the subordinator into JIT-able callables intended</span>
 <span class="sd">    for mean-risk optimisation (Phase E).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">risk</span><span class="p">:</span> <span class="n">RiskMeasure</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span>
-    <span class="n">Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+    <span class="n">scenarios</span><span class="p">:</span> <span class="n">DiscreteMeasure</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">risk</span><span class="p">:</span> <span class="n">RiskMeasure</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">NormalMixture</span><span class="p">,</span>
+                 <span class="n">scenarios</span><span class="p">:</span> <span class="n">DiscreteMeasure</span> <span class="o">|</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">risk</span> <span class="o">=</span> <span class="n">risk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scenarios</span> <span class="o">=</span> <span class="n">DiscreteMeasure</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">scenarios</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span>
 
     <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scenarios</span><span class="p">)</span>
 
 <div class="viewcode-block" id="WeightFunctional.grad">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.functional.WeightFunctional.grad">[docs]</a>
     <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scenarios</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="WeightFunctional.hess">
 <a class="viewcode-back" href="../../../api/finance.html#normix.finance.functional.WeightFunctional.hess">[docs]</a>
     <span class="nd">@eqx</span><span class="o">.</span><span class="n">filter_jit</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">hess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scenarios</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

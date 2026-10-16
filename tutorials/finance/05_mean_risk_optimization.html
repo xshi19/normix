@@ -216,6 +216,7 @@
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -231,6 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -242,6 +244,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -483,9 +486,8 @@ problem</p>
 \min_w\; \rho(w^\top X)
 \quad\text{s.t.}\quad w^\top e = 1,\quad E[w^\top X] \ge m .
 \]</div>
-<p>For a general distribution this is a <span class="math notranslate nohighlight">\(d\)</span>-dimensional optimization that must be
-solved by Monte Carlo. The normal-mixture structure collapses it to <strong>two
-dimensions</strong>. Because <span class="math notranslate nohighlight">\(w^\top X\)</span> is again a univariate mixture with parameters
+<p>For a general distribution this is a <span class="math notranslate nohighlight">\(d\)</span>-dimensional optimization. The
+normal-mixture structure collapses it to <strong>two dimensions</strong>. Because <span class="math notranslate nohighlight">\(w^\top X\)</span> is again a univariate mixture with parameters
 <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma) = (w^\top\mu,\, w^\top\gamma,\,
 \sqrt{w^\top\Sigma w})\)</span>, and because any coherent <span class="math notranslate nohighlight">\(\rho\)</span> is <em>decreasing</em> in
 <span class="math notranslate nohighlight">\(\tilde\mu\)</span>, <em>non-increasing</em> in <span class="math notranslate nohighlight">\(\tilde\gamma\)</span>, and <em>non-decreasing</em> in
@@ -615,12 +617,12 @@ dispersion g = 3.1470e-04  vs  wᵀΣw = 3.1470e-04
 <h2>Figure 8 — the efficient surface<a class="headerlink" href="#figure-8-the-efficient-surface" title="Link to this heading">#</a></h2>
 <p>Each point of the surface is the <span class="math notranslate nohighlight">\(\operatorname{CVaR}_{95\%}\)</span> of the
 minimum-dispersion portfolio realising <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>, evaluated
-over a single shared sample of <span class="math notranslate nohighlight">\(Y\)</span> (common random numbers). We frame the grid
+over one shared probability measure of <span class="math notranslate nohighlight">\(Y\)</span>. We frame the grid
 around the efficient frontier — the band of returns a manager actually operates
 in — by first solving for the frontier and bracketing the coordinates it visits.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">gh</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">20_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Q</span> <span class="o">=</span> <span class="n">gh</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">()</span>
 <span class="n">E_Y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">E_Y</span><span class="p">())</span>
 <span class="n">mv_ret</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">expected_return</span><span class="p">(</span><span class="n">mv_mu</span><span class="p">,</span> <span class="n">mv_gamma</span><span class="p">))</span>
 
@@ -629,7 +631,7 @@ in — by first solving for the frontier and bracketing the coordinates it visit
 <span class="n">ga_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gh</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span>
 <span class="n">ga_search</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">ga_a</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">ga_a</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="mf">4e-4</span><span class="p">)</span>
 <span class="n">frontier</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span>
-    <span class="n">targets</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">mv_gamma</span><span class="p">)</span> <span class="o">-</span> <span class="n">ga_search</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">mv_gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">ga_search</span><span class="p">),</span>
+    <span class="n">targets</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">mv_gamma</span><span class="p">)</span> <span class="o">-</span> <span class="n">ga_search</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">mv_gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">ga_search</span><span class="p">),</span>
     <span class="n">n_iter</span><span class="o">=</span><span class="mi">48</span><span class="p">)</span>
 
 <span class="c1"># 2. bracket the frontier&#39;s (μ̃, γ̃) to set a tight, relevant surface window</span>
@@ -641,13 +643,13 @@ in — by first solving for the frontier and bracketing the coordinates it visit
 <span class="n">mu_grid</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">mu_lo</span><span class="p">,</span> <span class="n">mu_hi</span><span class="p">,</span> <span class="mi">41</span><span class="p">)</span>
 <span class="n">ga_grid</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ga_lo</span><span class="p">,</span> <span class="n">ga_hi</span><span class="p">,</span> <span class="mi">41</span><span class="p">)</span>
 
-<span class="n">surface</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_surface</span><span class="p">(</span><span class="n">mu_grid</span><span class="p">,</span> <span class="n">ga_grid</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="n">surface</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_surface</span><span class="p">(</span><span class="n">mu_grid</span><span class="p">,</span> <span class="n">ga_grid</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CVaR over the grid ∈ [</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">risk</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CVaR over the grid ∈ [0.0193, 0.0468]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CVaR over the grid ∈ [0.0193, 0.0467]
 </pre></div>
 </div>
 </div>
@@ -672,7 +674,7 @@ in — by first solving for the frontier and bracketing the coordinates it visit
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/672f9eee9003e4593202c1fc1a1fbbbd00056f995bd04ae357f7fabc8121351f.png" src="../../_images/672f9eee9003e4593202c1fc1a1fbbbd00056f995bd04ae357f7fabc8121351f.png" />
+<img alt="../../_images/b1dfd2470cbb3a4dd18fc0a13a6e367fb784cb2ee303d86449b5bc0f7a8629ba.png" src="../../_images/b1dfd2470cbb3a4dd18fc0a13a6e367fb784cb2ee303d86449b5bc0f7a8629ba.png" />
 </div>
 </div>
 <p>The surface is a <strong>convex bowl</strong> that rises toward <em>both</em> extreme corners —
@@ -763,7 +765,7 @@ sideways-parabola frontier.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/535c55a3fe5e5af85039a290d3a4d1767c076aabc9ab65e503716b59e272c03e.png" src="../../_images/535c55a3fe5e5af85039a290d3a4d1767c076aabc9ab65e503716b59e272c03e.png" />
+<img alt="../../_images/83c8eaae0446711701f065f22c6eef311b2f8a6c7bc0269074cf3c7f277127bf.png" src="../../_images/83c8eaae0446711701f065f22c6eef311b2f8a6c7bc0269074cf3c7f277127bf.png" />
 </div>
 </div>
 </section>
@@ -781,10 +783,10 @@ assumptions of each subordinator reshape the tail-risk-optimal frontier.</p>
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">5.6</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MeanRiskProblem</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">cvar</span><span class="p">)</span>
-    <span class="n">Ym</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">15_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">Qm</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">()</span>
     <span class="n">g_mv</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">min_dispersion_point</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">span</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="mf">4e-4</span><span class="p">)</span>
-    <span class="n">fr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span><span class="n">targets_cmp</span><span class="p">,</span> <span class="n">Ym</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="n">g_mv</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">g_mv</span> <span class="o">+</span> <span class="n">span</span><span class="p">),</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">46</span><span class="p">)</span>
+    <span class="n">fr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span><span class="n">targets_cmp</span><span class="p">,</span> <span class="n">Qm</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="n">g_mv</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">g_mv</span> <span class="o">+</span> <span class="n">span</span><span class="p">),</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">46</span><span class="p">)</span>
     <span class="n">frontiers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">fr</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fr</span><span class="o">.</span><span class="n">risk</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fr</span><span class="o">.</span><span class="n">expected_return</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e4</span><span class="p">,</span> <span class="s2">&quot;o-&quot;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
@@ -797,7 +799,7 @@ assumptions of each subordinator reshape the tail-risk-optimal frontier.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/8e4589e4d1e5ae57e6459c48284a7461136ef500838547828b4887f2ab51d44e.png" src="../../_images/8e4589e4d1e5ae57e6459c48284a7461136ef500838547828b4887f2ab51d44e.png" />
+<img alt="../../_images/358b79dc1551f0d3cdbb42fa0d460e456ccf90d4cd4a1afff82b216ea1216864.png" src="../../_images/358b79dc1551f0d3cdbb42fa0d460e456ccf90d4cd4a1afff82b216ea1216864.png" />
 </div>
 </div>
 <p>The families agree on the <em>shape</em> but disagree on the <em>level</em> of tail risk. The
@@ -852,17 +854,17 @@ the tail.</p>
     </tr>
     <tr>
       <th>NIG</th>
-      <td>0.0189</td>
+      <td>0.0188</td>
       <td>5.7241</td>
     </tr>
     <tr>
       <th>NInvG</th>
-      <td>0.0195</td>
+      <td>0.0197</td>
       <td>5.3103</td>
     </tr>
     <tr>
       <th>GH</th>
-      <td>0.0195</td>
+      <td>0.0193</td>
       <td>5.7241</td>
     </tr>
   </tbody>
@@ -914,8 +916,8 @@ models tilt the allocation differently to control the same tail:</p>
       <th>MSFT</th>
       <td>0.063</td>
       <td>0.051</td>
-      <td>0.034</td>
-      <td>0.040</td>
+      <td>0.032</td>
+      <td>0.042</td>
     </tr>
     <tr>
       <th>JPM</th>
@@ -928,29 +930,29 @@ models tilt the allocation differently to control the same tail:</p>
       <th>XOM</th>
       <td>0.090</td>
       <td>0.094</td>
-      <td>0.112</td>
+      <td>0.113</td>
       <td>0.096</td>
     </tr>
     <tr>
       <th>JNJ</th>
       <td>0.297</td>
-      <td>0.296</td>
-      <td>0.314</td>
-      <td>0.300</td>
+      <td>0.297</td>
+      <td>0.315</td>
+      <td>0.299</td>
     </tr>
     <tr>
       <th>PG</th>
       <td>0.230</td>
       <td>0.222</td>
-      <td>0.243</td>
+      <td>0.242</td>
       <td>0.219</td>
     </tr>
     <tr>
       <th>WMT</th>
       <td>0.235</td>
       <td>0.240</td>
-      <td>0.229</td>
-      <td>0.248</td>
+      <td>0.230</td>
+      <td>0.247</td>
     </tr>
     <tr>
       <th>CAT</th>
@@ -972,7 +974,7 @@ models tilt the allocation differently to control the same tail:</p>
 with optimal weights, dispersion, and projected return in closed form.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">efficient_surface</span></code> reproduces the convex efficient surface (Fig. 8) and
 <code class="docutils literal notranslate"><span class="pre">efficient_frontier</span></code> the geometry and the classical frontier (Fig. 9), all
-from one fitted mixture and one shared subordinator sample.</p></li>
+from one fitted mixture and one shared subordinator measure.</p></li>
 <li><p>Swapping the subordinator family leaves the frontier’s shape intact but
 moves its level: tail assumptions translate directly into tail-risk-optimal
 allocations.</p></li>
@@ -982,6 +984,8 @@ allocations.</p></li>
 QP) is covered in <a class="reference internal" href="06_transaction_costs.html"><span class="doc">Transaction costs and local-quadratic rebalancing</span></a>. Effective number of bets is
 derived in <a class="reference internal" href="../../theory/enb.html"><span class="doc">Effective Number of Bets and Minimum Torsion</span></a> and <a class="reference internal" href="../../theory/generalized_enb.html"><span class="doc">Generalized Effective Number of Bets</span></a>
 (see <a class="reference internal" href="07_diversification.html"><span class="doc">Diversification: variance ENB vs CVaR ENB</span></a> for Meucci ENB).</p>
+<p>Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+<a class="reference internal" href="08_quadrature_scenarios.html"><span class="doc">Quadrature scenarios for portfolio CVaR</span></a>.</p>
 </section>
 </section>
 

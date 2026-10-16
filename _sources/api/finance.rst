@@ -48,3 +48,10 @@ Diversification
    :members:
    :undoc-members:
    :show-inheritance:
+
+Scenario measures
+-----------------
+
+.. automodule:: normix.utils.quadrature
+   :members:
+   :show-inheritance:

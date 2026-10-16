@@ -216,6 +216,7 @@
 <li class="toctree-l2"><a class="reference internal" href="05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -231,6 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -242,6 +244,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -514,7 +517,7 @@ API is a different object (<code class="docutils literal notranslate"><span clas
          <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">e_step_backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
          <span class="o">.</span><span class="n">regularize_a_eq_b</span><span class="p">())</span>
 <span class="n">cvar</span> <span class="o">=</span> <span class="n">CVaR</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
-<span class="n">Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">15_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">joint</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mean log-likelihood </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">))</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -538,7 +541,7 @@ trading.</p>
 <span class="n">span</span> <span class="o">=</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
                       <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">gamma</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="mf">4e-4</span><span class="p">)</span>
 <span class="n">frontier</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">efficient_frontier</span><span class="p">(</span>
-    <span class="n">targets</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="n">ga</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">ga</span> <span class="o">+</span> <span class="n">span</span><span class="p">),</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+    <span class="n">targets</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">gamma_bounds</span><span class="o">=</span><span class="p">(</span><span class="n">ga</span> <span class="o">-</span> <span class="n">span</span><span class="p">,</span> <span class="n">ga</span> <span class="o">+</span> <span class="n">span</span><span class="p">),</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
 <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">frontier</span><span class="o">.</span><span class="n">risk</span><span class="p">)))</span>
 <span class="n">w0</span> <span class="o">=</span> <span class="n">frontier</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;anchor return </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">frontier</span><span class="o">.</span><span class="n">expected_return</span><span class="p">[</span><span class="n">k</span><span class="p">])</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">  &quot;</span>
@@ -548,17 +551,17 @@ trading.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>anchor return 5.538e-04  CVaR 0.0194
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>anchor return 5.538e-04  CVaR 0.0193
 </pre></div>
 </div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>AAPL    0.011
-MSFT    0.039
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>AAPL    0.012
+MSFT    0.040
 JPM     0.058
 XOM     0.106
-JNJ     0.309
-PG      0.237
-WMT     0.233
-CAT     0.008
+JNJ     0.308
+PG      0.238
+WMT     0.231
+CAT     0.007
 dtype: float64
 </pre></div>
 </div>
@@ -581,22 +584,22 @@ buy/sell variables <span class="math notranslate nohighlight">\(v = (v^+; v^-)\)
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tc</span> <span class="o">=</span> <span class="n">TransactionCostProblem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">cvar</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">c2</span><span class="o">=</span><span class="mf">5e-2</span><span class="p">)</span>
 <span class="n">A</span> <span class="o">=</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">basket</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>   <span class="c1"># long-only: -w ≤ 0</span>
 <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">basket</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">tc</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;improved over hold?  </span><span class="si">{</span><span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">improved</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;turnover ‖Δw‖₁      </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">turnover</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;approx obj  hold → * </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">hold_objective</span><span class="p">)</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2"> → &quot;</span>
       <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">approx_objective</span><span class="p">)</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;exact  obj  hold → * </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">Y</span><span class="p">))</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2"> → &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span><span class="w"> </span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">Y</span><span class="p">))</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;exact  obj  hold → * </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">Q</span><span class="p">))</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2"> → &quot;</span>
+      <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span><span class="w"> </span><span class="n">w0</span><span class="p">,</span><span class="w"> </span><span class="n">Q</span><span class="p">))</span><span class="si">:</span><span class="s2">.6e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>improved over hold?  False
 turnover ‖Δw‖₁      0.0000
-approx obj  hold → * -9.664417e-02 → -9.664417e-02
-exact  obj  hold → * -9.664417e-02 → -9.664417e-02
+approx obj  hold → * -9.577092e-02 → -9.577092e-02
+exact  obj  hold → * -9.577092e-02 → -9.577092e-02
 </pre></div>
 </div>
 </div>
@@ -629,14 +632,14 @@ budget residual ẽᵀv = 0.00e+00
 <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">c2</span> <span class="ow">in</span> <span class="n">c2_grid</span><span class="p">:</span>
     <span class="n">r</span> <span class="o">=</span> <span class="n">TransactionCostProblem</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">cvar</span><span class="p">,</span> <span class="n">c1</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">c2</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">c2</span><span class="p">))</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
-        <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">w0</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
     <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
         <span class="s2">&quot;c2&quot;</span><span class="p">:</span> <span class="n">c2</span><span class="p">,</span>
         <span class="s2">&quot;turnover&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">turnover</span><span class="p">),</span>
         <span class="s2">&quot;approx_gain&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">approx_objective</span> <span class="o">-</span> <span class="n">r</span><span class="o">.</span><span class="n">hold_objective</span><span class="p">),</span>
         <span class="s2">&quot;exact_gain&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span>
-            <span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
-            <span class="o">-</span> <span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+            <span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">tc</span><span class="o">.</span><span class="n">true_objective_at</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
         <span class="p">)</span> <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">improved</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">})</span>
 <span class="n">sweep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
@@ -770,7 +773,7 @@ budget residual ẽᵀv = 0.00e+00
 <p>At large <span class="math notranslate nohighlight">\(c_2\)</span> the solver correctly returns the hold (<span class="math notranslate nohighlight">\(w^\star = w_0\)</span>). At small
 <span class="math notranslate nohighlight">\(c_2\)</span> the quadratic model can recommend a large move — outside the regime where
 the Taylor expansion is trustworthy — so in practice one verifies that the
-<strong>exact</strong> Monte Carlo objective also improves, exactly as the theory note warns.</p>
+<strong>unapproximated</strong> quadrature CVaR objective also improves, exactly as the theory note warns.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cmp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
@@ -809,14 +812,14 @@ the Taylor expansion is trustworthy — so in practice one verifies that the
   <tbody>
     <tr>
       <th>AAPL</th>
-      <td>0.011</td>
-      <td>0.011</td>
+      <td>0.012</td>
+      <td>0.012</td>
       <td>0.0</td>
     </tr>
     <tr>
       <th>MSFT</th>
-      <td>0.039</td>
-      <td>0.039</td>
+      <td>0.040</td>
+      <td>0.040</td>
       <td>0.0</td>
     </tr>
     <tr>
@@ -833,26 +836,26 @@ the Taylor expansion is trustworthy — so in practice one verifies that the
     </tr>
     <tr>
       <th>JNJ</th>
-      <td>0.309</td>
-      <td>0.309</td>
+      <td>0.308</td>
+      <td>0.308</td>
       <td>0.0</td>
     </tr>
     <tr>
       <th>PG</th>
-      <td>0.237</td>
-      <td>0.237</td>
+      <td>0.238</td>
+      <td>0.238</td>
       <td>0.0</td>
     </tr>
     <tr>
       <th>WMT</th>
-      <td>0.233</td>
-      <td>0.233</td>
+      <td>0.231</td>
+      <td>0.231</td>
       <td>0.0</td>
     </tr>
     <tr>
       <th>CAT</th>
-      <td>0.008</td>
-      <td>0.008</td>
+      <td>0.007</td>
+      <td>0.007</td>
       <td>0.0</td>
     </tr>
   </tbody>
@@ -875,6 +878,8 @@ gain is non-positive, hold <span class="math notranslate nohighlight">\(w_0\)</s
 <p>See <a class="reference internal" href="../../theory/transaction_costs.html"><span class="doc">Portfolio Optimization with Transaction Costs</span></a> for the QP derivation and
 <a class="reference internal" href="05_mean_risk_optimization.html"><span class="doc">Mean-risk optimization and the efficient surface</span></a> for the frictionless surface this rebalancing
 starts from.</p>
+<p>Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+<a class="reference internal" href="08_quadrature_scenarios.html"><span class="doc">Quadrature scenarios for portfolio CVaR</span></a>.</p>
 </section>
 </section>
 

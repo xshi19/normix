@@ -216,6 +216,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -231,6 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -242,6 +244,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -471,6 +474,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_grad_hess_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_grad_hess_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.step_resolution"><code class="docutils literal notranslate"><span class="pre">CVaR.step_resolution()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -499,6 +503,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Vh"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Vh</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.LT_U"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.LT_U</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.rank"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.scenarios"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.scenarios</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
@@ -573,7 +578,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional"><code class="docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.risk"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.risk</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.model"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.model</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.Y"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.scenarios"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.scenarios</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.grad"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.grad()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.hess"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.hess()</span></code></a></li>
 </ul>
@@ -625,6 +630,17 @@
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.quadrature">Scenario measures</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.p"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.p</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.mean"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.from_sample"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.from_sample()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.from_weights"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.from_weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.coerce"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.coerce()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -646,6 +662,7 @@
 <li><p><a class="reference internal" href="#module-normix.finance.transaction_costs" id="id7">Transaction Costs</a></p></li>
 <li><p><a class="reference internal" href="#module-normix.finance.functional" id="id8">Weight Functional</a></p></li>
 <li><p><a class="reference internal" href="#module-normix.finance.diversification" id="id9">Diversification</a></p></li>
+<li><p><a class="reference internal" href="#module-normix.utils.quadrature" id="id10">Scenario measures</a></p></li>
 </ul>
 </nav>
 <p>Portfolio projection lives on the mixture itself
@@ -659,8 +676,9 @@ value, first derivatives, and second derivatives in both the projected
 parameter space <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span> and the
 portfolio-weight space <span class="math notranslate nohighlight">\(w \in \mathbb{R}^d\)</span>. Formulas follow
 <code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.md</span></code>.</p>
-<p>Monte Carlo for CVaR value and derivatives is conditional over the
-subordinator <span class="math notranslate nohighlight">\(Y\)</span> (common random numbers). Deterministic VaR uses
+<p>CVaR integrates the conditional normal analytically over a positive
+scenario measure of <span class="math notranslate nohighlight">\(Y\)</span>. The default is deterministic quadrature;
+an array supplies equal-weight Monte Carlo draws. Deterministic VaR uses
 the <code class="docutils literal notranslate"><span class="pre">Univariate*</span></code> PINV <code class="xref py py-meth docutils literal notranslate"><span class="pre">ppf()</span></code>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure">
@@ -671,13 +689,13 @@ the <code class="docutils literal notranslate"><span class="pre">Univariate*</sp
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure.value">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value" title="Link to this definition">#</a></dt>
 <dd><p>Risk of the univariate normal mixture represented by <code class="docutils literal notranslate"><span class="pre">univariate</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -688,21 +706,21 @@ the <code class="docutils literal notranslate"><span class="pre">Univariate*</sp
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure.value_reduced">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value_reduced" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value_reduced" title="Link to this definition">#</a></dt>
 <dd><p>Risk from raw scalar parameters <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>.</p>
 <p>The univariate normal mixture is
 <span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma Y + \tilde\sigma\sqrt{Y}Z\)</span>. Unlike
 <a class="reference internal" href="#normix.finance.risk.RiskMeasure.value" title="normix.finance.risk.RiskMeasure.value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value()</span></code></a>, this signature takes plain scalars (no distribution
 object) and must be Bessel-/PINV-free so it can be
 <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vmap.html#jax.vmap" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.vmap()</span></code></a>-ed across an efficient-surface grid that shares the
-subordinator draws <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+scenario measure <code class="docutils literal notranslate"><span class="pre">scenarios</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -713,11 +731,11 @@ subordinator draws <code class="docutils literal notranslate"><span class="pre">
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.RiskMeasure.value_grad_hess_w">
-<span class="sig-name descname"><span class="pre">value_grad_hess_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value_grad_hess_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value_grad_hess_w" title="Link to this definition">#</a></dt>
-<dd><p>Fused <span class="math notranslate nohighlight">\((r(w), \nabla_w r, H_r(w))\)</span> under one CRN sample <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<span class="sig-name descname"><span class="pre">value_grad_hess_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#RiskMeasure.value_grad_hess_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.RiskMeasure.value_grad_hess_w" title="Link to this definition">#</a></dt>
+<dd><p>Fused <span class="math notranslate nohighlight">\((r(w), \nabla_w r, H_r(w))\)</span> under one shared scenario measure.</p>
 <p>Consumed by <a class="reference internal" href="#module-normix.finance.transaction_costs" title="normix.finance.transaction_costs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">transaction_costs</span></code></a> and
 <a class="reference internal" href="#module-normix.finance.diversification" title="normix.finance.diversification"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diversification</span></code></a>. Concrete measures override
-with an analytically fused implementation (CVaR shares one CMC VaR
+with an analytically fused implementation (CVaR shares one conditional VaR
 solve); the base raises — a value-only measure cannot participate in
 the derivative-consuming layers.</p>
 <dl class="field-list simple">
@@ -725,7 +743,7 @@ the derivative-consuming layers.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -740,7 +758,7 @@ the derivative-consuming layers.</p>
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.risk.</span></span><span class="sig-name descname"><span class="pre">CVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a></p>
-<p>Conditional Value at Risk at confidence <span class="math notranslate nohighlight">\(\alpha \in (0, 1)\)</span>.</p>
+<p>Conditional Value at Risk at tail probability <span class="math notranslate nohighlight">\(\alpha \in (0, 1)\)</span>.</p>
 <p>For a univariate normal mixture <span class="math notranslate nohighlight">\(X = \tilde\mu + \tilde\gamma Y
 + \tilde\sigma \sqrt{Y} Z\)</span>, the value is computed in closed form
 conditional on <span class="math notranslate nohighlight">\(Y\)</span>:</p>
@@ -750,8 +768,16 @@ conditional on <span class="math notranslate nohighlight">\(Y\)</span>:</p>
 - (\tilde\mu + \tilde\gamma Y) \Phi(z_Y) \right],\]</div>
 <p>where <span class="math notranslate nohighlight">\(z_Y = (x_\alpha - \tilde\mu - \tilde\gamma Y)
 / (\tilde\sigma \sqrt{Y})\)</span> and <span class="math notranslate nohighlight">\(x_\alpha = -\operatorname{VaR}_\alpha\)</span>
-is found by bisection on the conditional Monte Carlo CDF (same <code class="docutils literal notranslate"><span class="pre">Y</span></code> as
-the integral, for common random numbers).</p>
+is found by transformed bisection on the conditional CDF under the same
+measure as the integral. <code class="docutils literal notranslate"><span class="pre">scenarios=None</span></code> uses subordinator quadrature.
+See <a class="reference internal" href="../theory/quadrature_scenarios.html"><span class="doc">Quadrature scenarios for mixture CVaR</span></a> for accuracy and moment domains.</p>
+<p class="rubric">Notes</p>
+<p>At zero skew with divergent CVaR, derivatives represent limits under
+tail truncation, not classical derivatives of an infinite-valued function.
+The scalar scale derivative is <span class="math notranslate nohighlight">\(+\infty\)</span>; its second derivative
+is zero because each truncated risk is linear in scale. Portfolio
+chain-rule terms preserve exact zero coefficients and otherwise retain
+the sign of the product with an infinite derivative.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p>
@@ -778,13 +804,13 @@ the integral, for common random numbers).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.value">
-<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value" title="Link to this definition">#</a></dt>
 <dd><p>Risk of the univariate normal mixture represented by <code class="docutils literal notranslate"><span class="pre">univariate</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -795,24 +821,25 @@ the integral, for common random numbers).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_reduced">
-<span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_reduced" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">value_reduced</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_reduced"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_reduced" title="Link to this definition">#</a></dt>
 <dd><p>CVaR from raw scalar parameters, vectorizable over a surface grid.</p>
-<p>Inverts the conditional-MC CDF for <span class="math notranslate nohighlight">\(x_\alpha\)</span> by bisection on
+<p>Inverts the conditional CDF for <span class="math notranslate nohighlight">\(x_\alpha\)</span> by bisection on
 the component-quantile bracket <span class="math notranslate nohighlight">\([\min_i q_i, \max_i q_i]\)</span>,
 <span class="math notranslate nohighlight">\(q_i = \tilde\mu + \tilde\gamma Y_i + \tilde\sigma\sqrt{Y_i}\,
-\Phi^{-1}(\alpha)\)</span>. The bracket contains the root for every sample
-<code class="docutils literal notranslate"><span class="pre">Y</span></code>. No PINV table and no Bessel evaluation; the CVaR integral is
+\Phi^{-1}(\alpha)\)</span>. The bracket contains the root for every positive scenario measure.
+No PINV table and no Bessel evaluation; the CVaR integral is
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">_cvar_from_quantile()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>equinox.EquinoxRuntimeError</strong> – If the result is not finite, also under <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
+<dd class="field-odd"><p><strong>equinox.EquinoxRuntimeError</strong> – If the result is NaN, also under <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>. Divergent
+    moments return infinity.</p>
 </dd>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>mu</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -823,14 +850,14 @@ the component-quantile bracket <span class="math notranslate nohighlight">\([\mi
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.gradient_scalar">
-<span class="sig-name descname"><span class="pre">gradient_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_scalar" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">gradient_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_scalar" title="Link to this definition">#</a></dt>
 <dd><p>Return <span class="math notranslate nohighlight">\((\partial r / \partial \tilde\mu,
 \partial r / \partial \tilde\gamma, \partial r / \partial \tilde\sigma)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -841,7 +868,7 @@ the component-quantile bracket <span class="math notranslate nohighlight">\([\mi
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.hessian_scalar">
-<span class="sig-name descname"><span class="pre">hessian_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_scalar" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">hessian_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_scalar" title="Link to this definition">#</a></dt>
 <dd><p>Return the <span class="math notranslate nohighlight">\(3 \times 3\)</span> Hessian in <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>.</p>
 <p><span class="math notranslate nohighlight">\(\partial^2/\partial \tilde\mu \, \cdot = 0\)</span> exactly; the other
 non-trivial blocks follow <code class="docutils literal notranslate"><span class="pre">docs/theory/cvar_derivatives.md</span></code>
@@ -850,7 +877,7 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -861,13 +888,13 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_w">
-<span class="sig-name descname"><span class="pre">value_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_w" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">value_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_w" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -878,14 +905,14 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.gradient_w">
-<span class="sig-name descname"><span class="pre">gradient_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_w" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">gradient_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.gradient_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.gradient_w" title="Link to this definition">#</a></dt>
 <dd><p>Gradient <span class="math notranslate nohighlight">\(\nabla_w r_{\operatorname{CVaR}_\alpha}(w)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -896,14 +923,14 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.hessian_w">
-<span class="sig-name descname"><span class="pre">hessian_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_w" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">hessian_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.hessian_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.hessian_w" title="Link to this definition">#</a></dt>
 <dd><p>Hessian <span class="math notranslate nohighlight">\(H_{r_{\operatorname{CVaR}_\alpha}}(w)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -914,21 +941,43 @@ non-trivial blocks follow <code class="docutils literal notranslate"><span class
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.risk.CVaR.value_grad_hess_w">
-<span class="sig-name descname"><span class="pre">value_grad_hess_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_grad_hess_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_grad_hess_w" title="Link to this definition">#</a></dt>
-<dd><p>Fused <span class="math notranslate nohighlight">\((r, \nabla_w r, H_r)\)</span> with one CMC VaR solve.</p>
+<span class="sig-name descname"><span class="pre">value_grad_hess_w</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.value_grad_hess_w"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.value_grad_hess_w" title="Link to this definition">#</a></dt>
+<dd><p>Fused <span class="math notranslate nohighlight">\((r, \nabla_w r, H_r)\)</span> with one conditional VaR solve.</p>
 <p>Equivalent to calling <a class="reference internal" href="#normix.finance.risk.CVaR.value_w" title="normix.finance.risk.CVaR.value_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value_w()</span></code></a>, <a class="reference internal" href="#normix.finance.risk.CVaR.gradient_w" title="normix.finance.risk.CVaR.gradient_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">gradient_w()</span></code></a>, and
 <a class="reference internal" href="#normix.finance.risk.CVaR.hessian_w" title="normix.finance.risk.CVaR.hessian_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">hessian_w()</span></code></a> separately, but projects once and bisects the
-conditional-MC CDF once.</p>
+conditional CDF once.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)">tuple</a>[<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>, <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.finance.risk.CVaR.step_resolution">
+<span class="sig-name descname"><span class="pre">step_resolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">univariate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/risk.html#CVaR.step_resolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.risk.CVaR.step_resolution" title="Link to this definition">#</a></dt>
+<dd><p>Transition width divided by local node spacing in <span class="math notranslate nohighlight">\(\log Y\)</span>.</p>
+<p>Reports <span class="math notranslate nohighlight">\(R=1/(\rho_{loc}\,h)\)</span> at the conditional-CDF step.
+A small value suggests increasing the node count; this is a
+heuristic, not an error bound. Returns infinity when there is no
+positive step, and zero when the step lies outside the node range.
+Duplicate and zero-mass nodes do not improve resolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>univariate</strong> (<em>_UnivariateNormalMixtureMixin</em>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1053,13 +1102,16 @@ portfolio <code class="docutils literal notranslate"><span class="pre">weights</
 
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">MeanRiskProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.optimization.</span></span><span class="sig-name descname"><span class="pre">MeanRiskProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Mean-risk optimization in reduced <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span> coordinates.</p>
 <p>Bundles a fitted <a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code></a> and a
 <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>. All heavy evaluations share a
-fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> (common random numbers); draw it once via
-<code class="docutils literal notranslate"><span class="pre">model.joint.subordinator().rvs(n,</span> <span class="pre">seed)</span></code>.</p>
+fixed probability measure of the subordinator. <code class="docutils literal notranslate"><span class="pre">scenarios=None</span></code> builds
+quadrature once at construction. Supply an array for equal-weight Monte
+Carlo, or a <code class="docutils literal notranslate"><span class="pre">DiscreteMeasure</span></code> for weighted scenarios. Per-call
+overrides share one measure across the whole grid or frontier.
+Expected returns continue to use the model law’s mean.</p>
 <p>The whitened factorisation of <span class="math notranslate nohighlight">\(M = [\mu\;\gamma\;e]\)</span> is computed
 once at construction. The Gram matrix <span class="math notranslate nohighlight">\(A = M^\top\Sigma^{-1}M\)</span>
 is stored for the minimum-dispersion anchor; it is positive semidefinite
@@ -1070,6 +1122,7 @@ the whitened factor and are returned only for attainable targets.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1106,6 +1159,11 @@ the whitened factor and are returned only for attainable targets.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.rank">
 <span class="sig-name descname"><span class="pre">rank</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.rank" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.scenarios">
+<span class="sig-name descname"><span class="pre">scenarios</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><span class="pre">DiscreteMeasure</span></a></span><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.scenarios" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -1208,19 +1266,22 @@ efficient-surface grid ranges.</p>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
+</dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.risk_at">
-<span class="sig-name descname"><span class="pre">risk_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.risk_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.risk_at" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">risk_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.risk_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.risk_at" title="Link to this definition">#</a></dt>
 <dd><p>Efficient-surface risk at a single <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1231,11 +1292,11 @@ efficient-surface grid ranges.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.efficient_surface">
-<span class="sig-name descname"><span class="pre">efficient_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">efficient_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_tilde</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_surface" title="Link to this definition">#</a></dt>
 <dd><p>Evaluate the efficient surface over the grid <code class="docutils literal notranslate"><span class="pre">mu_tilde</span> <span class="pre">×</span> <span class="pre">gamma_tilde</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">mu_tilde</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_tilde</span></code> are 1-D arrays; the returned
 <code class="docutils literal notranslate"><span class="pre">risk</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(len(mu_tilde),</span> <span class="pre">len(gamma_tilde))</span></code>. Memory
-scales as <code class="docutils literal notranslate"><span class="pre">len(mu_tilde)</span> <span class="pre">*</span> <span class="pre">len(gamma_tilde)</span> <span class="pre">*</span> <span class="pre">len(Y)</span></code>.
+scales as <code class="docutils literal notranslate"><span class="pre">len(mu_tilde)</span> <span class="pre">*</span> <span class="pre">len(gamma_tilde)</span> <span class="pre">*</span> <span class="pre">len(scenarios.Y)</span></code>.
 Every grid node must lie in the reachable set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
@@ -1245,7 +1306,7 @@ Every grid node must lie in the reachable set.</p>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>mu_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>gamma_tilde</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1256,7 +1317,7 @@ Every grid node must lie in the reachable set.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.optimization.MeanRiskProblem.efficient_frontier">
-<span class="sig-name descname"><span class="pre">efficient_frontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_frontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">efficient_frontier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma_bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">48</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/optimization.html#MeanRiskProblem.efficient_frontier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.optimization.MeanRiskProblem.efficient_frontier" title="Link to this definition">#</a></dt>
 <dd><p>Minimum risk for each target expected return in <code class="docutils literal notranslate"><span class="pre">returns</span></code>.</p>
 <p>For every target <span class="math notranslate nohighlight">\(m\)</span>, minimises the risk along the part of
 <span class="math notranslate nohighlight">\(\tilde\mu + \tilde\gamma E[Y] = m\)</span> that lies in the reachable
@@ -1275,7 +1336,7 @@ its own expected return and every other return is infeasible.</p>
 <dt class="field-even">Parameters<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>returns</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>gamma_bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>]</em>)</p></li>
 <li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 </ul>
@@ -1597,17 +1658,17 @@ exceeds the hold objective; otherwise the theory recommends keeping
 
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.build_quadratic_approximation">
-<span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">build_quadratic_approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#build_quadratic_approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.build_quadratic_approximation" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">normix.finance.transaction_costs.</span></span><span class="sig-name descname"><span class="pre">build_quadratic_approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#build_quadratic_approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.build_quadratic_approximation" title="Link to this definition">#</a></dt>
 <dd><p>Evaluate <span class="math notranslate nohighlight">\(r(w_0)\)</span>, <span class="math notranslate nohighlight">\(\nabla r(w_0)\)</span>, and <span class="math notranslate nohighlight">\(H_r(w_0)\)</span>.</p>
 <p>Uses <a class="reference internal" href="#normix.finance.risk.RiskMeasure.value_grad_hess_w" title="normix.finance.risk.RiskMeasure.value_grad_hess_w"><code class="xref py py-meth docutils literal notranslate"><span class="pre">value_grad_hess_w()</span></code></a> so the
-CMC VaR bisection runs once rather than three times.</p>
+conditional VaR bisection runs once rather than three times.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1717,13 +1778,13 @@ weight-space gradient and Hessian at <span class="math notranslate nohighlight">
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.approximate">
-<span class="sig-name descname"><span class="pre">approximate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.approximate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.approximate" title="Link to this definition">#</a></dt>
-<dd><p>Local Taylor model of risk at <code class="docutils literal notranslate"><span class="pre">w0</span></code> under subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<span class="sig-name descname"><span class="pre">approximate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.approximate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.approximate" title="Link to this definition">#</a></dt>
+<dd><p>Local Taylor model of risk at <code class="docutils literal notranslate"><span class="pre">w0</span></code> under subordinator scenarios.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1734,7 +1795,7 @@ weight-space gradient and Hessian at <span class="math notranslate nohighlight">
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.build_qp">
-<span class="sig-name descname"><span class="pre">build_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.build_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.build_qp" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.build_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.build_qp" title="Link to this definition">#</a></dt>
 <dd><p>Build the buy/sell QP at <code class="docutils literal notranslate"><span class="pre">w0</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">m</span></code> defaults to <a class="reference internal" href="#normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector" title="normix.finance.transaction_costs.TransactionCostProblem.expected_return_vector"><code class="xref py py-meth docutils literal notranslate"><span class="pre">expected_return_vector()</span></code></a>. Optional <code class="docutils literal notranslate"><span class="pre">A</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>
 encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. long-only via <code class="docutils literal notranslate"><span class="pre">A</span> <span class="pre">=</span> <span class="pre">-I</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span> <span class="pre">=</span> <span class="pre">0</span></code>).</p>
@@ -1742,7 +1803,7 @@ encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. lon
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>A</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
@@ -1757,13 +1818,13 @@ encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. lon
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.solve">
-<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.solve" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.solve" title="Link to this definition">#</a></dt>
 <dd><p>Build and solve the local QP; see <a class="reference internal" href="#normix.finance.transaction_costs.solve_transaction_cost_qp" title="normix.finance.transaction_costs.solve_transaction_cost_qp"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve_transaction_cost_qp()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>A</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>b</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
@@ -1779,14 +1840,14 @@ encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. lon
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.transaction_costs.TransactionCostProblem.true_objective_at">
-<span class="sig-name descname"><span class="pre">true_objective_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.true_objective_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">true_objective_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/transaction_costs.html#TransactionCostProblem.true_objective_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.transaction_costs.TransactionCostProblem.true_objective_at" title="Link to this definition">#</a></dt>
 <dd><p>Exact objective <span class="math notranslate nohighlight">\(w^\top m - c_1 r(w) - c_2 \|w - w_0\|_1\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>w0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -1803,22 +1864,22 @@ encode <span class="math notranslate nohighlight">\(A w \le b\)</span> (e.g. lon
 <span id="weight-functional"></span><h2><a class="toc-backref" href="#id8" role="doc-backlink">Weight Functional</a><a class="headerlink" href="#module-normix.finance.functional" title="Link to this heading">#</a></h2>
 <p>Risk measures as JIT-able functions of portfolio weights.</p>
 <p><a class="reference internal" href="#normix.finance.functional.WeightFunctional" title="normix.finance.functional.WeightFunctional"><code class="xref py py-class docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a> bundles a <a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code></a>,
-a multivariate normal-mixture model, and a fixed subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> into
+a multivariate normal-mixture model, and a fixed subordinator measure into
 a callable <code class="docutils literal notranslate"><span class="pre">w</span> <span class="pre">-&gt;</span> <span class="pre">ℝ</span></code> with gradient and Hessian companions for optimisation.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.functional.</span></span><span class="sig-name descname"><span class="pre">WeightFunctional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.finance.functional.</span></span><span class="sig-name descname"><span class="pre">WeightFunctional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">risk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/functional.html#WeightFunctional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.functional.WeightFunctional" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
-<p>Risk measure as a function of weights, with frozen model and <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<p>Risk measure as a function of weights, with frozen model and scenarios.</p>
 <p>Bundles a <code class="xref py py-class docutils literal notranslate"><span class="pre">RiskMeasure</span></code>, a <code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixture</span></code> model, and a
-realisation <code class="docutils literal notranslate"><span class="pre">Y</span></code> of the subordinator into JIT-able callables intended
+probability measure of the subordinator into JIT-able callables intended
 for mean-risk optimisation (Phase E).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>risk</strong> (<a class="reference internal" href="#normix.finance.risk.RiskMeasure" title="normix.finance.risk.RiskMeasure"><em>RiskMeasure</em></a>)</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1833,8 +1894,8 @@ for mean-risk optimisation (Phase E).</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.Y">
-<span class="sig-name descname"><span class="pre">Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.finance.functional.WeightFunctional.Y" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="normix.finance.functional.WeightFunctional.scenarios">
+<span class="sig-name descname"><span class="pre">scenarios</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><span class="pre">DiscreteMeasure</span></a></span><a class="headerlink" href="#normix.finance.functional.WeightFunctional.scenarios" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -2133,7 +2194,7 @@ Requires a finite <code class="docutils literal notranslate"><span class="pre">V
 <p>For 1-homogeneous <span class="math notranslate nohighlight">\(\rho\)</span>, diagonalizes
 <span class="math notranslate nohighlight">\(H_{r^2}(w) = 2\nabla r\,\nabla r^\top + 2 r H_r\)</span> where
 <span class="math notranslate nohighlight">\((r, \nabla r, H_r)\)</span> come from <strong>one</strong> call to
-<code class="docutils literal notranslate"><span class="pre">risk.value_grad_hess_w(model,</span> <span class="pre">w,</span> <span class="pre">Y)</span></code>. Meaningful only for
+<code class="docutils literal notranslate"><span class="pre">risk.value_grad_hess_w(model,</span> <span class="pre">w,</span> <span class="pre">scenarios)</span></code>. Meaningful only for
 <span class="math notranslate nohighlight">\(r(w) &gt; 0\)</span> (else <span class="math notranslate nohighlight">\(r^2\)</span> is not convex at <code class="docutils literal notranslate"><span class="pre">w</span></code> and <code class="docutils literal notranslate"><span class="pre">enb</span></code>
 is NaN).</p>
 <dl class="field-list simple">
@@ -2156,22 +2217,112 @@ is NaN).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.finance.diversification.GeneralizedENB.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/diversification.html#GeneralizedENB.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.diversification.GeneralizedENB.evaluate" title="Link to this definition">#</a></dt>
-<dd><p>ENB at <code class="docutils literal notranslate"><span class="pre">w</span></code> under subordinator sample <code class="docutils literal notranslate"><span class="pre">Y</span></code> (common random numbers).</p>
-<p><code class="docutils literal notranslate"><span class="pre">Y</span></code> is mandatory — draw once via
-<code class="docutils literal notranslate"><span class="pre">model.joint.subordinator().rvs(n,</span> <span class="pre">seed)</span></code> and share across finance
-evaluations. Not promised vmap-able over <code class="docutils literal notranslate"><span class="pre">w</span></code>: the fused bundle seeds
-its CMC bracket from the PINV <code class="docutils literal notranslate"><span class="pre">ppf</span></code>.</p>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/finance/diversification.html#GeneralizedENB.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.finance.diversification.GeneralizedENB.evaluate" title="Link to this definition">#</a></dt>
+<dd><p>ENB at <code class="docutils literal notranslate"><span class="pre">w</span></code> under a fixed subordinator measure.</p>
+<p>Defaults to subordinator quadrature. Pass a shared measure or sample
+to reuse it across evaluations. Supports <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over weights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>)</p></li>
 <li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
-<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.finance.diversification.ENBResult" title="normix.finance.diversification.ENBResult"><em>ENBResult</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-normix.utils.quadrature">
+<span id="scenario-measures"></span><h2><a class="toc-backref" href="#id10" role="doc-backlink">Scenario measures</a><a class="headerlink" href="#module-normix.utils.quadrature" title="Link to this heading">#</a></h2>
+<p>Discrete probability measures for conditional expectations.</p>
+<p>See <a class="reference internal" href="../theory/quadrature_scenarios.html"><span class="doc">Quadrature scenarios for mixture CVaR</span></a> for the quadrature construction
+and the finance identities preserved by positive weights.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.utils.quadrature.</span></span><span class="sig-name descname"><span class="pre">DiscreteMeasure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/quadrature.html#DiscreteMeasure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Probability measure <span class="math notranslate nohighlight">\(Q=\sum_j p_j\delta_{Y_j}\)</span> on positive nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<em>Array</em>) – Nonempty, finite, positive one-dimensional nodes.</p></li>
+<li><p><strong>log_p</strong> (<em>Array</em>) – Log weights with the same shape as <code class="docutils literal notranslate"><span class="pre">Y</span></code>. Normalized at construction;
+<span class="math notranslate nohighlight">\(-\infty\)</span> denotes a zero weight. At least one must be finite.</p></li>
+<li><p><strong>tail_index</strong> (<em>Array</em>) – Positive-moment threshold of the source law. Defaults to infinity
+for empirical measures. Quadrature retains the source threshold so
+truncation cannot hide a divergent risk or derivative.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure.p">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">p</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure.p" title="Link to this definition">#</a></dt>
+<dd><p>Normalized, nonnegative probabilities.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/quadrature.html#DiscreteMeasure.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure.mean" title="Link to this definition">#</a></dt>
+<dd><p>Finite discrete mean <span class="math notranslate nohighlight">\(E_Q[Y]\)</span>, irrespective of the source law.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure.from_sample">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/quadrature.html#DiscreteMeasure.from_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure.from_sample" title="Link to this definition">#</a></dt>
+<dd><p>Assign equal probabilities to a sample, preserving its order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure.from_weights">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/quadrature.html#DiscreteMeasure.from_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure.from_weights" title="Link to this definition">#</a></dt>
+<dd><p>Normalize finite nonnegative weights with positive total mass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>w</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.utils.quadrature.DiscreteMeasure.coerce">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">coerce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scenarios</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subordinator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/utils/quadrature.html#DiscreteMeasure.coerce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.utils.quadrature.DiscreteMeasure.coerce" title="Link to this definition">#</a></dt>
+<dd><p>Use a measure, assign sample weights, or build subordinator quadrature.</p>
+<p><code class="docutils literal notranslate"><span class="pre">None</span></code> requires a subordinator. Explicit measures retain their
+source law metadata and are returned unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scenarios</strong> (<a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a><em> | </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>subordinator</strong> (<a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><em>ExponentialFamily</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.utils.quadrature.DiscreteMeasure" title="normix.utils.quadrature.DiscreteMeasure"><em>DiscreteMeasure</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2246,6 +2397,7 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.gradient_w"><code class="docutils literal notranslate"><span class="pre">CVaR.gradient_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.hessian_w"><code class="docutils literal notranslate"><span class="pre">CVaR.hessian_w()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.value_grad_hess_w"><code class="docutils literal notranslate"><span class="pre">CVaR.value_grad_hess_w()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.risk.CVaR.step_resolution"><code class="docutils literal notranslate"><span class="pre">CVaR.step_resolution()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -2274,6 +2426,7 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.Vh"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.Vh</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.LT_U"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.LT_U</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.rank"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.scenarios"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.scenarios</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.E_Y"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.E_Y()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.weights"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.weights()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.optimization.MeanRiskProblem.dispersion"><code class="docutils literal notranslate"><span class="pre">MeanRiskProblem.dispersion()</span></code></a></li>
@@ -2348,7 +2501,7 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional"><code class="docutils literal notranslate"><span class="pre">WeightFunctional</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.risk"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.risk</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.model"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.model</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.Y"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.scenarios"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.scenarios</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.grad"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.grad()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.functional.WeightFunctional.hess"><code class="docutils literal notranslate"><span class="pre">WeightFunctional.hess()</span></code></a></li>
 </ul>
@@ -2396,6 +2549,17 @@ its CMC bracket from the PINV <code class="docutils literal notranslate"><span c
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.diversification.GeneralizedENB.risk"><code class="docutils literal notranslate"><span class="pre">GeneralizedENB.risk</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.diversification.GeneralizedENB.torsion"><code class="docutils literal notranslate"><span class="pre">GeneralizedENB.torsion</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.finance.diversification.GeneralizedENB.evaluate"><code class="docutils literal notranslate"><span class="pre">GeneralizedENB.evaluate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-normix.utils.quadrature">Scenario measures</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.p"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.p</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.mean"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.mean()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.from_sample"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.from_sample()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.from_weights"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.from_weights()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.utils.quadrature.DiscreteMeasure.coerce"><code class="docutils literal notranslate"><span class="pre">DiscreteMeasure.coerce()</span></code></a></li>
 </ul>
 </li>
 </ul>

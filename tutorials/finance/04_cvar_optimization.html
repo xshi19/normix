@@ -216,6 +216,7 @@
 <li class="toctree-l2"><a class="reference internal" href="05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
 </ul>
 </details></li>
 </ul>
@@ -231,6 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
@@ -242,6 +244,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../design/em_framework.html">EM Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -454,7 +457,7 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-fitted-mixture-and-a-portfolio">A fitted mixture and a portfolio</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#var-cvar-and-conditional-monte-carlo">VaR, CVaR, and conditional Monte Carlo</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#var-cvar-and-quadrature">VaR, CVaR, and quadrature</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-in-the-scalar-parametrization">Derivatives in the scalar parametrization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-in-weight-space">Derivatives in weight space</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-few-risk-reducing-steps">A few risk-reducing steps</a></li>
@@ -477,8 +480,9 @@
 Gaussian, so the Conditional Value-at-Risk <span class="math notranslate nohighlight">\(\operatorname{CVaR}_\alpha\)</span>
 (<a class="reference internal" href="../../references.html#rockafellaruryasev2000"><span class="std std-ref">RockafellarUryasev2000</span></a>) — and its gradient and
 Hessian in the portfolio weights (<a class="reference internal" href="../../references.html#tasche1999"><span class="std std-ref">Tasche1999</span></a>,
-<a class="reference internal" href="../../references.html#rauhasanov2004"><span class="std std-ref">RauHasanov2004</span></a>) — can be computed by a fast conditional
-Monte Carlo over <span class="math notranslate nohighlight">\(Y\)</span> alone. This tutorial fits a mixture, computes CVaR,
+<a class="reference internal" href="../../references.html#rauhasanov2004"><span class="std std-ref">RauHasanov2004</span></a>) — can be computed by a positive weighted
+sum over <span class="math notranslate nohighlight">\(Y\)</span>. Quadrature supplies the default scenarios. This tutorial fits a
+mixture, computes CVaR,
 verifies the analytic derivatives, and takes a few gradient steps to reduce
 risk. Formal derivations: <a class="reference internal" href="../../theory/cvar_derivatives.html"><span class="doc">CVaR Derivatives for Normal Mixture Distributions</span></a>.</p>
 <div class="cell docutils container">
@@ -527,42 +531,44 @@ risk. Formal derivations: <a class="reference internal" href="../../theory/cvar_
 </div>
 </div>
 </section>
-<section id="var-cvar-and-conditional-monte-carlo">
-<h2>VaR, CVaR, and conditional Monte Carlo<a class="headerlink" href="#var-cvar-and-conditional-monte-carlo" title="Link to this heading">#</a></h2>
-<p>VaR is a deterministic quantile via the projected <code class="docutils literal notranslate"><span class="pre">ppf</span></code>. CVaR uses a conditional
-Monte Carlo over the subordinator draws <span class="math notranslate nohighlight">\(Y\)</span> — far lower variance than sampling
-returns directly:</p>
+<section id="var-cvar-and-quadrature">
+<h2>VaR, CVaR, and quadrature<a class="headerlink" href="#var-cvar-and-quadrature" title="Link to this heading">#</a></h2>
+<p>VaR is a deterministic quantile via the projected <code class="docutils literal notranslate"><span class="pre">ppf</span></code>. CVaR integrates
+over a deterministic quadrature measure of <span class="math notranslate nohighlight">\(Y\)</span>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Q</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">quadrature</span><span class="p">()</span>
 <span class="n">var_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">proj</span><span class="p">))</span>
-<span class="n">cvar_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span>
+<span class="n">cvar_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Q</span><span class="p">))</span>
+<span class="n">Y_mc</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">100_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;conditional-MC CVaR = </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span><span class="w"> </span><span class="n">Y_mc</span><span class="p">))</span><span class="si">:</span><span class="s2">.8f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;VaR_</span><span class="si">{</span><span class="mi">1</span><span class="o">-</span><span class="n">alpha</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">  = </span><span class="si">{</span><span class="n">var_a</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CVaR_</span><span class="si">{</span><span class="mi">1</span><span class="o">-</span><span class="n">alpha</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">cvar_a</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>VaR_95%  = 0.02045
-CVaR_95% = 0.03084
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>conditional-MC CVaR = 0.03083693
+VaR_95%  = 0.02045
+CVaR_95% = 0.03074
 </pre></div>
 </div>
 </div>
 </div>
 <p>We validate against a brute-force quantile estimate from one million return
-draws — agreement confirms the conditional-MC estimator:</p>
+draws — agreement checks the tail-risk scale:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">draws</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">draws</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">cvar_brute</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">draws</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;conditional-MC CVaR : </span><span class="si">{</span><span class="n">cvar_a</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;quadrature CVaR     : </span><span class="si">{</span><span class="n">cvar_a</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;brute-force MC CVaR : </span><span class="si">{</span><span class="n">cvar_brute</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>conditional-MC CVaR : 0.03084
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>quadrature CVaR     : 0.03074
 brute-force MC CVaR : 0.03083
 </pre></div>
 </div>
@@ -573,7 +579,7 @@ brute-force MC CVaR : 0.03083
 <h2>Derivatives in the scalar parametrization<a class="headerlink" href="#derivatives-in-the-scalar-parametrization" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">CVaR</span></code> differentiates the risk analytically in the projected parameters
 <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma, \tilde\sigma)\)</span>. We check the gradient against a
-central finite difference using common random numbers (the same <span class="math notranslate nohighlight">\(Y\)</span>):</p>
+central finite difference using the same fixed measure <span class="math notranslate nohighlight">\(Q\)</span>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sub</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span>
@@ -583,13 +589,13 @@ central finite difference using common random numbers (the same <span class="mat
     <span class="k">return</span> <span class="n">UnivariateNormalInverseGaussian</span><span class="o">.</span><span class="n">from_classical</span><span class="p">(</span>
         <span class="n">mu</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">s</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">mu_ig</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">mu</span><span class="p">),</span> <span class="n">lam</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">lam</span><span class="p">))</span>
 
-<span class="n">g_analytic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">gradient_scalar</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span>
+<span class="n">g_analytic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">gradient_scalar</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">Q</span><span class="p">))</span>
 <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-5</span>
 <span class="n">g_fd</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">((</span><span class="n">mt</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">st</span><span class="p">)):</span>
     <span class="n">hi</span><span class="p">,</span> <span class="n">lo</span> <span class="o">=</span> <span class="p">[</span><span class="n">mt</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">st</span><span class="p">],</span> <span class="p">[</span><span class="n">mt</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">st</span><span class="p">]</span>
     <span class="n">hi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">eps</span><span class="p">;</span> <span class="n">lo</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">eps</span>
-    <span class="n">g_fd</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">rebuild</span><span class="p">(</span><span class="o">*</span><span class="n">hi</span><span class="p">),</span> <span class="n">Y</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">rebuild</span><span class="p">(</span><span class="o">*</span><span class="n">lo</span><span class="p">),</span> <span class="n">Y</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">))</span>
+    <span class="n">g_fd</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">rebuild</span><span class="p">(</span><span class="o">*</span><span class="n">hi</span><span class="p">),</span> <span class="n">Q</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">rebuild</span><span class="p">(</span><span class="o">*</span><span class="n">lo</span><span class="p">),</span> <span class="n">Q</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;∂CVaR/∂(μ̃, γ̃, σ̃) analytic:&quot;</span><span class="p">,</span> <span class="n">g_analytic</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;∂CVaR/∂(μ̃, γ̃, σ̃) FD      :&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">g_fd</span><span class="p">))</span>
@@ -597,8 +603,8 @@ central finite difference using common random numbers (the same <span class="mat
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∂CVaR/∂(μ̃, γ̃, σ̃) analytic: [-1.      -2.02219  2.09231]
-∂CVaR/∂(μ̃, γ̃, σ̃) FD      : [-1.      -2.02219  2.09231]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∂CVaR/∂(μ̃, γ̃, σ̃) analytic: [-1.      -2.01185  2.08651]
+∂CVaR/∂(μ̃, γ̃, σ̃) FD      : [-1.      -2.01185  2.08651]
 </pre></div>
 </div>
 </div>
@@ -612,21 +618,21 @@ and <code class="docutils literal notranslate"><span class="pre">hessian_w</span
 gradient against a finite difference of <code class="docutils literal notranslate"><span class="pre">value_w</span></code>:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gw_analytic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">gw_analytic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Q</span><span class="p">))</span>
 <span class="n">gw_fd</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)):</span>
     <span class="n">hi</span><span class="p">,</span> <span class="n">lo</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="n">w</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">-</span><span class="n">eps</span><span class="p">)</span>
-    <span class="n">gw_fd</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">Y</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">))</span>
+    <span class="n">gw_fd</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">Q</span><span class="p">))</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">Q</span><span class="p">)))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span><span class="p">))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;∇_w CVaR analytic:&quot;</span><span class="p">,</span> <span class="n">gw_analytic</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;∇_w CVaR FD      :&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gw_fd</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hessian_w shape  :&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Y</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hessian_w shape  :&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">hessian_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">Q</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∇_w CVaR analytic: [0.03702 0.03165 0.02395 0.01744]
-∇_w CVaR FD      : [0.03702 0.03165 0.02395 0.01744]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>∇_w CVaR analytic: [0.0369  0.03155 0.02388 0.01739]
+∇_w CVaR FD      : [0.0369  0.03155 0.02388 0.01739]
 Hessian_w shape  : (4, 4)
 </pre></div>
 </div>
@@ -636,17 +642,17 @@ Hessian_w shape  : (4, 4)
 <section id="a-few-risk-reducing-steps">
 <h2>A few risk-reducing steps<a class="headerlink" href="#a-few-risk-reducing-steps" title="Link to this heading">#</a></h2>
 <p>Projected gradient descent on the weights (keeping <span class="math notranslate nohighlight">\(\sum_i w_i = 1\)</span>) reduces the
-portfolio CVaR. We hold <span class="math notranslate nohighlight">\(Y\)</span> fixed across steps for a clean comparison:</p>
+portfolio CVaR. We hold <span class="math notranslate nohighlight">\(Q\)</span> fixed across steps for a clean comparison:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">w_opt</span> <span class="o">=</span> <span class="n">w</span>
-<span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Y</span><span class="p">))]</span>
+<span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Q</span><span class="p">))]</span>
 <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.5</span>
 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
-    <span class="n">g</span> <span class="o">=</span> <span class="n">cvar</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">cvar</span><span class="o">.</span><span class="n">gradient_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">g</span> <span class="o">-</span> <span class="n">g</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>                       <span class="c1"># project onto the simplex tangent (Σ Δw = 0)</span>
     <span class="n">w_opt</span> <span class="o">=</span> <span class="n">w_opt</span> <span class="o">-</span> <span class="n">lr</span> <span class="o">*</span> <span class="n">g</span>
-    <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Y</span><span class="p">)))</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cvar</span><span class="o">.</span><span class="n">value_w</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">w_opt</span><span class="p">,</span> <span class="n">Q</span><span class="p">)))</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;start weights : </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;final weights : </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w_opt</span><span class="p">)</span><span class="si">}</span><span class="s2">  (sum </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">w_opt</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
@@ -656,8 +662,8 @@ portfolio CVaR. We hold <span class="math notranslate nohighlight">\(Y\)</span> 
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>start weights : [0.4 0.3 0.2 0.1]
-final weights : [0.33729 0.27552 0.22254 0.16465]  (sum 1.0000)
-CVaR 0.03084 → 0.02961
+final weights : [0.33747 0.2756  0.22248 0.16445]  (sum 1.0000)
+CVaR 0.03074 → 0.02952
 </pre></div>
 </div>
 </div>
@@ -675,7 +681,7 @@ CVaR 0.03084 → 0.02961
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../../_images/a9533d9896541604be2ea82803213fbe187d1126804b2848f9810e61f13c482a.png" src="../../_images/a9533d9896541604be2ea82803213fbe187d1126804b2848f9810e61f13c482a.png" />
+<img alt="../../_images/9523138cc9f7458ec0396557a4bc09de77204f5600ba0308d905f2e7f9839191.png" src="../../_images/9523138cc9f7458ec0396557a4bc09de77204f5600ba0308d905f2e7f9839191.png" />
 </div>
 </div>
 <p>The weight gradient lets you plug normix’s tail risk straight into any
@@ -684,16 +690,16 @@ constrained optimizer; the analytic Hessian enables second-order methods.</p>
 <section id="takeaways">
 <h2>Takeaways<a class="headerlink" href="#takeaways" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>A fitted mixture yields portfolio VaR and CVaR through a low-variance
-conditional Monte Carlo over the subordinator <span class="math notranslate nohighlight">\(Y\)</span> — validated against
-brute-force sampling.</p></li>
+<li><p>A fitted mixture yields portfolio VaR through PINV and CVaR through
+quadrature over the subordinator <span class="math notranslate nohighlight">\(Y\)</span>, checked against brute-force sampling.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CVaR</span></code> provides analytic gradients/Hessians in both <span class="math notranslate nohighlight">\((\tilde\mu, \tilde\gamma,
-\tilde\sigma)\)</span> and the weights <span class="math notranslate nohighlight">\(w\)</span>, matching finite differences to machine
-precision.</p></li>
+\tilde\sigma)\)</span> and the weights <span class="math notranslate nohighlight">\(w\)</span>, checked against finite differences.</p></li>
 <li><p>Those weight-space derivatives drive gradient-based CVaR optimization.</p></li>
 </ul>
 <p>Next: <a class="reference internal" href="05_mean_risk_optimization.html"><span class="doc">Mean-risk optimization and the efficient surface</span></a> turns this into a full mean-risk
 optimizer, reducing the problem to a two-dimensional efficient surface.</p>
+<p>Quadrature defaults and a comparison with explicit Monte Carlo scenarios:
+<a class="reference internal" href="08_quadrature_scenarios.html"><span class="doc">Quadrature scenarios for portfolio CVaR</span></a>.</p>
 </section>
 </section>
 
@@ -745,7 +751,7 @@ optimizer, reducing the problem to a two-dimensional efficient surface.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-fitted-mixture-and-a-portfolio">A fitted mixture and a portfolio</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#var-cvar-and-conditional-monte-carlo">VaR, CVaR, and conditional Monte Carlo</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#var-cvar-and-quadrature">VaR, CVaR, and quadrature</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-in-the-scalar-parametrization">Derivatives in the scalar parametrization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-in-weight-space">Derivatives in weight space</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-few-risk-reducing-steps">A few risk-reducing steps</a></li>
