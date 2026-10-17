@@ -78,6 +78,19 @@ class JointVarianceGamma(JointNormalMixture):
                 - j.alpha * jnp.log(j.beta)
                 + j._mu_Lambda_gamma())
 
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log joint density-power integral :math:`R(q) = \log\int p(x,y)^q\,dx\,dy`.
+
+        Finite iff :math:`q > 0` and :math:`q(\alpha-1)+(1-q)d/2 > -1`,
+        where :math:`d` is the dimension of :math:`X`. Equality diverges.
+        Returns :math:`+\infty` outside this domain; :meth:`renyi` supplies
+        the sign through :math:`R(q)/(1-q)`. Supports ``jit`` and ``vmap``.
+        """
+        q = jnp.asarray(alpha, dtype=jnp.float64)
+        in_domain = (q > 0.0) & (q * (self.alpha - 1.0) + (1.0 - q) * self.d / 2.0 + 1.0 > 0.0)
+        q_safe = jnp.where(in_domain, q, 1.0)
+        return jnp.where(in_domain, super().log_density_power(q_safe), jnp.inf)
+
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, alpha, beta):
         mu = jnp.asarray(mu, dtype=jnp.float64)
