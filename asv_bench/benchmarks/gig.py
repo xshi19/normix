@@ -1,9 +1,9 @@
-"""Warm-start GIG ``η → θ`` timing (EM M-step hot path).
+"""Warm- and cold-start GIG ``η → θ`` timing.
 
 Source: ``benchmarks/bench_gig_solvers.py``. Easy = symmetric GIG;
 hard = ``a ≫ b`` (the ill-conditioned case η-rescaling targets).
-``theta0`` is passed so the JAX path hits ``_gig_jax_newton_jit`` rather
-than the cold-start multi-start CPU solver.
+Warm starts pass ``theta0`` to exercise the cached EM M-step kernel.
+Cold starts include seed generation and the JAX multi-start solve.
 """
 
 from __future__ import annotations
@@ -60,6 +60,28 @@ class GIGFromExpectation:
             self.eta, theta0=self.theta0, backend=backend
         )
         jax.block_until_ready(gig.p)
+
+
+class GIGFromExpectationCold:
+    """Cold-start inversion after compilation, including eager dispatch."""
+
+    params = [["newton", "lbfgs", "bfgs"], ["eager", "jit"]]
+    param_names = ["method", "mode"]
+    timeout = 180.0
+    warmup_time = 0.0
+
+    def setup(self, method: str, mode: str) -> None:
+        require_requested_device()
+        self.eta = GIG(0.5, 1.0, 1.0).expectation_params()
+
+        def invert(eta):
+            return GIG.from_expectation(eta, method=method).natural_params()
+
+        self.invert = jax.jit(invert) if mode == "jit" else invert
+        self.invert(self.eta).block_until_ready()
+
+    def time_from_expectation(self, method: str, mode: str) -> None:
+        self.invert(self.eta).block_until_ready()
 
 
 class Sampling:

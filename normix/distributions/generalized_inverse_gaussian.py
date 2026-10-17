@@ -53,6 +53,7 @@ Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
 """
 from __future__ import annotations
 
+from functools import partial
 from typing import Optional, Tuple
 
 import jax
@@ -1016,7 +1017,9 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         theta0 : jax.Array, optional
             Warm-start point. If ``None``, uses the selected JAX method
             with multiple starts, or multi-start L-BFGS-B on the CPU backend,
-            with Gamma/InverseGamma/InverseGaussian seeds.
+            with InverseGaussian/Gamma/InverseGamma seeds. JAX stops at the
+            first finite converged solve, starting with the interior
+            inverse-Gaussian seed.
         backend : str
             ``'jax'`` (default): supports ``jit``, forward and reverse
             AD through :math:`d\theta=H(\theta)^{-1}d\eta`. Solves and
@@ -1143,14 +1146,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 traced=isinstance(eta_target, jax.core.Tracer),
             )
         elif backend == "jax":
-            result = solve_bregman_multistart(
-                f, eta_scaled, jnp.stack(cls._initial_guesses(eta_scaled)),
-                backend=backend, method=method, bounds=_GIG_BOUNDS,
-                max_steps=maxiter, tol=tol, grad_fn=grad_fn, hess_fn=hess_fn,
-                verbose=verbose,
+            theta_scaled, grad_norm, converged, _ = cls._jax_cold_start(
+                eta_scaled, maxiter=maxiter, tol=tol, method=method,
             )
+            if verbose >= 1 and not isinstance(grad_norm, jax.core.Tracer):
+                status = "converged" if bool(converged) else "NOT converged"
+                print(f"GIG cold start [jax/{method}]: {status}, |grad|={float(grad_norm):.2e}")
             theta_scaled = _require_solved_theta(
-                result.theta, result.converged, grad_norm=result.grad_norm,
+                theta_scaled, converged, grad_norm=grad_norm,
                 traced=isinstance(eta_target, jax.core.Tracer),
             )
         else:
@@ -1179,12 +1182,26 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         upper = jnp.array([jnp.inf, 0.0, 0.0])
         return (lower, upper)
 
+    @classmethod
+    @partial(jax.jit, static_argnames=("cls", "maxiter", "method"))
+    def _jax_cold_start(cls, eta_scaled: jax.Array, *, maxiter: int, tol: float, method: str):
+        """Compile seed generation and inversion with fixed GIG rate bounds."""
+        result = solve_bregman_multistart(
+            cls._log_partition_from_theta, eta_scaled,
+            cls._initial_guesses(eta_scaled),
+            method=method, bounds=cls._theta_bounds(), max_steps=maxiter, tol=tol,
+            grad_fn=cls._grad_log_partition, hess_fn=cls._hessian_log_partition,
+        )
+        return result.theta, result.grad_norm, result.converged, result.num_steps
+
     @staticmethod
-    def _initial_guesses(eta_scaled: jax.Array) -> list:
+    @jax.jit
+    def _initial_guesses(eta_scaled: jax.Array) -> jax.Array:
         """
         Multi-start initial guesses for the scaled GIG problem.
 
-        Uses Gamma, InverseGamma, InverseGaussian special cases.
+        Tries the interior InverseGaussian seed before the Gamma and
+        InverseGamma boundary seeds and their perturbed copies.
         Rate coordinates are clamped to ``THETA_FLOOR`` for both backends.
         """
         from normix.distributions.gamma import Gamma
@@ -1196,17 +1213,17 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         gamma = Gamma.from_expectation(jnp.array([eta1, eta3]))
         invgamma = InverseGamma.from_expectation(jnp.array([-eta2, eta1]))
         invgauss = InverseGaussian.from_expectation(jnp.array([eta3, eta2]))
-        starting_points = [
-            jnp.array([gamma.alpha - 1.0, -eps / 2.0, -gamma.beta]),
-            jnp.array([-invgamma.alpha - 1.0, -invgamma.beta, -eps / 2.0]),
-            jnp.array([-1.5, -invgauss.lam / 2.0, -invgauss.lam / (2.0 * invgauss.mu**2)]),
-        ]
-        for seed in list(starting_points):
-            for scale in [0.1, 0.5, 2.0, 10.0]:
-                starting_points.append(seed.at[1:].set(jnp.minimum(seed[1:], -eps * scale / 2.0)))
-
-        return [seed.at[1:].set(jnp.minimum(seed[1:], THETA_FLOOR))
-                for seed in starting_points]
+        starting_points = jnp.array([
+            [-1.5, -invgauss.lam / 2.0, -invgauss.lam / (2.0 * invgauss.mu**2)],
+            [gamma.alpha - 1.0, -eps / 2.0, -gamma.beta],
+            [-invgamma.alpha - 1.0, -invgamma.beta, -eps / 2.0],
+        ])
+        scales = jnp.array([0.1, 0.5, 2.0, 10.0])
+        rates = jnp.minimum(starting_points[:, None, 1:], -eps * scales[None, :, None] / 2.0)
+        orders = jnp.broadcast_to(starting_points[:, None, :1], (3, 4, 1))
+        perturbed = jnp.concatenate((orders, rates), axis=-1).reshape(-1, 3)
+        seeds = jnp.concatenate((starting_points, perturbed))
+        return seeds.at[:, 1:].set(jnp.minimum(seeds[:, 1:], THETA_FLOOR))
 
 
 # ---------------------------------------------------------------------------

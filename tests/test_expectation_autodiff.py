@@ -71,6 +71,8 @@ def test_gig_cold_start_grad_and_jit(dist):
     reference = np.linalg.inv(_reference_hessian(dist))
     np.testing.assert_allclose(jax.grad(lambda target: jnp.sum(invert(target)))(eta),
                                reference.sum(axis=0), rtol=2e-6, atol=2e-7)
+    np.testing.assert_allclose(jax.jit(jax.jacrev(invert))(eta), reference,
+                               rtol=2e-6, atol=2e-7)
     jax.clear_caches()
 
 

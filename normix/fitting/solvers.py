@@ -10,8 +10,8 @@ Public API
 solve_bregman
     Single starting point.
 solve_bregman_multistart
-    Multiple starting points (``vmap`` for JAX Newton; a Python loop
-    for quasi-Newton and CPU).
+    Ordered starting points, stopping at the first finite converged
+    JAX solve. CPU solves select the best result from a Python loop.
 bregman_objective
     Utility :math:`f(\\theta) - \\theta\\cdot\\eta`.
 make_jit_newton_solver
@@ -22,7 +22,7 @@ make_jit_newton_solver
 
 Backends × methods
 ------------------
-backend='jax', method='newton'  custom lax.scan Newton, autodiff or analytical Hessian
+backend='jax', method='newton'  custom lax.while_loop Newton, autodiff or analytical Hessian
 backend='jax', method='lbfgs'   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
 backend='jax', method='bfgs'    jaxopt BFGS with reparameterization for bounds
 backend='cpu', method='lbfgs'   scipy L-BFGS-B
@@ -154,7 +154,7 @@ def solve_bregman(
 
     if backend == "jax":
         if method == "newton":
-            theta, fun, gn, conv = _jax_newton_raw(
+            theta, fun, gn, conv, steps = _jax_newton_raw(
                 f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
             )
             # No float()/bool() here — values may be JAX tracers inside lax.scan
@@ -162,7 +162,7 @@ def solve_bregman(
                 theta=theta,
                 fun=fun,
                 grad_norm=gn,
-                num_steps=max_steps,
+                num_steps=steps,
                 converged=conv,
                 elapsed_time=time.perf_counter() - t0,
             )
@@ -210,24 +210,26 @@ def solve_bregman_multistart(
     hess_fn: Optional[Callable] = None,
     verbose: int = 0,
 ) -> BregmanResult:
-    """Run solve_bregman from multiple starting points; return the best result.
+    """Solve from ordered starting points, preferring finite convergence.
 
     Parameters
     ----------
     theta0_batch : jax.Array or list of jax.Array
-        ``(K, dim)`` array or list of arrays. JAX Newton uses ``vmap``;
-        JAX quasi-Newton uses sequential ``lax.map``. CPU solves use a
-        Python loop.
+        Nonempty ``(K, dim)`` array or list of arrays. JAX tries starts in
+        order and stops at the first finite converged result. If none
+        converges, it returns the lowest finite objective. Put preferred
+        starts first. CPU solves use a Python loop over all starts.
     verbose : int
         0 = silent, >= 1 = print summary.
         Summaries are skipped while tracing.
     """
     t0 = time.perf_counter()
     if backend == "jax" and method in ("newton", "lbfgs", "bfgs"):
-        result = _multistart_jax(
+        theta, fun, gn, conv, steps = _multistart_jax(
             f, eta, jnp.asarray(theta0_batch, dtype=jnp.float64),
             bounds, max_steps, tol, grad_fn, hess_fn, method,
         )
+        result = BregmanResult(theta, fun, gn, steps, conv)
     else:
         theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
         result = _multistart_loop(
@@ -319,7 +321,7 @@ def _setup_reparam(
 
 
 # ---------------------------------------------------------------------------
-# JAX Newton  (lax.scan, vmap-compatible)
+# JAX Newton  (lax.while_loop, vmap-compatible)
 # ---------------------------------------------------------------------------
 
 def _damped_hessian(H: jax.Array, damping: float = HESSIAN_DAMPING) -> jax.Array:
@@ -410,8 +412,8 @@ def _jax_newton_raw(
     tol: float,
     grad_fn,   # theta → ∇ψ(θ), or None
     hess_fn,   # theta → ∇²ψ(θ), or None
-) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-    r"""Gauss–Newton in reparametrised :math:`\phi`-space via ``lax.scan``.
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+    r"""Gauss–Newton in reparametrised :math:`\phi`-space with early stopping.
 
     When ``grad_fn`` and ``hess_fn`` are both provided the chain rule is
     applied via ``jax.jacobian(to_theta)``:
@@ -452,8 +454,8 @@ def _jax_newton_raw(
     step, accepted at a tiny Armijo length, walks the GIG warm start
     into that bound.
 
-    Returns ``(theta_opt, fun, grad_norm, converged)`` as JAX arrays —
-    all are vmappable.
+    Returns ``(theta_opt, fun, grad_norm, converged, num_steps)`` as JAX
+    arrays. Iteration stops at the strict KKT tolerance or ``max_steps``.
     """
     phi0, to_theta, _ = _setup_reparam(theta0, bounds)
 
@@ -508,8 +510,12 @@ def _jax_newton_raw(
         )
         return phi - alpha_lm * delta_lm
 
-    def newton_body(carry, _):
-        phi, converged = carry
+    def newton_cond(carry):
+        step, _phi, converged = carry
+        return (step < max_steps) & ~converged
+
+    def newton_body(carry):
+        step, phi, converged = carry
         g, H, g_theta = get_g_H(phi)
         H_safe = _damped_hessian(H) if damp_phi else H
         delta = jnp.linalg.solve(H_safe, g)
@@ -529,18 +535,17 @@ def _jax_newton_raw(
                 operand=None,
             )
         theta = to_theta(phi)
-        grad_norm = jnp.max(jnp.abs(g_theta))
         converged_new = converged | (_kkt_residual(g_theta, theta, bounds) < tol)
         phi_out = jnp.where(converged_new, phi, phi_new)
-        return (phi_out, converged_new), grad_norm
+        return step + 1, phi_out, converged_new
 
-    (phi_opt, converged), _ = jax.lax.scan(
-        newton_body, (phi0, jnp.bool_(False)), None, length=max_steps
+    num_steps, phi_opt, converged = jax.lax.while_loop(
+        newton_cond, newton_body, (jnp.int32(0), phi0, jnp.bool_(False)),
     )
     theta_opt = to_theta(phi_opt)
     g_final = _natural_grad(f, eta, theta_opt, grad_fn)
     grad_norm = jnp.max(jnp.abs(g_final))
-    # The scan freezes once the pre-step KKT residual is under tol. The
+    # The loop stops once the pre-step KKT residual is under tol. The
     # last accepted step can land inside tol without a further frozen check.
     # The returned flag is wider: a free residual under BREGMAN_INVERT_ATOL
     # (multiplier dropped inside KKT_NEAR_GAP) is an inverted η.
@@ -548,7 +553,7 @@ def _jax_newton_raw(
     converged = converged | _inversion_converged(g_final, theta_opt, bounds, tol)
     converged = converged | strict
     final_obj = f(theta_opt) - jnp.dot(theta_opt, eta)
-    return theta_opt, final_obj, grad_norm, converged
+    return theta_opt, final_obj, grad_norm, converged, num_steps
 
 
 def _require_solved_theta(
@@ -601,7 +606,7 @@ def make_jit_newton_solver(
 
     The returned callable has signature
     ``solve(eta, theta0, max_steps=20, tol=1e-10) -> (theta_opt, fun, grad_norm, converged)``
-    where ``max_steps`` is a static argument (required by ``lax.scan``).
+    where ``max_steps`` and ``tol`` are static arguments.
 
     All distribution-level inputs (``f``, ``grad_fn``, ``hess_fn``, ``bounds``)
     are baked into the closure at construction time. Repeated calls with the
@@ -636,40 +641,44 @@ def make_jit_newton_solver(
         theta0 = jnp.asarray(theta0, dtype=jnp.float64)
         return _jax_newton_raw(
             f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
-        )
+        )[:4]
 
     return solve
 
 
+@partial(jax.jit, static_argnums=(0, 4, 6, 7, 8), inline=True)
 def _multistart_jax(
     f, eta, theta0_batch, bounds, max_steps, tol, grad_fn, hess_fn, method,
-) -> BregmanResult:
-    """Traceable multi-start selection over (K, dim) starting points."""
+):
+    """Cached sequential solves, stopping at the first finite convergence."""
     def solve_one(t0):
         if method == "newton":
-            return (*_jax_newton_raw(
+            return _jax_newton_raw(
                 f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn,
-            ), jnp.asarray(max_steps))
+            )
         result = _jax_quasi_newton(f, eta, t0, bounds, max_steps, tol, method)
         return (result.theta, result.fun, result.grad_norm,
-                result.converged, result.num_steps)
+                result.converged, jnp.asarray(result.num_steps, dtype=jnp.int32))
 
-    if method == "newton":
-        all_theta, all_fun, all_gn, all_conv, all_steps = jax.vmap(solve_one)(theta0_batch)
-    else:
-        all_theta, all_fun, all_gn, all_conv, all_steps = jax.lax.map(solve_one, theta0_batch)
-    # A start that met tol outranks a lower objective that did not.
-    finite = jnp.isfinite(all_fun)
-    best_conv = jnp.argmin(jnp.where(all_conv & finite, all_fun, jnp.inf))
-    best_any = jnp.argmin(jnp.where(finite, all_fun, jnp.inf))
-    best = jnp.where(jnp.any(all_conv & finite), best_conv, best_any)
-    return BregmanResult(
-        theta=all_theta[best],
-        fun=all_fun[best],
-        grad_norm=all_gn[best],
-        num_steps=all_steps[best],
-        converged=all_conv[best],
+    def cond(state):
+        i, best = state
+        return (i < theta0_batch.shape[0]) & ~(best[3] & jnp.isfinite(best[1]))
+
+    def body(state):
+        i, best = state
+        result = solve_one(theta0_batch[i])
+        take = (i == 0) | (jnp.isfinite(result[1]) & (
+            ~jnp.isfinite(best[1]) | result[3] | (result[1] < best[1])
+        ))
+        best = jax.tree.map(lambda new, old: jnp.where(take, new, old), result, best)
+        return i + 1, best
+
+    unsolved = (
+        theta0_batch[0], jnp.array(jnp.inf, dtype=theta0_batch.dtype),
+        jnp.array(jnp.inf, dtype=theta0_batch.dtype), jnp.bool_(False), jnp.int32(0),
     )
+    _, best = jax.lax.while_loop(cond, body, (jnp.int32(0), unsolved))
+    return best
 
 
 # ---------------------------------------------------------------------------
