@@ -214,16 +214,17 @@ def solve_bregman_multistart(
     Parameters
     ----------
     theta0_batch : jax.Array or list of jax.Array
-        ``(K, dim)`` array for ``backend='jax'``, ``method='newton'``
-        (parallel via vmap); list of arrays otherwise (sequential for-loop).
+        ``(K, dim)`` array or list of arrays. JAX Newton uses ``vmap``;
+        JAX quasi-Newton uses sequential ``lax.map``. CPU solves use a
+        Python loop.
     verbose : int
         0 = silent, >= 1 = print summary.
     """
     t0 = time.perf_counter()
-    if backend == "jax" and method == "newton":
-        result = _multistart_jax_newton(
+    if backend == "jax" and method in ("newton", "lbfgs", "bfgs"):
+        result = _multistart_jax(
             f, eta, jnp.asarray(theta0_batch, dtype=jnp.float64),
-            bounds, max_steps, tol, grad_fn, hess_fn,
+            bounds, max_steps, tol, grad_fn, hess_fn, method,
         )
     else:
         theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
@@ -638,14 +639,23 @@ def make_jit_newton_solver(
     return solve
 
 
-def _multistart_jax_newton(
-    f, eta, theta0_batch, bounds, max_steps, tol, grad_fn, hess_fn,
+def _multistart_jax(
+    f, eta, theta0_batch, bounds, max_steps, tol, grad_fn, hess_fn, method,
 ) -> BregmanResult:
-    """Parallel multi-start Newton via vmap over (K, dim) starting points."""
+    """Traceable multi-start selection over (K, dim) starting points."""
     def solve_one(t0):
-        return _jax_newton_raw(f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn)
+        if method == "newton":
+            return (*_jax_newton_raw(
+                f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn,
+            ), jnp.asarray(max_steps))
+        result = _jax_quasi_newton(f, eta, t0, bounds, max_steps, tol, method)
+        return (result.theta, result.fun, result.grad_norm,
+                result.converged, result.num_steps)
 
-    all_theta, all_fun, all_gn, all_conv = jax.vmap(solve_one)(theta0_batch)
+    if method == "newton":
+        all_theta, all_fun, all_gn, all_conv, all_steps = jax.vmap(solve_one)(theta0_batch)
+    else:
+        all_theta, all_fun, all_gn, all_conv, all_steps = jax.lax.map(solve_one, theta0_batch)
     # A start that met tol outranks a lower objective that did not.
     finite = jnp.isfinite(all_fun)
     best_conv = jnp.argmin(jnp.where(all_conv & finite, all_fun, jnp.inf))
@@ -655,7 +665,7 @@ def _multistart_jax_newton(
         theta=all_theta[best],
         fun=all_fun[best],
         grad_norm=all_gn[best],
-        num_steps=max_steps,
+        num_steps=all_steps[best],
         converged=all_conv[best],
     )
 
@@ -788,7 +798,7 @@ def _cpu_solve(
 
 
 # ---------------------------------------------------------------------------
-# Multi-start: Python for-loop  (CPU, and JAX quasi-Newton)
+# Multi-start: Python for-loop (CPU)
 # ---------------------------------------------------------------------------
 
 def _multistart_loop(

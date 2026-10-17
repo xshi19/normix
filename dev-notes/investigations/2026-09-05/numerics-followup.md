@@ -115,7 +115,7 @@ GIG cold starts formerly entered a CPU multi-start even with
 JAX Newton now uses traceable Gamma/InverseGamma/InverseGaussian seeds and
 the existing JAX multi-start solver. Its selected metadata stays in arrays.
 The CPU path remains eager-only and does not support JAX transformations;
-GIG's documented transformation contract is the JAX Newton path.
+All three JAX methods support transformations.
 
 Before: the Gamma and InverseGamma Jacobian tests raise the dynamic-loop
 reverse-mode error; the GIG cold-start test raises `ConcretizationTypeError`.
@@ -137,6 +137,16 @@ $\left[\begin{smallmatrix}16.23357293&-10.82238195\\
 -10.82238195&8.54825464\end{smallmatrix}\right]$.
 The InverseGamma(3,2) shape gradient is
 $(10.82238195,-16.23357293)$ instead of a reverse-mode exception.
+
+The resumed validation adds
+`test_gig_cold_start_quasi_newton_derivative_under_jit` for L-BFGS and
+BFGS. It exposed a remaining CPU fallback in JAX quasi-Newton cold starts:
+`np.array(t0)` raised `TracerArrayConversionError` before solving.
+All JAX cold starts now use the requested method. Newton retains `vmap`;
+quasi-Newton uses sequential `lax.map` to avoid unrolling fifteen solver
+graphs or batching their line searches. Selection uses array operations,
+with the same preference for a converged finite solution over a lower
+unconverged objective. The selected iteration count is preserved.
 
 ## 9.2 GIG target-domain boundary
 

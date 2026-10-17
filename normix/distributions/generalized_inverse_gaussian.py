@@ -1014,11 +1014,11 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Parameters
         ----------
         theta0 : jax.Array, optional
-            Warm-start point. If ``None``, uses multi-start Newton for the
-            JAX backend and multi-start L-BFGS-B for the CPU backend,
+            Warm-start point. If ``None``, uses the selected JAX method
+            with multiple starts, or multi-start L-BFGS-B on the CPU backend,
             with Gamma/InverseGamma/InverseGaussian seeds.
         backend : str
-            ``'jax'`` (default): Newton supports ``jit``, forward and reverse
+            ``'jax'`` (default): supports ``jit``, forward and reverse
             AD through :math:`d\theta=H(\theta)^{-1}d\eta`. Solves and
             initial guesses are not differentiated. Singular, nonfinite,
             or bound-active solutions have NaN derivatives.
@@ -1142,7 +1142,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 theta_scaled, converged, grad_norm=grad_norm,
                 traced=isinstance(eta_target, jax.core.Tracer),
             )
-        elif backend == "jax" and method == "newton":
+        elif backend == "jax":
             result = solve_bregman_multistart(
                 f, eta_scaled, jnp.stack(cls._initial_guesses(eta_scaled)),
                 backend=backend, method=method, bounds=_GIG_BOUNDS,

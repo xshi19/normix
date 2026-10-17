@@ -162,3 +162,18 @@ def test_generic_expectation_solver_derivative_under_jit(method):
     expected = np.linalg.inv(_reference_hessian(dist))
     np.testing.assert_allclose(jax.jit(jax.jacrev(invert))(dist.expectation_params()),
                                expected, rtol=1e-6, atol=1e-7)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize('method', ['lbfgs', 'bfgs'])
+def test_gig_cold_start_quasi_newton_derivative_under_jit(method):
+    dist = GIG(0.5, 1.0, 1.0)
+
+    def invert(eta):
+        return GIG.from_expectation(eta, method=method, maxiter=100).natural_params()
+
+    eta = dist.expectation_params()
+    expected = np.linalg.inv(_reference_hessian(dist))
+    np.testing.assert_allclose(jax.jit(invert)(eta), dist.natural_params(), rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(jax.jit(jax.jacrev(invert))(eta), expected, rtol=1e-5, atol=1e-6)
+    jax.clear_caches()
