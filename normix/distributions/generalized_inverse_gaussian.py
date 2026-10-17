@@ -1003,6 +1003,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Rescaling balances the forward and inverse target moments before
         optimization, reducing sensitivity to the units of :math:`X`.
 
+        The target layout is :math:`\eta=(\ell,m_-,m_+)`, with
+        :math:`\ell=E[\log X]`, :math:`m_-=E[1/X]`, and :math:`m_+=E[X]`.
+        Entries must be finite, :math:`m_-,m_+>0`, :math:`m_-m_+>1`, and
+        :math:`-\log m_-<\ell<\log m_+`. Equality is rejected as a
+        degenerate point-mass boundary. These necessary conditions do not
+        guarantee an interior GIG solution. Gamma/InverseGamma limits with
+        finite moments can satisfy all inequalities strictly.
+
         Parameters
         ----------
         theta0 : jax.Array, optional
@@ -1020,10 +1028,56 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Raises
         ------
+        ValueError
+            An eager target violates a necessary moment condition, before
+            any solve. Under JAX tracing an invalid target returns a NaN
+            model with NaN derivatives; scalar ``jit`` skips the solve.
         RuntimeError
             The solve did not converge. Under ``jit`` / ``lax.scan`` the
             returned natural parameters are NaN instead of a silent model.
         """
+        eta = jnp.asarray(eta, dtype=jnp.float64)
+        ell, m_minus, m_plus = eta
+        conditions = jnp.array([
+            jnp.all(jnp.isfinite(eta)),
+            m_minus > 0.0,
+            m_plus > 0.0,
+            m_minus * m_plus > 1.0,
+            ell > -jnp.log(m_minus),
+            ell < jnp.log(m_plus),
+        ])
+        kwargs = dict(theta0=theta0, maxiter=maxiter, tol=tol, backend=backend,
+                      method=method, verbose=verbose)
+        if not isinstance(eta, jax.core.Tracer):
+            requirements = (
+                "finite entries", "E[1/X] > 0", "E[X] > 0",
+                "E[X] * E[1/X] > 1", "-log(E[1/X]) < E[log X]",
+                "E[log X] < log(E[X])",
+            )
+            for satisfied, requirement in zip(np.asarray(conditions), requirements):
+                if not satisfied:
+                    raise ValueError(f"GIG.from_expectation requires {requirement}; equality is not an interior target")
+            return cls._from_expectation_unchecked(eta, **kwargs)
+        return jax.lax.cond(
+            jnp.all(conditions),
+            lambda target: cls._from_expectation_unchecked(target, **kwargs),
+            lambda target: cls.from_natural(jnp.full_like(target, jnp.nan) * target),
+            eta,
+        )
+
+    @classmethod
+    def _from_expectation_unchecked(
+        cls,
+        eta: jax.Array,
+        *,
+        theta0: Optional[jax.Array] = None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+        backend: str = "jax",
+        method: str = "newton",
+        verbose: int = 0,
+    ) -> "GeneralizedInverseGaussian":
+        """Invert a target that passed the public moment-domain check."""
         eta_target = jnp.asarray(eta, dtype=jnp.float64)
         eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]

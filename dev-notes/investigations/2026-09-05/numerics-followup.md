@@ -137,3 +137,39 @@ $\left[\begin{smallmatrix}16.23357293&-10.82238195\\
 -10.82238195&8.54825464\end{smallmatrix}\right]$.
 The InverseGamma(3,2) shape gradient is
 $(10.82238195,-16.23357293)$ instead of a reverse-mode exception.
+
+## 9.2 GIG target-domain boundary
+
+The statistic order is $(\log X,1/X,X)$, so write
+$\eta=(\ell,m_-,m_+)$. For a positive nonconstant random variable,
+strict Jensen gives $-\log m_-<\ell<\log m_+$;
+Cauchy–Schwarz gives $m_-m_+>1$. Both moments must be positive and every
+entry finite. The public constructor checks these necessary conditions
+before solving. Equality is rejected without a tolerance: a finite
+interior GIG is nonconstant. Gamma and InverseGamma boundaries with finite
+moments need not saturate these inequalities; they remain admissible to
+this cheap check. Existence of an interior GIG still depends on the solve.
+
+Eager failures raise `ValueError` naming the first violated condition.
+A scalar traced call uses `lax.cond` to return a NaN model without running
+the solver. The invalid branch also has NaN derivatives. Under `vmap`,
+JAX can evaluate both branches; the invalid result is still masked.
+The numerical Newton kernel is unchanged. The public boundary delegates
+valid targets to `_from_expectation_unchecked`, which retains the solve
+and shared implicit derivative.
+
+TDD: replacing the solver with a failure sentinel showed that an invalid
+negative inverse moment reached the solver before the fix.
+`test_gig_expectation_domain.py` checks each inequality, zero/negative
+moments, NaN/infinity, equality, both eager backends, traced/vmapped NaN
+models, invalid-target gradients, valid fits, and finite-moment Gamma /
+InverseGamma limits.
+
+After: all 31 domain tests pass. The supplied invalid targets now raise
+condition-specific `ValueError` instead of spending a solve and raising
+`RuntimeError`. A 30-pair warmed JIT timing on GIG(0.5,1,1), a 0.9-scaled
+warm start, and 20 Newton steps gave median 2.799 ms through the public
+guard versus 2.804 ms through the unchecked solve. This shows no measurable
+overhead in that workload; it is not a general performance claim.
+Reproducer: `/workspace/reports/scratch/time_gig_boundary.py`;
+output: `/workspace/reports/scratch/gig_boundary_timing.txt`.
