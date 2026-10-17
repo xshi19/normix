@@ -3,8 +3,10 @@
 **normix** is a [JAX](https://docs.jax.dev/en/latest/) package for Generalized
 Hyperbolic distributions and their relatives, implemented as exponential
 families. It is built on [Equinox](https://docs.kidger.site/equinox/) with
-float64 precision throughout, and is JIT-compiled, differentiable, and
-`vmap`-compatible end to end.
+float64 precision throughout. Log-densities, moments, and the JAX
+log-partition triad are JIT-compiled and differentiable.
+`vmap` batches one observation.
+The supported surface is the {doc}`capability matrix <user_guide/capabilities>`.
 
 ```python
 import jax
@@ -24,13 +26,16 @@ log_p = jax.vmap(result.model.log_prob)(X)
 
 ## Key features
 
-- **Exponential-family structure** — three parametrizations (classical, natural
-  $\theta$, expectation $\eta$) with automatic, lossless conversion.
+- **Exponential-family structure** — classical parameters and natural
+  $\theta$ convert exactly. `from_expectation` inverts
+  $\eta = \nabla\psi(\theta)$ in closed form or to a solver tolerance.
 - **The full GH family** — Gamma, Inverse Gamma, Inverse Gaussian, GIG, Variance
   Gamma, Normal-Inverse Gamma, Normal-Inverse Gaussian, and Generalized
   Hyperbolic, plus univariate and factor variants.
-- **EM fitting** — batch and incremental/mini-batch EM with a hybrid CPU/JAX
-  backend ([SciPy](https://docs.scipy.org/doc/scipy/) Bessel on the hot path).
+- **EM fitting** — batch and incremental EM. Bessel values come from
+  the `log_kv` kernel in JAX or NumPy.
+  [SciPy](https://docs.scipy.org/doc/scipy/) supplies the CPU optimizers.
+  `scipy.special.kve` is a test oracle.
 - **Closed-form divergences** — squared Hellinger and KL with no Monte Carlo.
 - **Finance toolkit** — portfolio projection and differentiable CVaR.
 - **Immutable** — all distributions are

@@ -22,8 +22,9 @@ and the choice of positive subordinator $Y$ names the member:
 | `GeneralizedHyperbolic` | GIG | `p`, `a`, `b` |
 
 The shared location/shape parameters are always $\mu$ (`mu`), $\gamma$
-(`gamma`), and the covariance $\Sigma$ given through its Cholesky factor
-`L_Sigma`. Because the `GIG` nests the Gamma, Inverse Gamma, and Inverse
+(`gamma`), and the dispersion $\Sigma$ given through its Cholesky factor
+`L_Sigma`. $\Sigma$ is the conditional scale, not the marginal covariance
+from `cov()`. Because the `GIG` nests the Gamma, Inverse Gamma, and Inverse
 Gaussian as limits, `GeneralizedHyperbolic` nests all the others — see
 {doc}`../tutorials/core/02_gh_family_tour`.
 
