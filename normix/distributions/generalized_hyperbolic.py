@@ -381,6 +381,14 @@ class GeneralizedHyperbolic(NormalMixture):
         return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
     def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
+        """Warm-start the GIG solve from the current subordinator.
+
+        On CPU, a failed solve keeps this GIG and EM continues.
+        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        A finite solve outside the clamp does the same.
+        A non-finite JAX solve is left in place so EM can set
+        ``solver_failed``.
+        """
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
@@ -397,8 +405,6 @@ class GeneralizedHyperbolic(NormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except RuntimeError:
-                raise
             except Exception:
                 gig_new = current_gig
             else:
@@ -660,6 +666,14 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
     def m_step_subordinator(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
+        """Warm-start the GIG solve from the current subordinator.
+
+        On CPU, a failed solve keeps this GIG and EM continues.
+        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        A finite solve outside the clamp does the same.
+        A non-finite JAX solve is left in place so EM can set
+        ``solver_failed``.
+        """
         from normix.distributions.generalized_inverse_gaussian import GIG
         backend = kwargs.get('backend', 'jax')
         method = kwargs.get('method', 'newton')
@@ -675,8 +689,6 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except RuntimeError:
-                raise
             except Exception:
                 gig_new = current_gig
             else:

@@ -19,6 +19,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from normix.exponential_family import _check_backend
+from normix.fitting.solvers import SolverDidNotConverge
 
 
 
@@ -117,10 +118,9 @@ def _validate_fit_data(X: jax.Array) -> None:
     """
     if isinstance(X, jax.core.Tracer):
         return
-    arr = np.asarray(X)
-    if arr.ndim == 0 or arr.size == 0 or arr.shape[0] == 0:
+    if X.ndim == 0 or X.size == 0 or X.shape[0] == 0:
         raise ValueError("fit received an empty sample")
-    if not np.isfinite(arr).all():
+    if not bool(jnp.all(jnp.isfinite(X))):
         raise ValueError("fit requires every observation to be finite")
 
 
@@ -137,18 +137,6 @@ def _inexact_finite(tree) -> jax.Array:
 def _mixing_finite(model) -> jax.Array:
     """True when the subordinator parameters are finite."""
     return _inexact_finite(model.subordinator())
-
-
-def _poison_mixing(model, active):
-    """Replace the first stored subordinator field with NaN when ``active``."""
-    key = type(model)._subordinator_keys()[0]
-
-    def getter(m):
-        return getattr(m._joint, key)
-
-    current = getter(model)
-    poisoned = jnp.where(active, jnp.full_like(current, jnp.nan), current)
-    return eqx.tree_at(getter, model, poisoned)
 
 
 def _restore_location(result: "EMResult", center: jax.Array) -> "EMResult":
@@ -168,9 +156,10 @@ class EMResult:
     ``converged``, ``diverged``, and ``solver_failed`` are separate.
     Tolerance met is ``converged=True``. A non-finite normal-block change
     or objective is ``diverged=True``: the last finite model is kept.
-    A non-finite mixing distribution after the M-step (the inner
-    :math:`\\eta\\to\\theta` solve failed, or a closed form returned NaN)
-    is ``solver_failed=True``, again with the last finite model kept.
+    A non-finite mixing distribution after the M-step is
+    ``solver_failed=True``, again with the last finite model kept.
+    On the Python loop, :class:`~normix.fitting.solvers.SolverDidNotConverge`
+    or ``ValueError`` sets the same flag.
     Exhausting ``max_iter`` leaves all three false. They are not
     opposites.
     """
@@ -303,9 +292,8 @@ class BatchEMFitter:
         self.eta_update = eta_update
         self.track_ll = track_ll
         self.m_step_kwargs = dict(m_step_kwargs) if m_step_kwargs else {}
-        # Test hooks (1-based step). ``tests/test_em_regression.py``.
+        # Test hook (1-based step). ``tests/test_em_regression.py``.
         self._force_nonfinite_at_step: int | None = None
-        self._force_solver_fail_at_step: int | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -519,9 +507,6 @@ class BatchEMFitter:
             force_at = self._force_nonfinite_at_step
             if force_at is not None:
                 max_change = jnp.where(step_no == force_at, jnp.nan, max_change)
-            force_solver = self._force_solver_fail_at_step
-            if force_solver is not None:
-                mdl_new = _poison_mixing(mdl_new, step_no == force_solver)
             mix_ok = _mixing_finite(mdl_new)
             iterate_ok = jnp.isfinite(max_change) & jnp.isfinite(obj)
             finite = iterate_ok & mix_ok
@@ -638,9 +623,7 @@ class BatchEMFitter:
             try:
                 model, max_change, eta_state, obj = self._step(
                     model, X, eta_state, target_log_det=target_log_det)
-            except RuntimeError as exc:
-                if "did not converge" not in str(exc):
-                    raise
+            except (SolverDidNotConverge, ValueError):
                 solver_failed = True
                 model = prev_model
                 changes.append(jnp.array(jnp.nan))
@@ -653,9 +636,6 @@ class BatchEMFitter:
             force_at = self._force_nonfinite_at_step
             if force_at is not None and (i + 1) == force_at:
                 max_change = jnp.array(jnp.nan)
-            force_solver = self._force_solver_fail_at_step
-            if force_solver is not None and (i + 1) == force_solver:
-                model = _poison_mixing(model, True)
             dt = time.perf_counter() - t_iter
             changes.append(max_change)
             n_iter = i + 1

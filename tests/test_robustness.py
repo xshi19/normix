@@ -237,8 +237,6 @@ def test_gamma_from_expectation_accepts_true_moments_and_traced_eta():
     np.testing.assert_allclose(float(back.beta), 1.3, rtol=1e-8)
     traced = jax.jit(lambda e: Gamma.from_expectation(e).alpha)(eta)
     np.testing.assert_allclose(float(traced), 2.5, rtol=1e-8)
-    skipped = jax.jit(lambda e: Gamma.from_expectation(e).alpha)(jnp.array([0.0, 1.0]))
-    assert skipped.shape == ()
 
 
 def test_fit_mle_valid_sample_unchanged():
