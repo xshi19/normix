@@ -200,6 +200,61 @@ class TestSolveBregmanQuadratic:
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
 
+    def test_jax_newton_reports_steps_until_stop(self):
+        """A quadratic Newton step lands on η; the count is not the budget."""
+        eta = jnp.array([1.0, -2.0])
+        r = solve_bregman(
+            quadratic_f, eta, jnp.zeros(2),
+            backend="jax", method="newton", max_steps=40, tol=1e-10,
+        )
+        assert r.reason == "converged"
+        assert isinstance(r.num_steps, int)
+        assert 1 <= r.num_steps < 40
+        assert r.kkt_residual < 1e-10
+        assert r.converged
+
+    def test_jax_newton_max_steps_reason(self):
+        def cosh_sum(theta):
+            return jnp.sum(jnp.cosh(theta))
+
+        r = solve_bregman(
+            cosh_sum, jnp.array([0.0]), jnp.array([2.0]),
+            backend="jax", method="newton", max_steps=1, tol=1e-12,
+        )
+        assert r.reason == "max_steps"
+        assert r.num_steps == 1
+        assert r.converged is False
+        assert r.kkt_residual > 1e-3
+
+
+def _cpu_quad_grad(theta):
+    return np.asarray(theta, dtype=np.float64).copy()
+
+
+def _cpu_quad_hess(theta):
+    return np.eye(np.asarray(theta).shape[0])
+
+
+def test_cpu_bfgs_and_newton_honour_bounds():
+    """The unconstrained minimizer is θ=1. A θ≤0 constraint must hold it."""
+    eta = jnp.array([1.0])
+    theta0 = jnp.array([-0.5])
+    bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
+
+    def objective(theta):
+        return 0.5 * jnp.dot(theta, theta)
+
+    for method, hess in (("bfgs", None), ("newton", _cpu_quad_hess), ("lbfgs", None)):
+        r = solve_bregman(
+            objective, eta, theta0,
+            backend="cpu", method=method, bounds=bounds,
+            max_steps=80, tol=1e-8,
+            grad_fn=_cpu_quad_grad, hess_fn=hess,
+        )
+        assert float(r.theta[0]) <= 1e-8, method
+        assert float(r.theta[0]) > -1e-3, method
+        assert r.reason in ("converged", "atol"), method
+
 
 def test_damped_hessian_scales_with_trace():
     """Ridge is λ tr(H)/n, not an absolute 1e-6."""
