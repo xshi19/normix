@@ -498,7 +498,7 @@ class ExponentialFamily(eqx.Module):
         ------
         ValueError
             ``backend`` is not ``'jax'`` or ``'cpu'``.
-        RuntimeError
+        SolverDidNotConverge
             The solve did not converge. Under ``jit`` / ``lax.scan`` the
             returned natural parameters are NaN instead of a silent model.
         """

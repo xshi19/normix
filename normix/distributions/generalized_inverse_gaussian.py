@@ -1015,7 +1015,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Raises
         ------
-        RuntimeError
+        SolverDidNotConverge
             The solve did not converge. Under ``jit`` / ``lax.scan`` the
             returned natural parameters are NaN instead of a silent model.
         """
