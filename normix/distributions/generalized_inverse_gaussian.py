@@ -375,7 +375,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         GIG is already in GIG coordinates, so this returns ``self``. It exists
         so that every subordinator family exposes a uniform ``to_gig()`` for
         the shared prior-to-posterior conjugacy map in the EM E-step (see
-        :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`).
+        ``JointNormalMixture._posterior_gig_params``).
         ``boundary_eps`` is accepted for API uniformity and ignored.
         """
         del boundary_eps
@@ -394,7 +394,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return self._gig_layout_eta_split()
 
     def _gig_layout_eta_split(self):
-        r"""Degenerate-aware split. See :meth:`_gig_layout_eta`."""
+        r"""Degenerate-aware split. See ``_gig_layout_eta``."""
         p, a, b = self.p, self.a, self.b
         use_gamma, use_invg, _, _ = _gig_degeneracy_flags(p, a, b, jnp)
 
@@ -438,7 +438,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
         Small-:math:`z` limit (see ``_gig_degeneracy_flags``): Gamma
         if :math:`p>0`, InverseGamma if :math:`p<0`. Otherwise the Bessel
-        kernel on ``(a_safe, b_safe)`` as in :meth:`_grad_log_partition`.
+        kernel on ``(a_safe, b_safe)`` as in ``_grad_log_partition``.
         Off :math:`\Theta` returns :math:`+\infty`. Clamps on the Gamma /
         InverseGamma branches are unselected-branch guards.
         """
@@ -474,7 +474,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
     def log_partition(self) -> jax.Array:
         r""":math:`\psi(\theta)` at current parameters.
 
-        A module-level :func:`jax.jit` of :meth:`_log_partition_from_theta`
+        A module-level :func:`jax.jit` of ``_log_partition_from_theta``
         (see ``_gig_log_partition_jit``). Without it, a scalar call runs
         the eager 192-point :func:`~normix.utils.bessel.log_kv` quadrature
         — about a second per E-step when conjugacy asks for prior
@@ -665,7 +665,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Keeps ``m.log_k`` from :func:`~normix.utils.bessel.log_kv_moments`
         to form :math:`\psi = \log 2 + \log K_p(\sqrt{ab}) +
         \tfrac{p}{2}\log(b/a)` with no extra Bessel call. Matches the
-        Bessel branch of :meth:`_grad_log_partition` (``LOG_EPS`` floor).
+        Bessel branch of ``_grad_log_partition`` (``LOG_EPS`` floor).
         """
         p = jnp.asarray(p, dtype=jnp.float64)
         a_safe = jnp.maximum(jnp.asarray(a, dtype=jnp.float64), LOG_EPS)

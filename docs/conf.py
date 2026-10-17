@@ -76,6 +76,7 @@ nitpick_ignore = [
     ('py:func', 'numpy.ndarray.ravel'),
     ('py:func', 'jax.custom_jvp'),
     ('py:func', 'jnp.where'),
+    ('py:exc', 'equinox.EquinoxRuntimeError'),
 ]
 # Napoleon often lexes Parameters prose as types; private helpers appear in
 # inherited docstrings. Regex keeps the allowlist small while still failing

@@ -361,7 +361,7 @@ def log_kv_moments(v, z, backend: str = 'jax') -> BesselMoments:
         Order (any real; :math:`\nu=0` is an ordinary point).
     z : scalar or array
         Argument (must be :math:`> 0`).
-    backend : {'jax', 'cpu'}, optional
+    backend : 'jax' or 'cpu', optional
         Array backend. ``'jax'`` is JIT-able and differentiable; ``'cpu'``
         is the same sums in NumPy.
 

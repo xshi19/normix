@@ -350,7 +350,7 @@ class FactorVarianceGamma(FactorNormalMixture):
                 + log_K + zw)
 
     def _subordinator_expectations(self):
-        r"""Prior Gamma moments; see :meth:`VarianceGamma._subordinator_expectations`."""
+        r"""Prior Gamma moments; see ``VarianceGamma._subordinator_expectations``."""
         E_log_Y = jax.scipy.special.digamma(self.alpha) - jnp.log(self.beta)
         E_inv_Y = self.beta / jnp.maximum(self.alpha - 1.0, ALPHA_MOMENT_MARGIN)
         E_Y = self.alpha / self.beta

@@ -11,6 +11,7 @@ Bessel Functions
 .. automodule:: normix.utils.bessel
    :members:
    :undoc-members:
+   :exclude-members: Array
 
 Constants
 ---------

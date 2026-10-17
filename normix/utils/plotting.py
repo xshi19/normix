@@ -294,7 +294,8 @@ def plot_mle_fit(
     Parameters
     ----------
     data        : 1-D sample array
-    fit_results : list of dicts {label, dist, ls, color}
+    fit_results : list of dict
+        Each dict has keys ``label``, ``dist``, ``ls`` and ``color``.
     """
     fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
     ax.hist(data, bins=60, density=True, alpha=0.5, color="lightsteelblue",

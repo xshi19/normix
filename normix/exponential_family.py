@@ -408,7 +408,7 @@ class ExponentialFamily(eqx.Module):
 
         Uses the gauge :math:`\psi` after lifting both operands, with
         :math:`\eta_p` from the source family's closed-form tail split
-        (:meth:`_divergence_eta`) rather than :math:`\nabla\psi` at a
+        (``_divergence_eta``) rather than :math:`\nabla\psi` at a
         boundary :math:`\theta`.
         """
         from normix.divergences import kl_divergence_from_eta

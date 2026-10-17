@@ -257,7 +257,7 @@ class InverseGamma(ExponentialFamily):
 
         :math:`X=1/W` with :math:`W\sim\mathrm{Gamma}(\alpha,\beta)`, so the
         matrix is the signed permutation of
-        :meth:`~normix.distributions.gamma.Gamma._b_covariance`. Entries that
+        ``Gamma._b_covariance``. Entries that
         need :math:`E[X]` (:math:`\alpha\le 1`) or :math:`E[X^2]`
         (:math:`\alpha\le 2`) are :math:`+\infty`.
         """
