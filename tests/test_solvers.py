@@ -18,6 +18,7 @@ from normix.fitting.solvers import (
     solve_bregman_multistart,
     _setup_reparam,
 )
+from normix.utils.constants import THETA_FLOOR
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -370,6 +371,20 @@ class TestSolveBregmanGIG:
 # ---------------------------------------------------------------------------
 
 class TestSolveBregmanMultistart:
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('geom', [1e3, 1e6])
+    @pytest.mark.parametrize('compiled', [False, True])
+    def test_gig_initial_guesses_stay_inside_rate_bounds(self, geom, compiled):
+        from normix import GIG
+
+        initial_guesses = GIG._initial_guesses
+        if compiled:
+            initial_guesses = jax.jit(initial_guesses)
+        seeds = np.asarray(initial_guesses(jnp.array([0.0, geom, geom])))
+
+        assert np.isfinite(seeds).all()
+        assert np.all(seeds[:, 1:] <= THETA_FLOOR)
 
     def test_jax_newton_vmap(self):
         """vmap multi-start on quadratic — all starts should converge."""

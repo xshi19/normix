@@ -1154,15 +1154,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 traced=isinstance(eta_target, jax.core.Tracer),
             )
         else:
-            theta0_list = cls._initial_guesses(eta_scaled)
-            processed = []
-            for t0 in theta0_list:
-                t0_np = np.array(t0)
-                t0_np[1] = min(t0_np[1], THETA_FLOOR)
-                t0_np[2] = min(t0_np[2], THETA_FLOOR)
-                processed.append(jnp.asarray(t0_np, dtype=jnp.float64))
             result = solve_bregman_multistart(
-                cls._log_partition_cpu, eta_scaled, processed,
+                cls._log_partition_cpu, eta_scaled, cls._initial_guesses(eta_scaled),
                 backend="cpu", method="lbfgs",
                 bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
                 grad_fn=cls._grad_log_partition_cpu,
@@ -1192,6 +1185,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Multi-start initial guesses for the scaled GIG problem.
 
         Uses Gamma, InverseGamma, InverseGaussian special cases.
+        Rate coordinates are clamped to ``THETA_FLOOR`` for both backends.
         """
         from normix.distributions.gamma import Gamma
         from normix.distributions.inverse_gamma import InverseGamma
@@ -1211,7 +1205,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             for scale in [0.1, 0.5, 2.0, 10.0]:
                 starting_points.append(seed.at[1:].set(jnp.minimum(seed[1:], -eps * scale / 2.0)))
 
-        return starting_points
+        return [seed.at[1:].set(jnp.minimum(seed[1:], THETA_FLOOR))
+                for seed in starting_points]
 
 
 # ---------------------------------------------------------------------------
