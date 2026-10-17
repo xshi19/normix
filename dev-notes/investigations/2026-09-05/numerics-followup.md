@@ -77,3 +77,63 @@ failed with `UnexpectedTracerError` before the change. For Gamma(3,2),
 $\partial_\beta H_2=-0.5$ and
 $\partial_\alpha H_2=2\log 2-7/6=0.219627694453224$;
 $\partial_q H_q|_{q=2}=-0.106770228755435$ is unchanged.
+
+## 9.4 Implicit expectation inversion
+
+Design constraints: F2 keeps the existing constructors; F4 supplies the
+Hessian triad; S2 keeps all derivatives in natural coordinates; E14 keeps
+Gamma's optional shape projection. No new class, module, or public API.
+The shared private classmethod
+`ExponentialFamily._implicit_natural_params(eta, theta)` attaches the
+derivative to a solved natural parameter vector. Gamma, InverseGamma,
+GIG, and the generic constructor solve with stopped targets and initial
+guesses, then call this method. Closed-form inverses remain ordinary AD.
+
+Differentiate $\nabla\psi(\theta)=\eta$ to obtain
+$H(\theta)d\theta=d\eta$. The custom JVP solves this linear system;
+JAX transposes it for reverse mode. It uses the distribution's Hessian
+triad, never the optimizer's damped matrix or its reparametrization.
+
+Let $D_{ii}=\sqrt{H_{ii}}$ and $C=D^{-1}HD^{-1}$.
+The tangent is $D^{-1}C^{-1}D^{-1}d\eta$, computed by Cholesky.
+This removes units before checking identifiability. Require finite
+entries, positive diagonal, and
+$\lambda_{\min}(C)>n\epsilon\lambda_{\max}(C)$ for $n$ natural coordinates
+and machine epsilon $\epsilon$. Otherwise the derivative is NaN.
+Nonfinite solutions and active natural-coordinate bounds also give NaN.
+No ridge or pseudoinverse substitutes a different derivative. Keeping the
+NaN as a multiplicative tangent factor makes both JVP and VJP propagate it.
+
+Gamma's shape projection occurs after the implicit inverse, so an active
+`alpha_min` has zero shape derivative and the rate still follows the target
+mean. Joint pytree M-steps inherit subordinator derivatives. Redundant flat
+joint coordinates are not promised a unique inverse; a singular Fisher
+matrix gives NaN derivatives rather than an invented gauge choice.
+
+GIG cold starts formerly entered a CPU multi-start even with
+`backend='jax'`. Python `float` conversions made this fail under tracing.
+JAX Newton now uses traceable Gamma/InverseGamma/InverseGaussian seeds and
+the existing JAX multi-start solver. Its selected metadata stays in arrays.
+The CPU path remains eager-only and does not support JAX transformations;
+GIG's documented transformation contract is the JAX Newton path.
+
+Before: the Gamma and InverseGamma Jacobian tests raise the dynamic-loop
+reverse-mode error; the GIG cold-start test raises `ConcretizationTypeError`.
+`test_expectation_autodiff.py` checks forward/reverse Jacobians, scalar
+reverse gradients, JIT, and central differences at three points per family.
+References are analytical trigamma Hessians for Gamma/InverseGamma and
+40-digit mpmath derivatives of the Bessel normalization for GIG. A GIG
+with $a=10^{-4},b=10^4$ tests unequal units. Additional cases cover cold
+starts, failed solves, a singular representation, the closed-form inverse
+Gaussian, Gamma's projection, and joint VG/NInvG M-steps.
+
+The first 20 inversion cases passed. Two additional regressions exercise
+the generic base constructor with JAX L-BFGS/BFGS under JIT. The first
+failed at a Python `float` conversion in the solver result. Selected
+quasi-Newton metadata now remains in arrays, as for Newton. This change
+is required by the derivative path; it does not change convergence tests.
+At Gamma(3,2), the inverse Fisher matrix is
+$\left[\begin{smallmatrix}16.23357293&-10.82238195\\
+-10.82238195&8.54825464\end{smallmatrix}\right]$.
+The InverseGamma(3,2) shape gradient is
+$(10.82238195,-16.23357293)$ instead of a reverse-mode exception.

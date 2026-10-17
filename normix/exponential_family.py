@@ -426,6 +426,43 @@ class ExponentialFamily(eqx.Module):
         return cls._log_partition_from_theta(theta) - jnp.dot(theta, eta)
 
     @classmethod
+    def _implicit_natural_params(cls, eta: jax.Array, theta: jax.Array) -> jax.Array:
+        r"""Attach the interior inverse derivative :math:`H(\theta)^{-1}d\eta`.
+
+        ``theta`` is the result of a solve on stopped inputs. Diagonal
+        equilibration removes units before the positive-definiteness check
+        and Cholesky solve. Unidentifiable, nonfinite, or bound-active
+        solutions have NaN derivatives; no damping changes the inverse.
+        """
+        @jax.custom_jvp
+        def inverse(target, solved):
+            return solved
+
+        @inverse.defjvp
+        def inverse_jvp(primals, tangents):
+            target, solved = primals
+            d_eta, _ = tangents
+            theta = inverse(target, solved)
+            hessian = cls._hessian_log_partition(theta)
+            diagonal = jnp.diag(hessian)
+            valid = (jnp.all(jnp.isfinite(theta)) & jnp.all(jnp.isfinite(hessian))
+                     & jnp.all(diagonal > 0.0))
+            bounds = cls._theta_bounds()
+            if bounds is not None:
+                valid = valid & jnp.all((theta > bounds[0]) & (theta < bounds[1]))
+            scale = jnp.sqrt(jnp.where(diagonal > 0.0, diagonal, 1.0))
+            scaled = hessian / scale[:, None] / scale[None, :]
+            scaled = jnp.where(valid, (scaled + scaled.T) / 2.0, jnp.eye(theta.size))
+            eigenvalues = jnp.linalg.eigvalsh(scaled)
+            cutoff = theta.size * jnp.finfo(theta.dtype).eps * eigenvalues[-1]
+            valid = valid & (eigenvalues[0] > cutoff)
+            factor = jnp.linalg.cholesky(jnp.where(valid, scaled, jnp.eye(theta.size)))
+            tangent = jax.scipy.linalg.cho_solve((factor, True), d_eta / scale) / scale
+            return theta, tangent * jnp.where(valid, 1.0, jnp.nan)
+
+        return inverse(eta, jax.lax.stop_gradient(theta))
+
+    @classmethod
     def from_expectation(
         cls,
         eta: jax.Array,
@@ -442,6 +479,12 @@ class ExponentialFamily(eqx.Module):
 
         Minimises the Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta`
         via ``solve_bregman``. Subclasses can override for closed-form inverses.
+        The JAX path differentiates the solved stationarity condition:
+        :math:`d\theta=H(\theta)^{-1}d\eta`, in forward and reverse mode.
+        Initial guesses and optimizer iterations are not differentiated.
+        Singular, numerically rank-deficient, nonfinite, or bound-active
+        solutions have NaN derivatives. The CPU backend is eager-only
+        and does not support JAX transformations.
 
         Parameters
         ----------
@@ -460,10 +503,12 @@ class ExponentialFamily(eqx.Module):
         """
         from normix.fitting.solvers import solve_bregman, _require_solved_theta
 
-        eta = jnp.asarray(eta, dtype=jnp.float64)
+        eta_target = jnp.asarray(eta, dtype=jnp.float64)
+        eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         if theta0 is None:
             theta0 = jnp.zeros_like(eta)
 
+        theta0 = jax.lax.stop_gradient(theta0)
         bounds = cls._theta_bounds()
 
         if backend == 'cpu':
@@ -484,7 +529,10 @@ class ExponentialFamily(eqx.Module):
         )
         theta = _require_solved_theta(
             result.theta, result.converged, grad_norm=result.grad_norm,
+            traced=isinstance(eta_target, jax.core.Tracer),
         )
+        if backend == "jax":
+            theta = cls._implicit_natural_params(eta_target, theta)
         return cls.from_natural(theta)
 
     @classmethod

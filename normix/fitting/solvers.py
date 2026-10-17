@@ -553,10 +553,13 @@ def _require_solved_theta(
     converged: Any,
     *,
     grad_norm: Any = None,
+    traced: bool = False,
 ) -> jax.Array:
     """Return ``theta`` only when the Bregman solve converged.
 
-    Eager calls raise :class:`RuntimeError`. Under tracing (``jit``,
+    ``traced`` preserves the caller's trace context when solve inputs
+    were stopped for implicit differentiation. Eager calls raise
+    :class:`RuntimeError`. Under tracing (``jit``,
     ``lax.scan``, EM) a failed solve is NaN, so the caller cannot treat
     an uninverted :math:`\\eta` as a model. GH M-step sanity checks
     already reject non-finite subordinator parameters and keep the
@@ -564,7 +567,7 @@ def _require_solved_theta(
     """
     converged_b = jnp.asarray(converged, dtype=jnp.bool_)
     masked = jnp.where(converged_b, theta, jnp.full_like(theta, jnp.nan))
-    if isinstance(theta, jax.core.Tracer) or isinstance(converged, jax.core.Tracer):
+    if traced or isinstance(theta, jax.core.Tracer) or isinstance(converged, jax.core.Tracer):
         return masked
     if bool(converged_b):
         return theta
@@ -650,10 +653,10 @@ def _multistart_jax_newton(
     best = jnp.where(jnp.any(all_conv & finite), best_conv, best_any)
     return BregmanResult(
         theta=all_theta[best],
-        fun=float(all_fun[best]),
-        grad_norm=float(all_gn[best]),
+        fun=all_fun[best],
+        grad_norm=all_gn[best],
         num_steps=max_steps,
-        converged=bool(all_conv[best]),
+        converged=all_conv[best],
     )
 
 
@@ -687,19 +690,19 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
     theta_opt = to_theta(result.params)
 
     g = jax.grad(lambda t: f(t) - jnp.dot(t, eta))(theta_opt)
-    final_obj = float(f(theta_opt) - jnp.dot(theta_opt, eta))
+    final_obj = f(theta_opt) - jnp.dot(theta_opt, eta)
 
     # jaxopt state.error is ‖∇_φ obj‖, which is tiny on an exp bound
     # while g_θ is still O(1). Acceptance is the natural residual.
     state = result.state
-    n_iter = int(state.iter_num) if hasattr(state, "iter_num") else max_steps
+    n_iter = state.iter_num if hasattr(state, "iter_num") else max_steps
 
     return BregmanResult(
         theta=theta_opt,
         fun=final_obj,
-        grad_norm=float(jnp.max(jnp.abs(g))),
+        grad_norm=jnp.max(jnp.abs(g)),
         num_steps=n_iter,
-        converged=bool(_inversion_converged(g, theta_opt, bounds, tol)),
+        converged=_inversion_converged(g, theta_opt, bounds, tol),
     )
 
 
