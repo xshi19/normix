@@ -16,7 +16,6 @@ from typing import Any, Optional
 import equinox as eqx
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from normix.exponential_family import _check_backend
 from normix.fitting.solvers import SolverDidNotConverge
