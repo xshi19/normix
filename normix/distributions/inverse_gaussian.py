@@ -37,7 +37,7 @@ import jax.numpy as jnp
 
 from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.constants import SCENARIO_QUAD_NODES
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 from normix.utils.constants import LOG_EPS
 from normix.utils.rvs import QuantileTable, build_pinv_table
 
@@ -299,13 +299,27 @@ class InverseGaussian(ExponentialFamily):
         theta0=None,
         maxiter: int = 100,
         tol: float = 1e-12,
+        backend: str = "jax",
         **kwargs,
     ) -> "InverseGaussian":
         r"""
         Closed-form from :math:`\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]`:
 
         :math:`\mu = \eta_1`, :math:`\lambda = 1/(\eta_2 - 1/\eta_1)`.
+
+        Parameters
+        ----------
+        backend : str
+            Accepted for a uniform constructor signature. The map is
+            closed form and does not dispatch on it.
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
+        del backend
         eta = jnp.asarray(eta, dtype=jnp.float64)
         mu = eta[0]
         lam = 1.0 / (eta[1] - 1.0 / eta[0])

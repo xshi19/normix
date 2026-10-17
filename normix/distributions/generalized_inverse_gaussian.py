@@ -62,7 +62,7 @@ import numpy as np
 from normix.utils.bessel import log_kv, log_kv_moments, _ab_coeffs, _edge
 from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.rvs import QuantileTable, build_pinv_table
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 from normix.utils.constants import (
     SCENARIO_QUAD_NODES, SCENARIO_QUAD_PANELS,
     SCENARIO_WINDOW_TILTS, SCENARIO_LOG_Y_MAX,
@@ -1019,6 +1019,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             The solve did not converge. Under ``jit`` / ``lax.scan`` the
             returned natural parameters are NaN instead of a silent model.
         """
+        _check_backend(backend)
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
 
@@ -1033,12 +1034,10 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             f = cls._log_partition_cpu
             grad_fn = cls._grad_log_partition_cpu
             hess_fn = cls._hessian_log_partition_cpu
-        elif backend == "jax":
+        else:
             f = cls._log_partition_from_theta
             grad_fn = cls._grad_log_partition
             hess_fn = cls._hessian_log_partition
-        else:
-            raise ValueError(f"Unknown backend: {backend!r}")
 
         if theta0 is not None:
             theta0 = jnp.asarray(theta0, dtype=jnp.float64)
@@ -1066,9 +1065,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                     "grad_fn": grad_fn,
                     "hess_fn": hess_fn,
                 }
-                # trust-exact doesn't support bounds
-                if backend == "cpu" and method == "newton":
-                    solver_kwargs["bounds"] = None
 
                 result = solve_bregman(
                     f, eta_scaled, theta0_scaled,

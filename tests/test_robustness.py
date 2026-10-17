@@ -166,6 +166,81 @@ def test_fit_mle_vmap_on_valid_samples():
     assert np.isfinite(np.asarray(fitted.beta)).all()
 
 
+def _vg_init():
+    return VarianceGamma.from_classical(
+        mu=jnp.zeros(2), gamma=jnp.zeros(2),
+        sigma=jnp.eye(2), alpha=2.0, beta=1.0,
+    )
+
+
+def test_fit_rejects_empty_and_nonfinite_data():
+    model = _vg_init()
+    X = jnp.array([[0.1, -0.2], [0.3, 0.4], [-0.5, 0.2], [0.0, 0.1]])
+    with pytest.raises(ValueError, match="empty"):
+        model.fit(jnp.zeros((0, 2)))
+    with pytest.raises(ValueError, match="empty"):
+        model.fit(jnp.array([]))
+    with pytest.raises(ValueError, match="finite"):
+        model.fit(X.at[1, 0].set(jnp.nan))
+    with pytest.raises(ValueError, match="finite"):
+        model.fit(X.at[0, 1].set(jnp.inf))
+
+
+def test_incremental_fit_rejects_empty_data():
+    from normix.fitting.em import IncrementalEMFitter
+
+    with pytest.raises(ValueError, match="empty"):
+        IncrementalEMFitter().fit(
+            _vg_init(), jnp.zeros((0, 2)), key=jax.random.PRNGKey(0),
+        )
+
+
+def test_fit_rejects_unknown_backend():
+    model = _vg_init()
+    X = jnp.array([[0.1, -0.2], [0.3, 0.4], [-0.5, 0.2]])
+    with pytest.raises(ValueError, match="e_step_backend"):
+        model.fit(X, e_step_backend="gpu")
+    with pytest.raises(ValueError, match="m_step_backend"):
+        BatchEMFitter(m_step_backend="torch")
+
+
+@pytest.mark.parametrize("dist", [
+    Gamma(alpha=2.0, beta=1.0),
+    InverseGamma(alpha=2.0, beta=1.0),
+    InverseGaussian(mu=1.5, lam=2.0),
+])
+def test_unknown_backend_raises_on_expectation_api(dist):
+    eta = dist.expectation_params()
+    with pytest.raises(ValueError, match="backend"):
+        dist.expectation_params(backend="foo")
+    with pytest.raises(ValueError, match="backend"):
+        type(dist).from_expectation(eta, backend="foo")
+
+
+@pytest.mark.parametrize("eta", [
+    np.array([0.0, 1.0]),
+    np.array([1.0, 1.0]),
+    np.array([0.0, -1.0]),
+    np.array([np.nan, 1.0]),
+    np.array([0.0]),
+])
+def test_gamma_from_expectation_rejects_impossible_eta(eta):
+    with pytest.raises(ValueError, match="no finite Gamma"):
+        Gamma.from_expectation(jnp.asarray(eta))
+
+
+def test_gamma_from_expectation_accepts_true_moments_and_traced_eta():
+    g = Gamma(alpha=2.5, beta=1.3)
+    eta = g.expectation_params()
+    back = Gamma.from_expectation(eta)
+    np.testing.assert_allclose(float(back.alpha), 2.5, rtol=1e-8)
+    np.testing.assert_allclose(float(back.beta), 1.3, rtol=1e-8)
+    traced = jax.jit(lambda e: Gamma.from_expectation(e).alpha)(eta)
+    np.testing.assert_allclose(float(traced), 2.5, rtol=1e-8)
+    skipped = jax.jit(lambda e: Gamma.from_expectation(e).alpha)(jnp.array([0.0, 1.0]))
+    assert skipped.shape == ()
+
+
 def test_fit_mle_valid_sample_unchanged():
     x = jnp.array([0.5, 1.0, 2.0, 3.0, 0.7, 1.4])
     g = Gamma.fit_mle(x)

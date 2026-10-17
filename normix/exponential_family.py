@@ -45,6 +45,16 @@ import jax.numpy as jnp
 from normix.utils.constants import RENYI_TAYLOR_EPS
 
 
+def _check_backend(backend: str, *, name: str = "backend") -> None:
+    """Reject an unknown backend string at a public boundary.
+
+    ``'jax'`` and ``'cpu'`` are the only values. Anything else used to
+    fall through to the JAX branch.
+    """
+    if backend not in ("jax", "cpu"):
+        raise ValueError(f"{name} must be 'jax' or 'cpu', got {backend!r}")
+
+
 class ExponentialFamily(eqx.Module):
     """
     Abstract base class for exponential family distributions.
@@ -128,7 +138,13 @@ class ExponentialFamily(eqx.Module):
         ----------
         backend : str
             ``'jax'`` (default, JIT-able) or ``'cpu'`` (numpy/scipy).
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         theta = self.natural_params()
         if backend == 'cpu':
             return jnp.asarray(
@@ -142,7 +158,13 @@ class ExponentialFamily(eqx.Module):
         ----------
         backend : str
             ``'jax'`` (default, JIT-able) or ``'cpu'`` (numpy/scipy).
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         theta = self.natural_params()
         if backend == 'cpu':
             return jnp.asarray(
@@ -474,12 +496,15 @@ class ExponentialFamily(eqx.Module):
 
         Raises
         ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         RuntimeError
             The solve did not converge. Under ``jit`` / ``lax.scan`` the
             returned natural parameters are NaN instead of a silent model.
         """
         from normix.fitting.solvers import solve_bregman, _require_solved_theta
 
+        _check_backend(backend)
         eta = jnp.asarray(eta, dtype=jnp.float64)
         if theta0 is None:
             theta0 = jnp.zeros_like(eta)

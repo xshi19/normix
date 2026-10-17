@@ -33,7 +33,7 @@ import jax.numpy as jnp
 
 from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.constants import SCENARIO_QUAD_NODES
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 from normix.utils.constants import LOG_EPS
 from normix.utils.gammainc import gammaincinv
 
@@ -292,7 +292,13 @@ class InverseGamma(ExponentialFamily):
         backend : str
             ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
             ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         eta = jnp.asarray(eta, dtype=jnp.float64)
         eta1, eta2 = eta[0], eta[1]
         target = -eta2 - jnp.log(-eta1)
