@@ -172,11 +172,17 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
 + numpy `log_kv`) avoids GPU dispatch on this 3-D scalar problem.
 
-`BregmanResult.num_steps` counts residual evaluations until the stop.
-Scan padding is not included.
-`reason` is `converged`, `atol`, `max_steps`, or `non_finite`.
+`BregmanResult.num_steps` counts steps taken.
+A one-step quadratic Newton solve reports 1.
+`reason` is an integer code.
+Eager and traced calls store that code as the same type.
+The codes are 0 converged, 1 atol, 2 max steps, and 3 non-finite.
 `kkt_residual` is the free residual of $\nabla f(\theta) - \eta$, with a bound multiplier removed.
-CPU BFGS and trust-exact apply box bounds in $\phi$-space, the same map as JAX Newton.
+
+CPU BFGS and trust-exact apply box bounds in $\phi$-space.
+The derivatives of that diagonal map are closed form.
+SciPy `gtol` is the $\phi$-gradient.
+Acceptance is the free $\theta$ residual.
 CPU L-BFGS-B keeps the bounds natively.
 
 ---

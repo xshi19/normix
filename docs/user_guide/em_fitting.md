@@ -36,6 +36,9 @@ guaranteed non-decreasing across iterations — a handy invariant when debugging
 
 `solver_failed` and `diverged` are separate flags on that result.
 A non-finite mixing distribution sets `solver_failed`.
+On the Python loop, `SolverDidNotConverge` or `ValueError` sets that flag too.
+A CPU GH warm start does not: a failed GIG solve keeps the previous GIG, and EM continues.
+
 A non-finite normal-block update sets `diverged`.
 Each flag keeps the last finite model.
 `fit` raises `ValueError` when the sample is empty or non-finite.
