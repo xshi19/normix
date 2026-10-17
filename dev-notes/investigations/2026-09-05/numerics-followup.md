@@ -57,3 +57,23 @@ Before the fix: 8 of the initial 22 cases failed; both Taylor-window cases
 also failed. The supplied repro gave VG $H_2=1.2775267168058138$ and
 NInvG $R(1/2)=1.438798918624631$; the corrected results are $-\infty$ and
 $+\infty$.
+
+## 6.5 Information-measure autodiff
+
+The nested custom JVP captured `self` while declaring only the order as a
+primal. Parameter tracers therefore escaped its differentiation boundary.
+The Taylor formula already supplies the limiting derivative
+$\partial_q H_q|_{q=1}=-V_H/2$. Removing the custom rule lets ordinary AD
+differentiate both branches, including their distribution parameters.
+The unused exact denominator is masked to remain safe under `vmap` at one.
+Entropy and varentropy use ordinary nested derivatives and had no such
+capture defect. NIG inherits the fix through its GH embedding.
+
+`test_information_gradients.py` compares parameter and order derivatives
+with central differences for Gamma, InverseGamma, joint VG, and joint NIG
+at $q=0.7,1,2$. It also checks entropy/varentropy parameter derivatives,
+Gamma closed forms, and batched derivatives at one. The first regression
+failed with `UnexpectedTracerError` before the change. For Gamma(3,2),
+$\partial_\beta H_2=-0.5$ and
+$\partial_\alpha H_2=2\log 2-7/6=0.219627694453224$;
+$\partial_q H_q|_{q=2}=-0.106770228755435$ is unchanged.
