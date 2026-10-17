@@ -78,7 +78,10 @@ class GIGFromExpectationCold:
             return GIG.from_expectation(eta, method=method).natural_params()
 
         self.invert = jax.jit(invert) if mode == "jit" else invert
-        self.invert(self.eta).block_until_ready()
+        try:
+            self.invert(self.eta).block_until_ready()
+        except jax.errors.ConcretizationTypeError as exc:
+            raise NotImplementedError("cold-start jit is unsupported at this commit") from exc
 
     def time_from_expectation(self, method: str, mode: str) -> None:
         self.invert(self.eta).block_until_ready()
