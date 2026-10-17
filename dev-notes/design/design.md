@@ -146,8 +146,8 @@ the class as `@classmethod` or `@staticmethod`.
 | S1 | Bregman divergence | Generic `f` (not `log_partition_fn`) | Decouple optimization from EFs — `solvers_and_bessel.md` § 1 |
 | S2 | Solver interface | `grad_fn` + `hess_fn` (both θ-space) — solver applies chain rule | Distributions never see φ-space |
 | S3 | Newton implementation | Hand-rolled `lax.while_loop`; module-level JIT cache | No JAX library has Newton minimizer with custom Hessian |
-| S4 | Multi-start | `vmap` for JAX, Python `for` for CPU | Orthogonal to solver name |
-| S5 | GIG η→θ | η-rescaled + CPU L-BFGS-B; warm-start defaults to `cpu/lbfgs` | Ill-conditioning + GPU dispatch overhead |
+| S4 | Multi-start | Cached JAX `lax.while_loop`: ordered starts, first finite converged result; lowest finite objective if none converges. Python `for` over all CPU starts. | Avoid solving every seed after convergence; applies to Newton, L-BFGS and BFGS. [Cold-start evidence](../investigations/2026-09-05/numerics-followup.md#round-5-cold-start-performance). |
+| S5 | GIG η→θ | η-rescaled; constructor defaults to `jax/newton`, with cached warm starts and an interior InverseGaussian seed first for cold starts. CPU cold starts use L-BFGS-B. | Balance moment units before inversion. JAX cold starts preserve S11 traceability without evaluating all 15 seeds. |
 | S6 | `BregmanResult` typing | Loose `Any` for scalars | Survives `lax.scan` carries |
 | S7 (D4) | `jaxopt` migration | Keep for now; `DeprecationWarning` suppressed at import | LBFGSB is uniquely useful — `exponential_family.md` § 4.2 |
 | S8 | Bessel | Single moment-quadrature kernel, JAX and numpy backends (S10); `backend='jax'\|'cpu'` API unchanged | `kve` overflow fallback was also wrong. `kve` is a test oracle. |

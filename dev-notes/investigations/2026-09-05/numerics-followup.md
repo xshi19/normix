@@ -142,11 +142,11 @@ The resumed validation adds
 `test_gig_cold_start_quasi_newton_derivative_under_jit` for L-BFGS and
 BFGS. It exposed a remaining CPU fallback in JAX quasi-Newton cold starts:
 `np.array(t0)` raised `TracerArrayConversionError` before solving.
-All JAX cold starts now use the requested method. Newton retains `vmap`;
-quasi-Newton uses sequential `lax.map` to avoid unrolling fifteen solver
-graphs or batching their line searches. Selection uses array operations,
-with the same preference for a converged finite solution over a lower
-unconverged objective. The selected iteration count is preserved.
+That change made all JAX cold starts use the requested method: Newton
+used `vmap`, and quasi-Newton used sequential `lax.map`. Round 5 below
+replaces both with early stopping over ordered seeds. A finite converged
+solution still outranks a lower unconverged objective. The selected
+iteration count is preserved.
 
 ## 9.2 GIG target-domain boundary
 
@@ -183,3 +183,96 @@ guard versus 2.804 ms through the unchecked solve. This shows no measurable
 overhead in that workload; it is not a general performance claim.
 Reproducer: `/workspace/reports/scratch/time_gig_boundary.py`;
 output: `/workspace/reports/scratch/gig_boundary_timing.txt`.
+
+## Round 5: cold-start performance
+
+The default JAX cold start changed from CPU L-BFGS-B to a traceable JAX
+solve in `b9db28c`. At `96fe9ca`, Newton vmapped 15 seeds through a
+500-iteration `lax.scan`. Converged parameters froze, but each lane still
+computed gradients, Hessians, line searches, and Bessel quadrature.
+
+Instrumentation of the original scan recorded the first strict KKT
+convergence check for GIG$(0.5,1,1)$, with float64 enabled before import:
+
+| Original lane | Seed | Checks at $10^{-10}$ / $10^{-12}$ |
+|---|---|---|
+| 0, 3, 4 | Gamma and duplicate perturbations | 19 / 19 |
+| 1, 7, 8 | InverseGamma and duplicate perturbations | 19 / 19 |
+| 2, 11–14 | InverseGaussian and duplicate perturbations | 6 / 7 |
+| 5, 6 | Other Gamma perturbations | 19 / 19; 16 / 16 |
+| 9, 10 | Other InverseGamma perturbations | 18 / 18; 16 / 16 |
+
+Every lane executed 500 iterations. None needed the full budget.
+Quasi-Newton used `lax.map` and likewise solved every seed, even after
+finding a finite converged result.
+
+The Newton kernel now uses `lax.while_loop` and reports its actual
+iteration count. Its Newton step, damping, line search, strict stopping
+tolerance, and final inversion acceptance test are unchanged. The cached
+warm-start entry point retains its four-array return contract.
+
+All three JAX methods try ordered seeds in a cached `lax.while_loop`.
+The first finite converged result ends the search. If none converges,
+the lowest finite objective wins; if every objective is nonfinite, the
+first result remains the failure result. GIG tries the interior
+InverseGaussian seed first, before the Gamma/InverseGamma boundary seeds.
+Its cached classmethod includes seed generation and fixed rate bounds.
+The seed loop contains one solver graph, avoiding a second compiled copy
+for the first seed. CPU multistart still tries every seed.
+
+The implicit derivative remains attached after the stopped primal solve:
+$H(\theta)d\theta=d\eta$. No optimizer history is differentiated.
+This change is a measured solver scheduling choice under S2/S3/S11;
+it introduces no class boundary or derivative formula.
+
+Seven regression cases failed before the fix: a quadratic exhausted its
+reported Newton budget; all three methods visited an unnecessary later
+seed; three standard GIG targets reported 30 steps. The guards assert
+iteration counts or observed objective evaluations, never elapsed time.
+Additional cases check cache reuse and selection after nonfinite or
+unconverged starts. `GIGFromExpectationCold` in
+`asv_bench/benchmarks/gig.py` measures eager and compiled cold starts for
+Newton, L-BFGS, and BFGS after compilation.
+
+Cold-start tolerance is a dynamic JIT argument, so changing it reuses the
+executable. The multistart JIT is inlined into the cached GIG entry point
+so compilation can see the fixed rate bounds. Seed perturbations use
+array broadcasting rather than unrolling separate updates for each seed.
+
+CPU measurements on the shared review box, JAX 0.9.1, float64:
+
+| Measurement | `96fe9ca` | Round 5 |
+|---|---:|---:|
+| Supplied eager repro, first call, $10^{-10}$ | 50.73 s | 3.31 s |
+| Supplied eager repro, next call, $10^{-12}$ | 44.79 s | 0.01 s |
+| Cold Newton, compiled median | 19.8267 s | 0.001976 s |
+| Cold L-BFGS, compiled median | 0.3964 s | 0.001967 s |
+| Cold BFGS, compiled median | 2.4786 s | 0.001298 s |
+| Perturbed warm Newton, compiled median | 3.041 ms | 1.095 ms |
+| GH M-step, compiled median | 17.149 ms | 1.901 ms |
+| Five GH EM steps, compiled median | 85.077 ms | 13.446 ms |
+
+The supplied master baseline was 2.67 s / 3.25 s. The first JAX call still
+pays compilation; the second tolerance no longer compiles another solve.
+Compiled inversion medians use two before and three after samples; the
+GH measurements use 61 samples. No GPU is available on this box.
+
+For GIG$(0.5,1,1)$, GIG$(-1.5,2,0.7)$, and GIG$(2.5,0.5,3)$, the selected
+Newton counts at $10^{-10}$ / $10^{-12}$ are 6 / 7, 6 / 6, and 9 / 9.
+The corresponding L-BFGS counts are 18 / 19, 17 / 17, and 21 / 23;
+BFGS counts are 17 / 18, 16 / 17, and 22 / 23. All are finite and converged.
+
+The external review report at
+`/workspace/reports/codex-numerics-summary.md` records validation results,
+commands, raw artifact paths, and the local commit. Profilers and timing
+scripts live under `/workspace/reports/scratch/round5_*`; the paired GH
+benchmark is `/workspace/reports/scratch/time_em_forward.py`.
+
+Final validation: `test_expectation_autodiff.py` 24 passed,
+`test_gig_expectation_domain.py` 31 passed, `test_solvers.py` 85 passed
+and 6 default-deselected, `test_gig_log_partition.py` 24 passed.
+Each file ran in its own serial pytest process with `-p no:cacheprovider`.
+Ruff F401/F811/F841 passed for `normix/` and the changed tests/benchmark.
+All six ASV setup/time smoke cases passed. GH M-step and five-step fit
+outputs match the pre-fix snapshot exactly, with maximum absolute
+change zero. No full suite, GPU suite, or docs build ran.
