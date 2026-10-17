@@ -1,4 +1,7 @@
 """Implicit expectation inversion against independent Hessians and differences."""
+import json
+from pathlib import Path
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -9,21 +12,20 @@ from normix import GIG, Gamma, InverseGamma, InverseGaussian, VarianceGamma, Nor
 from normix.exponential_family import ExponentialFamily
 
 
+_GIG_REF_PATH = Path(__file__).resolve().parent / "data" / "gig_hessian_reference.json"
+_GIG_HESSIANS = {
+    (row["p"], row["a"], row["b"]): np.array(row["hessian"])
+    for row in json.loads(_GIG_REF_PATH.read_text())["points"]
+}
+
+
 def _reference_hessian(dist):
     if isinstance(dist, (Gamma, InverseGamma)):
         a, b = float(dist.alpha), float(dist.beta)
         h = np.array([[polygamma(1, a), 1 / b], [1 / b, a / b**2]])
         return h if isinstance(dist, Gamma) else h[::-1, ::-1]
-    mp = pytest.importorskip('mpmath')
-    with mp.workdps(40):
-        theta = tuple(mp.mpf(float(t)) for t in dist.natural_params())
-
-        def psi(t0, t1, t2):
-            p, b, a = t0 + 1, -2 * t1, -2 * t2
-            return mp.log(2 * mp.besselk(p, mp.sqrt(a * b))) + p / 2 * mp.log(b / a)
-
-        return np.array([[float(mp.diff(psi, theta, tuple(int(k == i) + int(k == j) for k in range(3))))
-                          for j in range(3)] for i in range(3)])
+    key = (float(dist.p), float(dist.a), float(dist.b))
+    return _GIG_HESSIANS[key]
 
 
 @pytest.mark.contract
