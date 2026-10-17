@@ -2,8 +2,8 @@
 
 Source: ``benchmarks/bench_gig_solvers.py``. Easy = symmetric GIG;
 hard = ``a ≫ b`` (the ill-conditioned case η-rescaling targets).
-``theta0`` is passed so the JAX path hits ``_gig_jax_newton_jit`` rather
-than the cold-start multi-start CPU solver.
+``theta0`` is a neighbouring valid GIG, not the exact solution, and is
+still close enough that the JAX path hits ``_gig_jax_newton_jit``.
 """
 
 from __future__ import annotations
@@ -49,7 +49,12 @@ class GIGFromExpectation:
             b=jnp.asarray(b, dtype=jnp.float64),
         )
         self.eta = gig.expectation_params()
-        self.theta0 = gig.natural_params()
+        neighbour = GIG(
+            p=jnp.asarray(p + 0.25, dtype=jnp.float64),
+            a=jnp.asarray(a * 1.5, dtype=jnp.float64),
+            b=jnp.asarray(b * 0.5, dtype=jnp.float64),
+        )
+        self.theta0 = neighbour.natural_params()
         warm = GIG.from_expectation(
             self.eta, theta0=self.theta0, backend=backend
         )
