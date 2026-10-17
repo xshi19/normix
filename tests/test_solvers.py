@@ -373,6 +373,32 @@ class TestSolveBregmanGIG:
 class TestSolveBregmanMultistart:
 
     @pytest.mark.contract
+    @pytest.mark.parametrize('solver', [solve_bregman_multistart, solve_bregman])
+    @pytest.mark.parametrize('method', ['newton', 'lbfgs', 'bfgs'])
+    @pytest.mark.parametrize('compiled', [False, True])
+    def test_verbose_summary_is_trace_safe(self, solver, method, compiled, capsys):
+        eta = jnp.array([1.0, -0.5])
+        theta0 = jnp.zeros(2)
+        if solver is solve_bregman_multistart:
+            theta0 = jnp.stack([theta0, jnp.array([-1.0, 0.5])])
+
+        def invert(target):
+            return solver(
+                quadratic_f, target, theta0, backend='jax', method=method,
+                max_steps=20, tol=1e-8, verbose=1,
+            ).theta
+
+        if compiled:
+            invert = jax.jit(invert)
+        np.testing.assert_allclose(invert(eta), eta, rtol=1e-7, atol=1e-8)
+        output = capsys.readouterr().out
+        if compiled:
+            assert output == ''
+        else:
+            assert 'converged' in output
+            assert '|grad|=' in output
+
+    @pytest.mark.contract
     @pytest.mark.parametrize('geom', [1e3, 1e6])
     @pytest.mark.parametrize('compiled', [False, True])
     def test_gig_initial_guesses_stay_inside_rate_bounds(self, geom, compiled):

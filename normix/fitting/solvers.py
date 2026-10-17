@@ -142,6 +142,7 @@ def solve_bregman(
         If None with method='newton': jax.hessian of the full objective is used.
     verbose : int
         0 = silent, >= 1 = print summary after solve.
+        Summaries are skipped while tracing.
 
     Returns
     -------
@@ -184,7 +185,7 @@ def solve_bregman(
     else:
         raise ValueError(f"Unknown backend {backend!r}. Choose 'jax' or 'cpu'.")
 
-    if verbose >= 1:
+    if verbose >= 1 and not isinstance(result.grad_norm, jax.core.Tracer):
         status = "converged" if bool(result.converged) else "NOT converged"
         print(
             f"Bregman [{backend}/{method}]: {status} in "
@@ -219,6 +220,7 @@ def solve_bregman_multistart(
         Python loop.
     verbose : int
         0 = silent, >= 1 = print summary.
+        Summaries are skipped while tracing.
     """
     t0 = time.perf_counter()
     if backend == "jax" and method in ("newton", "lbfgs", "bfgs"):
@@ -239,7 +241,7 @@ def solve_bregman_multistart(
         num_steps=result.num_steps, converged=result.converged,
         elapsed_time=elapsed,
     )
-    if verbose >= 1:
+    if verbose >= 1 and not isinstance(result.grad_norm, jax.core.Tracer):
         k = len(theta0_batch) if hasattr(theta0_batch, '__len__') else '?'
         status = "converged" if result.converged else "NOT converged"
         print(
