@@ -243,7 +243,8 @@ class ExponentialFamily(eqx.Module):
 
         The identity equals :math:`\log\int p^\alpha` only for
         :math:`\alpha\theta \in \Theta`. Subclasses whose :math:`\psi` admits an
-        analytic continuation off :math:`\Theta` (Gamma, InverseGamma) return
+        analytic continuation off :math:`\Theta` (including Gamma, InverseGamma,
+        and their joints) return
         :math:`+\infty` when the powered density is not integrable, so
         :meth:`renyi` inherits the sign of :math:`1-\alpha`.
         """
@@ -280,7 +281,8 @@ class ExponentialFamily(eqx.Module):
 
         Defined for order :math:`\alpha > 0`. At :math:`\alpha = 1` the value
         is the removable-singularity limit, the Shannon :meth:`entropy`; the
-        first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
+        first-order expansion within the integrability domain
+        :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
         + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.
 
         A :func:`jax.custom_jvp` supplies the limiting derivative
@@ -294,7 +296,8 @@ class ExponentialFamily(eqx.Module):
         @jax.custom_jvp
         def _renyi(a: jax.Array) -> jax.Array:
             delta = a - 1.0
-            near = jnp.abs(delta) < RENYI_TAYLOR_EPS
+            near = ((jnp.abs(delta) < RENYI_TAYLOR_EPS)
+                    & jnp.isfinite(self.log_density_power(a)))
 
             def _taylor(_: jax.Array) -> jax.Array:
                 return self.entropy() - 0.5 * self.varentropy() * delta
@@ -307,7 +310,8 @@ class ExponentialFamily(eqx.Module):
         @_renyi.defjvp
         def _renyi_jvp(primals, tangents):
             (a,), (da,) = primals, tangents
-            near = jnp.abs(a - 1.0) < RENYI_TAYLOR_EPS
+            near = ((jnp.abs(a - 1.0) < RENYI_TAYLOR_EPS)
+                    & jnp.isfinite(self.log_density_power(a)))
 
             def _grad_near(_: jax.Array) -> jax.Array:
                 return -0.5 * self.varentropy()
