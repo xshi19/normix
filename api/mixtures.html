@@ -804,7 +804,7 @@ second moment of <span class="math notranslate nohighlight">\(Y\)</span> is <spa
 a + \gamma^\top\Sigma^{-1}\gamma,\;
 b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),\]</div>
 <p>with the family-specific prior <span class="math notranslate nohighlight">\((p, a, b)\)</span> resolved by
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>. Returns a dict with keys
+<code class="docutils literal notranslate"><span class="pre">_posterior_gig_params</span></code>. Returns a dict with keys
 <code class="docutils literal notranslate"><span class="pre">E_log_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_inv_Y</span></code>, <code class="docutils literal notranslate"><span class="pre">E_Y</span></code>, plus <code class="docutils literal notranslate"><span class="pre">psi_post</span></code> (posterior
 GIG log-partition) and <code class="docutils literal notranslate"><span class="pre">zw</span></code> (<span class="math notranslate nohighlight">\(\gamma^\top\Sigma^{-1}(x-\mu)\)</span>)
 for the conjugacy identity
@@ -857,7 +857,7 @@ for the conjugacy identity
 <li><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> — the natural η
 pytree of the joint normal-variance-mean mixture; uses the
 closed-form M-step (<span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span> analytical;
-subordinator via <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code>).</p></li>
+subordinator via <code class="docutils literal notranslate"><span class="pre">_subordinator_from_eta</span></code>).</p></li>
 <li><p>flat <code class="docutils literal notranslate"><span class="pre">jax.Array</span></code> — the generic Bregman solver inherited from
 <a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily" title="normix.exponential_family.ExponentialFamily"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExponentialFamily</span></code></a>.</p></li>
 </ul>
@@ -870,7 +870,7 @@ Gamma / InverseGamma / InverseGaussian; numerical for GIG).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Expectation parameters.</p></li>
 <li><p><strong>**kwargs</strong> – For the pytree path: forwarded to
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_subordinator_from_eta</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">backend</span></code>, <code class="docutils literal notranslate"><span class="pre">method</span></code>,
 <code class="docutils literal notranslate"><span class="pre">maxiter</span></code>, <code class="docutils literal notranslate"><span class="pre">theta0</span></code> for warm-starting GIG).
 For the flat-array path: forwarded to the parent solver.</p></li>
 </ul>
@@ -1056,12 +1056,12 @@ rotational gauge of <span class="math notranslate nohighlight">\(F\)</span>.</p>
 <p>Keyword arguments other than <code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> are forwarded to
 <a class="reference internal" href="fitting.html#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> (<code class="docutils literal notranslate"><span class="pre">algorithm</span></code>,
 <code class="docutils literal notranslate"><span class="pre">track_ll</span></code>, <code class="docutils literal notranslate"><span class="pre">eta_update</span></code>, <code class="docutils literal notranslate"><span class="pre">m_step_kwargs</span></code>, backends, …).
-Family-specific defaults come from <code class="xref py py-meth docutils literal notranslate"><span class="pre">_fit_defaults()</span></code> and are
+Family-specific defaults come from <code class="docutils literal notranslate"><span class="pre">_fit_defaults</span></code> and are
 overridden by any explicitly supplied kwarg.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em> or </em><em>{'density'</em><em>, </em><em>'inverse_moment'}</em><em>, </em><em>optional</em>) – Opt-in lower bound on the Gamma subordinator shape <span class="math notranslate nohighlight">\(\alpha\)</span>
+<li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>'density'</em><em> or </em><em>'inverse_moment'</em><em>, </em><em>optional</em>) – Opt-in lower bound on the Gamma subordinator shape <span class="math notranslate nohighlight">\(\alpha\)</span>
 (Variance Gamma only — the unique family whose marginal
 likelihood is unbounded at <span class="math notranslate nohighlight">\(x=\mu\)</span>). Restricts the
 estimator to a region where that degeneracy cannot occur; the
@@ -1071,7 +1071,7 @@ estimator to a region where that degeneracy cannot occur; the
 <span class="math notranslate nohighlight">\(d/2 + \varepsilon\)</span> (<code class="docutils literal notranslate"><span class="pre">'density'</span></code> — marginal density
 bounded) or <span class="math notranslate nohighlight">\(d/2 + 1 + \varepsilon\)</span>
 (<code class="docutils literal notranslate"><span class="pre">'inverse_moment'</span></code> — <span class="math notranslate nohighlight">\(E[1/Y\mid x]\)</span> also bounded), with
-<span class="math notranslate nohighlight">\(\varepsilon=\)</span> <code class="xref py py-data docutils literal notranslate"><span class="pre">ALPHA_MIN_MARGIN</span></code>.
+<span class="math notranslate nohighlight">\(\varepsilon=\)</span> <a class="reference internal" href="utils.html#normix.utils.constants.ALPHA_MIN_MARGIN" title="normix.utils.constants.ALPHA_MIN_MARGIN"><code class="xref py py-data docutils literal notranslate"><span class="pre">ALPHA_MIN_MARGIN</span></code></a>.
 Has no effect on NInvG / NIG / GH (their prior <span class="math notranslate nohighlight">\(b&gt;0\)</span> keeps
 the likelihood bounded for every <span class="math notranslate nohighlight">\(\alpha\)</span>). When set, it is
 merged into <code class="docutils literal notranslate"><span class="pre">m_step_kwargs</span></code> and wins over any
@@ -1331,7 +1331,7 @@ form; this tractable joint quantity is the natural surrogate.</p>
 \eta_6 = \Sigma + \mu\mu^\top E[1/Y] + \gamma\gamma^\top E[Y]
          + \mu\gamma^\top + \gamma\mu^\top\]</div>
 <p>When <span class="math notranslate nohighlight">\(\varepsilon\|\mu\|^2|E[1/Y]|\)</span> exceeds
-<code class="xref py py-data docutils literal notranslate"><span class="pre">MOMENT_CANCEL_ATOL</span></code>, those three
+<a class="reference internal" href="utils.html#normix.utils.constants.MOMENT_CANCEL_ATOL" title="normix.utils.constants.MOMENT_CANCEL_ATOL"><code class="xref py py-data docutils literal notranslate"><span class="pre">MOMENT_CANCEL_ATOL</span></code></a>, those three
 moments are stored about <span class="math notranslate nohighlight">\(\mu\)</span> instead. Float64 cannot hold
 both <span class="math notranslate nohighlight">\(s_1\mu\mu^\top\)</span> and <span class="math notranslate nohighlight">\(\Sigma\)</span>; the centered store
 is what the unchanged M-step needs in order to return <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
@@ -1450,7 +1450,7 @@ or sanity-check fallbacks.</p>
 <li><p>normal parameters: <code class="docutils literal notranslate"><span class="pre">mu</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>;</p></li>
 <li><p>dispersion alias <code class="docutils literal notranslate"><span class="pre">sigma</span></code> — converted to <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code> via
 Cholesky (mutually exclusive with <code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>);</p></li>
-<li><p>subordinator parameters declared by <code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_keys()</span></code>
+<li><p>subordinator parameters declared by <code class="docutils literal notranslate"><span class="pre">_subordinator_keys</span></code>
 (e.g. <code class="docutils literal notranslate"><span class="pre">alpha,</span> <span class="pre">beta</span></code> for VG / NInvG, <code class="docutils literal notranslate"><span class="pre">mu_ig,</span> <span class="pre">lam</span></code> for NIG,
 <code class="docutils literal notranslate"><span class="pre">p,</span> <span class="pre">a,</span> <span class="pre">b</span></code> for GH).</p></li>
 </ul>
@@ -1474,7 +1474,7 @@ immutable update via <a class="reference external" href="https://docs.kidger.sit
 <span class="sig-name descname"><span class="pre">regularize_det_sigma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_log_det</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.regularize_det_sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.regularize_det_sigma" title="Link to this definition">#</a></dt>
 <dd><p>Rescale to enforce <span class="math notranslate nohighlight">\(\log|\Sigma| = \mathrm{target\_log\_det}\)</span>.</p>
 <p>Picks <span class="math notranslate nohighlight">\(s = \exp((\log|\Sigma| - \tau)/d)\)</span> and applies
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_rescale()</span></code>. The default <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code> recovers the
+<code class="docutils literal notranslate"><span class="pre">_rescale</span></code>. The default <code class="docutils literal notranslate"><span class="pre">target_log_det</span> <span class="pre">=</span> <span class="pre">0</span></code> recovers the
 <span class="math notranslate nohighlight">\(|\Sigma| = 1\)</span> convention; passing the log-determinant of
 an initial reference Σ implements the <code class="docutils literal notranslate"><span class="pre">det_sigma_x</span></code> family.</p>
 <dl class="field-list simple">
@@ -1603,12 +1603,12 @@ GIG). Access via <a class="reference internal" href="#normix.mixtures.factor.Fac
 <p>Subclasses define the subordinator family (via the instance stored in
 <code class="docutils literal notranslate"><span class="pre">_subordinator</span></code>, which supplies the shared posterior map through
 <code class="docutils literal notranslate"><span class="pre">to_gig()</span></code>) and implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">log_prob()</span></code>,
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_subordinator_from_eta()</span></code>, and a few forwarders / initialisers.
-The prior-to-posterior GIG conjugacy (<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>)
+<code class="docutils literal notranslate"><span class="pre">_subordinator_from_eta</span></code>, and a few forwarders / initialisers.
+The prior-to-posterior GIG conjugacy (<code class="docutils literal notranslate"><span class="pre">_posterior_gig_params</span></code>)
 is uniform across families and lives on the base. The linear algebra for
 <span class="math notranslate nohighlight">\(\Sigma^{-1}\)</span> and <span class="math notranslate nohighlight">\(\log|\Sigma|\)</span> is shared via
-Woodbury helpers (<code class="xref py py-meth docutils literal notranslate"><span class="pre">_M()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_solve()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_quad_form()</span></code>,
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_det_sigma()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_beta()</span></code>).</p>
+Woodbury helpers (<code class="docutils literal notranslate"><span class="pre">_M</span></code>, <code class="docutils literal notranslate"><span class="pre">_solve</span></code>, <code class="docutils literal notranslate"><span class="pre">_quad_form</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_log_det_sigma</span></code>, <code class="docutils literal notranslate"><span class="pre">_beta</span></code>).</p>
 <p class="rubric">Notes</p>
 <p><code class="docutils literal notranslate"><span class="pre">F</span></code> is identifiable only up to a right <span class="math notranslate nohighlight">\(r \times r\)</span>
 orthogonal rotation, so the hybrid-RMS diagnostic is on
@@ -1681,7 +1681,7 @@ Stopping uses the Aitken remaining gap of <span class="math notranslate nohighli
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.mean">
 <span class="sig-name descname"><span class="pre">mean</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.mean" title="Link to this definition">#</a></dt>
-<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma\,E[Y]\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.mean()</span></code>).</p>
+<dd><p><span class="math notranslate nohighlight">\(E[X] = \mu + \gamma\,E[Y]\)</span> (see <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.mean" title="normix.mixtures.marginal.NormalMixture.mean"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mean()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1693,7 +1693,7 @@ Stopping uses the Aitken remaining gap of <span class="math notranslate nohighli
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.cov">
 <span class="sig-name descname"><span class="pre">cov</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.cov" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top\)</span>
-(see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.cov()</span></code>).</p>
+(see <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.cov" title="normix.mixtures.marginal.NormalMixture.cov"><code class="xref py py-meth docutils literal notranslate"><span class="pre">cov()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1704,7 +1704,7 @@ Stopping uses the Aitken remaining gap of <span class="math notranslate nohighli
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.skewness">
 <span class="sig-name descname"><span class="pre">skewness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.skewness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.skewness" title="Link to this definition">#</a></dt>
-<dd><p>Component-wise skewness of <span class="math notranslate nohighlight">\(X\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.skewness()</span></code>).</p>
+<dd><p>Component-wise skewness of <span class="math notranslate nohighlight">\(X\)</span> (see <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.skewness" title="normix.mixtures.marginal.NormalMixture.skewness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">skewness()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1715,7 +1715,7 @@ Stopping uses the Aitken remaining gap of <span class="math notranslate nohighli
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.kurtosis">
 <span class="sig-name descname"><span class="pre">kurtosis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.kurtosis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.kurtosis" title="Link to this definition">#</a></dt>
-<dd><p>Component-wise excess kurtosis of <span class="math notranslate nohighlight">\(X\)</span> (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">NormalMixture.kurtosis()</span></code>).</p>
+<dd><p>Component-wise excess kurtosis of <span class="math notranslate nohighlight">\(X\)</span> (see <a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.kurtosis" title="normix.mixtures.marginal.NormalMixture.kurtosis"><code class="xref py py-meth docutils literal notranslate"><span class="pre">kurtosis()</span></code></a>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -1916,7 +1916,7 @@ plus a positive diagonal residual.</p>
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.replace">
 <span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">updates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.replace" title="Link to this definition">#</a></dt>
 <dd><p>Return a new model with selected top-level fields replaced.</p>
-<p>Accepts any subset of <code class="xref py py-attr docutils literal notranslate"><span class="pre">_NORMAL_KEYS</span></code>. The public key
+<p>Accepts any subset of <code class="docutils literal notranslate"><span class="pre">_NORMAL_KEYS</span></code>. The public key
 <code class="docutils literal notranslate"><span class="pre">subordinator</span></code> updates the private <code class="docutils literal notranslate"><span class="pre">_subordinator</span></code> field.
 Subclass-specific subordinator parameter shortcuts (e.g.
 <code class="docutils literal notranslate"><span class="pre">alpha=...</span></code>) are not supported on the FA family — use

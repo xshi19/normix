@@ -493,12 +493,12 @@
 <span class="sd">    Subclasses define the subordinator family (via the instance stored in</span>
 <span class="sd">    ``_subordinator``, which supplies the shared posterior map through</span>
 <span class="sd">    ``to_gig()``) and implement :meth:`log_prob`,</span>
-<span class="sd">    :meth:`_subordinator_from_eta`, and a few forwarders / initialisers.</span>
-<span class="sd">    The prior-to-posterior GIG conjugacy (:meth:`_posterior_gig_params`)</span>
+<span class="sd">    ``_subordinator_from_eta``, and a few forwarders / initialisers.</span>
+<span class="sd">    The prior-to-posterior GIG conjugacy (``_posterior_gig_params``)</span>
 <span class="sd">    is uniform across families and lives on the base. The linear algebra for</span>
 <span class="sd">    :math:`\Sigma^{-1}` and :math:`\log|\Sigma|` is shared via</span>
-<span class="sd">    Woodbury helpers (:meth:`_M`, :meth:`_solve`, :meth:`_quad_form`,</span>
-<span class="sd">    :meth:`_log_det_sigma`, :meth:`_beta`).</span>
+<span class="sd">    Woodbury helpers (``_M``, ``_solve``, ``_quad_form``,</span>
+<span class="sd">    ``_log_det_sigma``, ``_beta``).</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -624,7 +624,7 @@
 <div class="viewcode-block" id="FactorNormalMixture.mean">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma\,E[Y]` (see :meth:`NormalMixture.mean`).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \mu + \gamma\,E[Y]` (see :meth:`~normix.mixtures.marginal.NormalMixture.mean`).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">_normal_mixture_mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span></div>
 
 
@@ -632,14 +632,14 @@
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.cov">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\mathrm{Cov}[X] = E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top`</span>
-<span class="sd">        (see :meth:`NormalMixture.cov`).&quot;&quot;&quot;</span>
+<span class="sd">        (see :meth:`~normix.mixtures.marginal.NormalMixture.cov`).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">_normal_mixture_cov</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="FactorNormalMixture.skewness">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.skewness">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">skewness</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Component-wise skewness of :math:`X` (see :meth:`NormalMixture.skewness`).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Component-wise skewness of :math:`X` (see :meth:`~normix.mixtures.marginal.NormalMixture.skewness`).&quot;&quot;&quot;</span>
         <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator</span><span class="o">.</span><span class="n">raw_moments</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">]))</span>
         <span class="n">sigma_diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
@@ -651,7 +651,7 @@
 <div class="viewcode-block" id="FactorNormalMixture.kurtosis">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.kurtosis">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">kurtosis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Component-wise excess kurtosis of :math:`X` (see :meth:`NormalMixture.kurtosis`).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Component-wise excess kurtosis of :math:`X` (see :meth:`~normix.mixtures.marginal.NormalMixture.kurtosis`).&quot;&quot;&quot;</span>
         <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator</span><span class="o">.</span><span class="n">raw_moments</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">]))</span>
         <span class="n">sigma_diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span>
@@ -703,9 +703,9 @@
 <span class="sd">        where :math:`(p_{\mathrm{gig}}, a_{\mathrm{gig}}, b_{\mathrm{gig}})`</span>
 <span class="sd">        are the subordinator&#39;s exact GIG coordinates</span>
 <span class="sd">        (``subordinator().to_gig()``).</span>
-<span class="sd">        See :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`</span>
+<span class="sd">        See ``JointNormalMixture._posterior_gig_params``</span>
 <span class="sd">        for the per-family table. Stays **pure**; the :math:`b_{\mathrm{post}}`</span>
-<span class="sd">        floor lives in :meth:`_floored_posterior_gig_params`.</span>
+<span class="sd">        floor lives in ``_floored_posterior_gig_params``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">gig</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">z2</span>
@@ -713,7 +713,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_floored_posterior_gig_params</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: :meth:`_posterior_gig_params` with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: ``_posterior_gig_params`` with</span>
 <span class="sd">        :math:`b_{\mathrm{post}}` floored at</span>
 <span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;</span>
 <span class="sd">        only binds for VG, prior :math:`b=0`).&quot;&quot;&quot;</span>
@@ -865,7 +865,7 @@
 <span class="sd">        :math:`(s_7, s_8, s_9, s_{10})`.</span>
 
 <span class="sd">        Computed at the *current* model parameters (μ, γ, F, β); β is</span>
-<span class="sd">        evaluated once via :meth:`_beta`.</span>
+<span class="sd">        evaluated once via ``_beta``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
@@ -1088,7 +1088,7 @@
 <span class="sd">        subordinator: :math:`\gamma \to \gamma/s`,</span>
 <span class="sd">        :math:`F \to F/\sqrt{s}`, :math:`D \to D/s` (so</span>
 <span class="sd">        :math:`\Sigma \to \Sigma/s`); the subordinator-side rescale is</span>
-<span class="sd">        delegated to :meth:`_build_rescaled`.</span>
+<span class="sd">        delegated to ``_build_rescaled``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">F_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
         <span class="n">D_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">/</span> <span class="n">scale</span>
@@ -1204,7 +1204,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">updates</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorNormalMixture&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return a new model with selected top-level fields replaced.</span>
 
-<span class="sd">        Accepts any subset of :attr:`_NORMAL_KEYS`. The public key</span>
+<span class="sd">        Accepts any subset of ``_NORMAL_KEYS``. The public key</span>
 <span class="sd">        ``subordinator`` updates the private ``_subordinator`` field.</span>
 <span class="sd">        Subclass-specific subordinator parameter shortcuts (e.g.</span>
 <span class="sd">        ``alpha=...``) are not supported on the FA family — use</span>

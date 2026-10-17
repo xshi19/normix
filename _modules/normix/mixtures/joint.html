@@ -885,7 +885,7 @@
 <span class="sd">            b + (x-\mu)^\top\Sigma^{-1}(x-\mu)\right),</span>
 
 <span class="sd">        with the family-specific prior :math:`(p, a, b)` resolved by</span>
-<span class="sd">        :meth:`_posterior_gig_params`. Returns a dict with keys</span>
+<span class="sd">        ``_posterior_gig_params``. Returns a dict with keys</span>
 <span class="sd">        ``E_log_Y``, ``E_inv_Y``, ``E_Y``, plus ``psi_post`` (posterior</span>
 <span class="sd">        GIG log-partition) and ``zw`` (:math:`\gamma^\top\Sigma^{-1}(x-\mu)`)</span>
 <span class="sd">        for the conjugacy identity</span>
@@ -950,13 +950,13 @@
 <span class="sd">        ============= ============================================ ===================================</span>
 
 <span class="sd">        This map stays **pure** (no floor); the :math:`b_{\mathrm{post}}` floor</span>
-<span class="sd">        is applied by :meth:`_floored_posterior_gig_params`.</span>
+<span class="sd">        is applied by ``_floored_posterior_gig_params``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">gig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">gig</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">a</span> <span class="o">+</span> <span class="n">w2</span><span class="p">,</span> <span class="n">gig</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">z2</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_floored_posterior_gig_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">w2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: :meth:`_posterior_gig_params` with</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: ``_posterior_gig_params`` with</span>
 <span class="sd">        :math:`b_{\mathrm{post}}` floored at</span>
 <span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR`.</span>
 
@@ -1011,7 +1011,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Assemble the full :math:`\theta` vector from subordinator scalars</span>
-<span class="sd">        and precomputed precision components (from :meth:`_precision_quantities`).</span>
+<span class="sd">        and precomputed precision components (from ``_precision_quantities``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_1</span><span class="p">,</span> <span class="n">theta_2</span><span class="p">,</span> <span class="n">theta_3</span><span class="p">]),</span>
@@ -1095,7 +1095,7 @@
 <span class="sd">        - :class:`~normix.fitting.eta.NormalMixtureEta` — the natural η</span>
 <span class="sd">          pytree of the joint normal-variance-mean mixture; uses the</span>
 <span class="sd">          closed-form M-step (:math:`\mu, \gamma, \Sigma` analytical;</span>
-<span class="sd">          subordinator via :meth:`_subordinator_from_eta`).</span>
+<span class="sd">          subordinator via ``_subordinator_from_eta``).</span>
 <span class="sd">        - flat ``jax.Array`` — the generic Bregman solver inherited from</span>
 <span class="sd">          :class:`~normix.exponential_family.ExponentialFamily`.</span>
 
@@ -1110,7 +1110,7 @@
 <span class="sd">            Expectation parameters.</span>
 <span class="sd">        **kwargs</span>
 <span class="sd">            For the pytree path: forwarded to</span>
-<span class="sd">            :meth:`_subordinator_from_eta` (e.g. ``backend``, ``method``,</span>
+<span class="sd">            ``_subordinator_from_eta`` (e.g. ``backend``, ``method``,</span>
 <span class="sd">            ``maxiter``, ``theta0`` for warm-starting GIG).</span>
 <span class="sd">            For the flat-array path: forwarded to the parent solver.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

@@ -684,7 +684,8 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        model : NormalMixture subclass (used as initial parameters)</span>
+<span class="sd">        model : NormalMixture</span>
+<span class="sd">            Instance of a NormalMixture subclass, used as initial parameters.</span>
 <span class="sd">        X : jax.Array</span>
 <span class="sd">            Data array, shape ``(n, d)``.</span>
 
@@ -748,7 +749,7 @@
 <span class="sd">        Returns ``(new_model, max_change, eta_state, objective)``.</span>
 <span class="sd">        ``objective`` is :math:`\\ell_n(\\theta_t)` from the E-step (MCECM:</span>
 <span class="sd">        first E-step of the cycle), plus the MAP penalty when</span>
-<span class="sd">        :meth:`_penalized_objective` applies.</span>
+<span class="sd">        ``_penalized_objective`` applies.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;mcecm&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mcecm_step</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">target_log_det</span><span class="o">=</span><span class="n">target_log_det</span><span class="p">)</span>
@@ -809,7 +810,7 @@
         <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">max_change</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">objective</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_map_penalty_applies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;True when :meth:`_penalized_objective` adds the MAP term.</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;True when ``_penalized_objective`` adds the MAP term.</span>
 
 <span class="sd">        Scalar-:math:`\tau` :class:`~normix.fitting.eta_rules.Shrinkage`</span>
 <span class="sd">        wrapping :class:`~normix.fitting.eta_rules.IdentityUpdate` on a</span>
@@ -835,7 +836,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_penalized_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">log_lik</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;MAP objective :math:`\ell_n + \tau(\theta\cdot\eta_0 - \psi)` when it is maximised.</span>
 
-<span class="sd">        See :meth:`_map_penalty_applies`. Otherwise returns :math:`\ell_n`.</span>
+<span class="sd">        See ``_map_penalty_applies``. Otherwise returns :math:`\ell_n`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_penalty_applies</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">log_lik</span>
@@ -1479,7 +1480,7 @@
 <span class="sd">    ``rms(new - old) / (1 + rms(old))`` with</span>
 <span class="sd">    ``rms(v) = ||v||_2 / sqrt(m)``; the overall measure is the maximum</span>
 <span class="sd">    across leaves. Stored in :attr:`EMResult.param_changes` as a</span>
-<span class="sd">    diagnostic; stopping uses :func:`_aitken_remaining`.</span>
+<span class="sd">    diagnostic; stopping uses ``_aitken_remaining``.</span>
 
 <span class="sd">    RMS (rather than raw L2) keeps a fixed ``tol`` roughly dimension-free:</span>
 <span class="sd">    the same per-coordinate drift yields the same leaf score for</span>

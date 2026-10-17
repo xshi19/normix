@@ -534,7 +534,7 @@
 <span class="sd">        Natural parameters in gauge coordinates.</span>
 <span class="sd">    eta_fin, m, v : jax.Array</span>
 <span class="sd">        Tail-split of :math:`\eta_p` (see</span>
-<span class="sd">        :meth:`~normix.exponential_family.ExponentialFamily._divergence_eta`).</span>
+<span class="sd">        ``ExponentialFamily._divergence_eta``).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dtheta</span> <span class="o">=</span> <span class="n">theta_q</span> <span class="o">-</span> <span class="n">theta_p</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">dtheta</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>

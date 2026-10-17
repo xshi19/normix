@@ -750,7 +750,7 @@ stay compatible with the <code class="docutils literal notranslate"><span class=
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>NormalMixture subclass</em><em> (</em><em>used as initial parameters</em><em>)</em>)</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="mixtures.html#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a>) – Instance of a NormalMixture subclass, used as initial parameters.</p></li>
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Data array, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p></li>
 </ul>
 </dd>
@@ -949,20 +949,22 @@ can live inside a lax.scan carry without concretization errors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>convex function θ → scalar</em><em>  (</em><em>e.g. log-partition ψ</em><em>)</em>)</p></li>
-<li><p><strong>eta</strong> (<em>target vector</em><em>  (</em><em>e.g. expectation parameters η</em><em>)</em>)</p></li>
-<li><p><strong>theta0</strong> (<em>initial guess</em>)</p></li>
-<li><p><strong>backend</strong> (<em>'jax'</em><em> (</em><em>JIT-able</em><em>) or </em><em>'cpu'</em><em> (</em><em>scipy</em><em>, </em><em>not JIT-able</em><em>)</em>)</p></li>
+<li><p><strong>f</strong> (<em>Callable</em>) – Convex function θ → scalar (e.g. log-partition ψ).</p></li>
+<li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Target vector (e.g. expectation parameters η).</p></li>
+<li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Initial guess.</p></li>
+<li><p><strong>backend</strong> (<em>'jax'</em><em> or </em><em>'cpu'</em>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> is JIT-able; <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> uses scipy and is not JIT-able.</p></li>
 <li><p><strong>method</strong> (<em>'lbfgs'</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
 <li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
 For backend=’jax’: enforced via reparameterization.
 For backend=’cpu’: converted to scipy format internally.</p></li>
-<li><p><strong>max_steps</strong> (<em>iteration budget</em>)</p></li>
-<li><p><strong>tol</strong> (<em>convergence tolerance on ‖∇f</em><em>(</em><em>θ</em><em>) </em><em>− η‖∞</em>)</p></li>
-<li><p><strong>grad_fn</strong> (<em>θ → ∇f</em><em>(</em><em>θ</em><em>)</em><em>.</em>) – For backend=’cpu’: must accept and return numpy arrays.
+<li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Iteration budget.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Convergence tolerance on ‖∇f(θ) − η‖∞.</p></li>
+<li><p><strong>grad_fn</strong> (<em>Callable</em><em>, </em><em>optional</em>) – θ → ∇f(θ).
+For backend=’cpu’: must accept and return numpy arrays.
 For backend=’jax’, method=’newton’: must be JAX-traceable.
 If None with backend=’cpu’: falls back to jax.grad (hybrid mode).</p></li>
-<li><p><strong>hess_fn</strong> (<em>θ → ∇²f</em><em>(</em><em>θ</em><em>)</em><em>.</em>) – Required for method=’newton’.
+<li><p><strong>hess_fn</strong> (<em>Callable</em><em>, </em><em>optional</em>) – θ → ∇²f(θ).
+Required for method=’newton’.
 For backend=’cpu’: must accept numpy arrays and return numpy array.
 For backend=’jax’, method=’newton’: must be JAX-traceable.
 If None with method=’newton’: jax.hessian of the full objective is used.</p></li>
@@ -982,8 +984,8 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>theta0_batch</strong> (<em>(</em><em>K</em><em>, </em><a class="reference internal" href="distributions.html#normix.distributions.normal.MultivariateNormal.dim" title="normix.distributions.normal.MultivariateNormal.dim"><em>dim</em></a><em>) </em><em>jax.Array for backend='jax'</em><em>, </em><em>method='newton'</em>) – (parallel via vmap); list of arrays otherwise
-(sequential for-loop).</p></li>
+<li><p><strong>theta0_batch</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(K,</span> <span class="pre">dim)</span></code> array for <code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code>, <code class="docutils literal notranslate"><span class="pre">method='newton'</span></code>
+(parallel via vmap); list of arrays otherwise (sequential for-loop).</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.</p></li>
 <li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
@@ -1018,7 +1020,7 @@ Newton kernel on each iteration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>convex objective ψ</em><em>(</em><em>θ</em><em>) </em><em>→ scalar</em><em> (</em><em>must be JAX-traceable</em><em>)</em><em>.</em>)</p></li>
+<li><p><strong>f</strong> (<em>Callable</em>) – Convex objective ψ(θ) → scalar (must be JAX-traceable).</p></li>
 <li><p><strong>grad_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla\psi(\theta) \to \mathbb{R}^d\)</span>.</p></li>
 <li><p><strong>hess_fn</strong> (<em>Callable</em>) – <span class="math notranslate nohighlight">\(\nabla^2\psi(\theta) \to \mathbb{R}^{d\times d}\)</span>.</p></li>
 <li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a><em> or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code>, each shape <span class="math notranslate nohighlight">\((d,)\)</span>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
@@ -1435,7 +1437,7 @@ base class provides a single <code class="xref py py-meth docutils literal notra
 <span class="math notranslate nohighlight">\(\mathrm{base}(\eta_{t-1}, \hat\eta)\)</span>.</p></li>
 <li><p><strong>eta0</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>) – Prior expectation parameters (shrinkage target). Must be a complete
 stats pytree of the same type as <code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> / <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>.</p></li>
-<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>stats pytree</em>) – <p>Shrinkage strength.</p>
+<li><p><strong>tau</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>) – <p>Shrinkage strength.</p>
 <ul>
 <li><p><strong>scalar</strong> — uniform shrinkage on every sufficient statistic;
 matches the penalised-MLE in

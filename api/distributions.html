@@ -1709,7 +1709,7 @@ and ignored.</p>
 <p>GIG is already in GIG coordinates, so this returns <code class="docutils literal notranslate"><span class="pre">self</span></code>. It exists
 so that every subordinator family exposes a uniform <code class="docutils literal notranslate"><span class="pre">to_gig()</span></code> for
 the shared prior-to-posterior conjugacy map in the EM E-step (see
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_posterior_gig_params()</span></code>).
+<code class="docutils literal notranslate"><span class="pre">JointNormalMixture._posterior_gig_params</span></code>).
 <code class="docutils literal notranslate"><span class="pre">boundary_eps</span></code> is accepted for API uniformity and ignored.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1736,7 +1736,7 @@ the shared prior-to-posterior conjugacy map in the EM E-step (see
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition">
 <span class="sig-name descname"><span class="pre">log_partition</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.log_partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.log_partition" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\psi(\theta)\)</span> at current parameters.</p>
-<p>A module-level <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.jit.html#jax.jit" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.jit()</span></code></a> of <code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_partition_from_theta()</span></code>
+<p>A module-level <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.jit.html#jax.jit" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.jit()</span></code></a> of <code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code>
 (see <code class="docutils literal notranslate"><span class="pre">_gig_log_partition_jit</span></code>). Without it, a scalar call runs
 the eager 192-point <a class="reference internal" href="utils.html#normix.utils.bessel.log_kv" title="normix.utils.bessel.log_kv"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_kv()</span></code></a> quadrature
 — about a second per E-step when conjugacy asks for prior
@@ -2389,7 +2389,7 @@ K_\nu\!\left(\sqrt{2qc}\right) \exp(\gamma^\top\Sigma^{-1}(x-\mu))\]</div>
 <p>where <span class="math notranslate nohighlight">\(\nu = \alpha - d/2\)</span>,
 <span class="math notranslate nohighlight">\(c = \beta + \tfrac{1}{2}\gamma^\top\Lambda\gamma\)</span>,
 <span class="math notranslate nohighlight">\(q = (x-\mu)^\top\Lambda(x-\mu)\)</span>.</p>
-<p><span class="math notranslate nohighlight">\(q,\,2c\)</span> are floored at <code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code>
+<p><span class="math notranslate nohighlight">\(q,\,2c\)</span> are floored at <a class="reference internal" href="utils.html#normix.utils.constants.LOG_EPS" title="normix.utils.constants.LOG_EPS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code></a>
 <em>before</em> forming <span class="math notranslate nohighlight">\(\sqrt{2qc}\)</span>, matching the floor used in the
 <span class="math notranslate nohighlight">\((q/2c)^{\nu/2}\)</span> ratio — otherwise <span class="math notranslate nohighlight">\(x=\mu\)</span> sends the true
 <span class="math notranslate nohighlight">\(q=0\)</span> into <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> unfloored while the ratio uses the
@@ -2634,7 +2634,7 @@ At <span class="math notranslate nohighlight">\(\gamma=0\)</span> this reduces e
 <p>GIG params: <span class="math notranslate nohighlight">\(p=-\alpha\)</span>, <span class="math notranslate nohighlight">\(a=\gamma^\top\Lambda\gamma\)</span>,
 <span class="math notranslate nohighlight">\(b=2\beta+Q(x)\)</span>.
 The normalising integral is <span class="math notranslate nohighlight">\(2(b/a)^{p/2} K_p(\sqrt{ab})\)</span>.</p>
-<p><span class="math notranslate nohighlight">\(a,b\)</span> are floored at <code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code>
+<p><span class="math notranslate nohighlight">\(a,b\)</span> are floored at <a class="reference internal" href="utils.html#normix.utils.constants.LOG_EPS" title="normix.utils.constants.LOG_EPS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LOG_EPS</span></code></a>
 <em>before</em> forming <span class="math notranslate nohighlight">\(\sqrt{ab}\)</span>, matching the floor used in the
 <span class="math notranslate nohighlight">\((b/a)^{p/2}\)</span> ratio. Without this, <span class="math notranslate nohighlight">\(\gamma=0\)</span> (the
 common no-skew case) sends the true <span class="math notranslate nohighlight">\(a=0\)</span> into <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>
@@ -2842,7 +2842,7 @@ so <span class="math notranslate nohighlight">\(\mu_{IG} = \sqrt{b/a}\)</span>.<
 <p>Unlike the VG / NInvG joints (whose shape <span class="math notranslate nohighlight">\(p\)</span> is a free
 coordinate read back from <span class="math notranslate nohighlight">\(\theta_1\)</span>), this class fixes
 <span class="math notranslate nohighlight">\(p=-1/2\)</span> and drops <span class="math notranslate nohighlight">\(\theta_1\)</span> from
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_log_partition_from_theta()</span></code> (using <span class="math notranslate nohighlight">\(K_{-1/2}\)</span>). The
+<code class="docutils literal notranslate"><span class="pre">_log_partition_from_theta</span></code> (using <span class="math notranslate nohighlight">\(K_{-1/2}\)</span>). The
 density-power scaling <span class="math notranslate nohighlight">\(\theta\mapsto\alpha\theta\)</span> moves
 <span class="math notranslate nohighlight">\(\theta_1\)</span> (i.e. the GIG order) off <span class="math notranslate nohighlight">\(-1/2\)</span>, so the
 constant-base-measure formula in

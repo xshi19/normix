@@ -530,22 +530,30 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    f : convex function θ → scalar  (e.g. log-partition ψ)</span>
-<span class="sd">    eta : target vector  (e.g. expectation parameters η)</span>
-<span class="sd">    theta0 : initial guess</span>
-<span class="sd">    backend : &#39;jax&#39; (JIT-able) or &#39;cpu&#39; (scipy, not JIT-able)</span>
+<span class="sd">    f : Callable</span>
+<span class="sd">        Convex function θ → scalar (e.g. log-partition ψ).</span>
+<span class="sd">    eta : jax.Array</span>
+<span class="sd">        Target vector (e.g. expectation parameters η).</span>
+<span class="sd">    theta0 : jax.Array</span>
+<span class="sd">        Initial guess.</span>
+<span class="sd">    backend : &#39;jax&#39; or &#39;cpu&#39;</span>
+<span class="sd">        ``&#39;jax&#39;`` is JIT-able; ``&#39;cpu&#39;`` uses scipy and is not JIT-able.</span>
 <span class="sd">    method : &#39;lbfgs&#39;, &#39;bfgs&#39;, or &#39;newton&#39;</span>
 <span class="sd">    bounds : tuple of jax.Array, or None</span>
 <span class="sd">        ``(lower, upper)`` pair, each shape ``(d,)``; ``None`` → unconstrained.</span>
 <span class="sd">        For backend=&#39;jax&#39;: enforced via reparameterization.</span>
 <span class="sd">        For backend=&#39;cpu&#39;: converted to scipy format internally.</span>
-<span class="sd">    max_steps : iteration budget</span>
-<span class="sd">    tol : convergence tolerance on ‖∇f(θ) − η‖∞</span>
-<span class="sd">    grad_fn : θ → ∇f(θ).</span>
+<span class="sd">    max_steps : int</span>
+<span class="sd">        Iteration budget.</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        Convergence tolerance on ‖∇f(θ) − η‖∞.</span>
+<span class="sd">    grad_fn : Callable, optional</span>
+<span class="sd">        θ → ∇f(θ).</span>
 <span class="sd">        For backend=&#39;cpu&#39;: must accept and return numpy arrays.</span>
 <span class="sd">        For backend=&#39;jax&#39;, method=&#39;newton&#39;: must be JAX-traceable.</span>
 <span class="sd">        If None with backend=&#39;cpu&#39;: falls back to jax.grad (hybrid mode).</span>
-<span class="sd">    hess_fn : θ → ∇²f(θ).</span>
+<span class="sd">    hess_fn : Callable, optional</span>
+<span class="sd">        θ → ∇²f(θ).</span>
 <span class="sd">        Required for method=&#39;newton&#39;.</span>
 <span class="sd">        For backend=&#39;cpu&#39;: must accept numpy arrays and return numpy array.</span>
 <span class="sd">        For backend=&#39;jax&#39;, method=&#39;newton&#39;: must be JAX-traceable.</span>
@@ -626,9 +634,9 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    theta0_batch : (K, dim) jax.Array for backend=&#39;jax&#39;, method=&#39;newton&#39;</span>
-<span class="sd">                   (parallel via vmap); list of arrays otherwise</span>
-<span class="sd">                   (sequential for-loop).</span>
+<span class="sd">    theta0_batch : jax.Array or list of jax.Array</span>
+<span class="sd">        ``(K, dim)`` array for ``backend=&#39;jax&#39;``, ``method=&#39;newton&#39;``</span>
+<span class="sd">        (parallel via vmap); list of arrays otherwise (sequential for-loop).</span>
 <span class="sd">    verbose : int</span>
 <span class="sd">        0 = silent, &gt;= 1 = print summary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -845,7 +853,7 @@
 <span class="sd">    The returned ``grad_norm`` is the natural residual</span>
 <span class="sd">    :math:`\lVert g_\theta\rVert_\infty`. Convergence uses the same</span>
 <span class="sd">    residual after dropping components a finite bound blocks</span>
-<span class="sd">    (:func:`_kkt_residual`). :math:`\lVert g_\phi\rVert_\infty` is not the</span>
+<span class="sd">    (``_kkt_residual``). :math:`\lVert g_\phi\rVert_\infty` is not the</span>
 <span class="sd">    stop: it can be tiny near a bound while a free coordinate of</span>
 <span class="sd">    :math:`g_\theta` is still :math:`O(1)`. At a bound optimum the</span>
 <span class="sd">    multiplier stays in ``grad_norm`` and does not by itself fail the solve.</span>
@@ -1023,7 +1031,8 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    f : convex objective ψ(θ) → scalar (must be JAX-traceable).</span>
+<span class="sd">    f : Callable</span>
+<span class="sd">        Convex objective ψ(θ) → scalar (must be JAX-traceable).</span>
 <span class="sd">    grad_fn : Callable</span>
 <span class="sd">        :math:`\nabla\psi(\theta) \to \mathbb{R}^d`.</span>
 <span class="sd">    hess_fn : Callable</span>

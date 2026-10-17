@@ -814,7 +814,7 @@ the general exponential-family formula via the gauge <span class="math notransla
 <dd><p>KL divergence <span class="math notranslate nohighlight">\(D_{\mathrm{KL}}(\mathrm{self} \| \mathrm{other})\)</span>.</p>
 <p>Uses the gauge <span class="math notranslate nohighlight">\(\psi\)</span> after lifting both operands, with
 <span class="math notranslate nohighlight">\(\eta_p\)</span> from the source family’s closed-form tail split
-(<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>) rather than <span class="math notranslate nohighlight">\(\nabla\psi\)</span> at a
+(<code class="docutils literal notranslate"><span class="pre">_divergence_eta</span></code>) rather than <span class="math notranslate nohighlight">\(\nabla\psi\)</span> at a
 boundary <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1038,11 +1038,11 @@ moment with a zero chord coefficient stays finite (no <span class="math notransl
 <li><p><strong>theta_p</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameters in gauge coordinates.</p></li>
 <li><p><strong>theta_q</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Natural parameters in gauge coordinates.</p></li>
 <li><p><strong>eta_fin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
+<code class="docutils literal notranslate"><span class="pre">ExponentialFamily._divergence_eta</span></code>).</p></li>
 <li><p><strong>m</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
+<code class="docutils literal notranslate"><span class="pre">ExponentialFamily._divergence_eta</span></code>).</p></li>
 <li><p><strong>v</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Tail-split of <span class="math notranslate nohighlight">\(\eta_p\)</span> (see
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">_divergence_eta()</span></code>).</p></li>
+<code class="docutils literal notranslate"><span class="pre">ExponentialFamily._divergence_eta</span></code>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

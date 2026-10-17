@@ -789,7 +789,7 @@
 <span class="sd">        GIG is already in GIG coordinates, so this returns ``self``. It exists</span>
 <span class="sd">        so that every subordinator family exposes a uniform ``to_gig()`` for</span>
 <span class="sd">        the shared prior-to-posterior conjugacy map in the EM E-step (see</span>
-<span class="sd">        :meth:`~normix.mixtures.joint.JointNormalMixture._posterior_gig_params`).</span>
+<span class="sd">        ``JointNormalMixture._posterior_gig_params``).</span>
 <span class="sd">        ``boundary_eps`` is accepted for API uniformity and ignored.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="n">boundary_eps</span>
@@ -809,7 +809,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gig_layout_eta_split</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_gig_layout_eta_split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Degenerate-aware split. See :meth:`_gig_layout_eta`.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Degenerate-aware split. See ``_gig_layout_eta``.&quot;&quot;&quot;</span>
         <span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span>
         <span class="n">use_gamma</span><span class="p">,</span> <span class="n">use_invg</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gig_degeneracy_flags</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">jnp</span><span class="p">)</span>
 
@@ -853,7 +853,7 @@
 
 <span class="sd">        Small-:math:`z` limit (see ``_gig_degeneracy_flags``): Gamma</span>
 <span class="sd">        if :math:`p&gt;0`, InverseGamma if :math:`p&lt;0`. Otherwise the Bessel</span>
-<span class="sd">        kernel on ``(a_safe, b_safe)`` as in :meth:`_grad_log_partition`.</span>
+<span class="sd">        kernel on ``(a_safe, b_safe)`` as in ``_grad_log_partition``.</span>
 <span class="sd">        Off :math:`\Theta` returns :math:`+\infty`. Clamps on the Gamma /</span>
 <span class="sd">        InverseGamma branches are unselected-branch guards.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -894,7 +894,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">log_partition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`\psi(\theta)` at current parameters.</span>
 
-<span class="sd">        A module-level :func:`jax.jit` of :meth:`_log_partition_from_theta`</span>
+<span class="sd">        A module-level :func:`jax.jit` of ``_log_partition_from_theta``</span>
 <span class="sd">        (see ``_gig_log_partition_jit``). Without it, a scalar call runs</span>
 <span class="sd">        the eager 192-point :func:`~normix.utils.bessel.log_kv` quadrature</span>
 <span class="sd">        — about a second per E-step when conjugacy asks for prior</span>
@@ -1095,7 +1095,7 @@
 <span class="sd">        Keeps ``m.log_k`` from :func:`~normix.utils.bessel.log_kv_moments`</span>
 <span class="sd">        to form :math:`\psi = \log 2 + \log K_p(\sqrt{ab}) +</span>
 <span class="sd">        \tfrac{p}{2}\log(b/a)` with no extra Bessel call. Matches the</span>
-<span class="sd">        Bessel branch of :meth:`_grad_log_partition` (``LOG_EPS`` floor).</span>
+<span class="sd">        Bessel branch of ``_grad_log_partition`` (``LOG_EPS`` floor).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">a_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">LOG_EPS</span><span class="p">)</span>

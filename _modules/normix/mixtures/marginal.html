@@ -596,7 +596,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Prior log-partition in the GIG convention that matches</span>
 <span class="sd">        :math:`\psi_{\mathrm{post}}`.</span>
 
-<span class="sd">        :meth:`~normix.mixtures.joint.JointNormalMixture._compute_posterior_expectations`</span>
+<span class="sd">        ``JointNormalMixture._compute_posterior_expectations``</span>
 <span class="sd">        evaluates :math:`\psi_{\mathrm{post}}` from GIG</span>
 <span class="sd">        :math:`\log 2 + \log K_p(\sqrt{ab}) + \tfrac{p}{2}\log(b/a)`</span>
 <span class="sd">        (base measure :math:`h\equiv 1`). InverseGaussian stores</span>
@@ -621,7 +621,7 @@
 <span class="sd">        :math:`\log h(x) = -\tfrac{d}{2}\log(2\pi) - \tfrac12\log|\Sigma|</span>
 <span class="sd">        + \gamma^\top\Sigma^{-1}(x-\mu)`. :math:`\psi` is the</span>
 <span class="sd">        subordinator log-partition in the GIG convention (shared across</span>
-<span class="sd">        the batch; see :meth:`_conjugacy_psi_prior`);</span>
+<span class="sd">        the batch; see ``_conjugacy_psi_prior``);</span>
 <span class="sd">        :math:`\psi_{\mathrm{post}}` is the posterior GIG log-partition.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">log_h</span> <span class="o">=</span> <span class="p">(</span>
@@ -721,12 +721,12 @@
 <span class="sd">        Keyword arguments other than ``alpha_min`` are forwarded to</span>
 <span class="sd">        :class:`~normix.fitting.em.BatchEMFitter` (``algorithm``,</span>
 <span class="sd">        ``track_ll``, ``eta_update``, ``m_step_kwargs``, backends, …).</span>
-<span class="sd">        Family-specific defaults come from :meth:`_fit_defaults` and are</span>
+<span class="sd">        Family-specific defaults come from ``_fit_defaults`` and are</span>
 <span class="sd">        overridden by any explicitly supplied kwarg.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        alpha_min : float or {&#39;density&#39;, &#39;inverse_moment&#39;}, optional</span>
+<span class="sd">        alpha_min : float, &#39;density&#39; or &#39;inverse_moment&#39;, optional</span>
 <span class="sd">            Opt-in lower bound on the Gamma subordinator shape :math:`\alpha`</span>
 <span class="sd">            (Variance Gamma only — the unique family whose marginal</span>
 <span class="sd">            likelihood is unbounded at :math:`x=\mu`). Restricts the</span>
@@ -860,7 +860,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Stored subordinator field names on the joint, e.g. ``(&#39;alpha&#39;, &#39;beta&#39;)``.</span>
 
 <span class="sd">        Used by :meth:`replace` to dispatch updates between the normal</span>
-<span class="sd">        block (:attr:`_NORMAL_KEYS`) and the subordinator block.</span>
+<span class="sd">        block (``_NORMAL_KEYS``) and the subordinator block.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
@@ -1299,7 +1299,7 @@
 <span class="sd">        - normal parameters: ``mu``, ``gamma``, ``L_Sigma``;</span>
 <span class="sd">        - dispersion alias ``sigma`` — converted to ``L_Sigma`` via</span>
 <span class="sd">          Cholesky (mutually exclusive with ``L_Sigma``);</span>
-<span class="sd">        - subordinator parameters declared by :meth:`_subordinator_keys`</span>
+<span class="sd">        - subordinator parameters declared by ``_subordinator_keys``</span>
 <span class="sd">          (e.g. ``alpha, beta`` for VG / NInvG, ``mu_ig, lam`` for NIG,</span>
 <span class="sd">          ``p, a, b`` for GH).</span>
 
@@ -1352,7 +1352,7 @@
 <span class="sd">        Pushes the scale ``s`` through every parameter so the joint</span>
 <span class="sd">        distribution is unchanged: :math:`\Sigma \to \Sigma/s`,</span>
 <span class="sd">        :math:`\gamma \to \gamma/s`, and the subordinator-side rescale</span>
-<span class="sd">        is delegated to :meth:`_build_rescaled` (e.g.</span>
+<span class="sd">        is delegated to ``_build_rescaled`` (e.g.</span>
 <span class="sd">        :math:`(a, b) \to (a/s, b\cdot s)` for GIG).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -1368,7 +1368,7 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Rescale to enforce :math:`\log|\Sigma| = \mathrm{target\_log\_det}`.</span>
 
 <span class="sd">        Picks :math:`s = \exp((\log|\Sigma| - \tau)/d)` and applies</span>
-<span class="sd">        :meth:`_rescale`. The default ``target_log_det = 0`` recovers the</span>
+<span class="sd">        ``_rescale``. The default ``target_log_det = 0`` recovers the</span>
 <span class="sd">        :math:`|\Sigma| = 1` convention; passing the log-determinant of</span>
 <span class="sd">        an initial reference Σ implements the ``det_sigma_x`` family.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
