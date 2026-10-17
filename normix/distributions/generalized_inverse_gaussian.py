@@ -1056,7 +1056,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             )
             for satisfied, requirement in zip(np.asarray(conditions), requirements):
                 if not satisfied:
-                    raise ValueError(f"GIG.from_expectation requires {requirement}; equality is not an interior target")
+                    raise ValueError(f"GIG.from_expectation requires {requirement}")
             return cls._from_expectation_unchecked(eta, **kwargs)
         return jax.lax.cond(
             jnp.all(conditions),
