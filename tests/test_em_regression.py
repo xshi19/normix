@@ -406,10 +406,99 @@ class TestEMDivergenceGuard:
         result = self._fit_with_forced_divergence(
             fitter, init, X, at_step=2)
         assert result.diverged is True
+        assert result.solver_failed is False
         assert not result.converged
         _assert_model_finite(result.model)
         assert int(result.n_iter) >= 1
         assert jnp.any(~jnp.isfinite(result.param_changes))
+
+
+def _tiny_vg():
+    X = jnp.array([[-0.4], [0.2], [0.7], [-0.1], [0.3], [1.1], [-0.8], [0.0]])
+    return VarianceGamma.default_init(X), X
+
+
+class _SolverFailModel:
+    """Delegates to a real mixture and fails the M-step like a dead solver."""
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    def replace(self, **kwargs):
+        return _SolverFailModel(self._inner.replace(**kwargs))
+
+    def e_step(self, X, backend="jax"):
+        return self._inner.e_step(X, backend=backend)
+
+    def m_step(self, eta, **kwargs):
+        raise RuntimeError(
+            "Bregman solve did not converge; refusing to return a model "
+            "whose expectation parameters were not inverted."
+        )
+
+    def em_convergence_params(self):
+        return self._inner.em_convergence_params()
+
+    @property
+    def mu(self):
+        return self._inner.mu
+
+
+class TestEMSolverFailure:
+    """A non-finite mixing block is solver_failed, not a silent NaN model."""
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_nonfinite_mixing_keeps_last_finite(self, loop):
+        init, X = _tiny_vg()
+        if loop == "scan":
+            backends = dict(e_step_backend="jax", m_step_backend="jax")
+        else:
+            backends = dict(e_step_backend="cpu", m_step_backend="cpu")
+        one = BatchEMFitter(
+            max_iter=1, tol=1e-12, verbose=0, **backends,
+        ).fit(init, X)
+        fitter = BatchEMFitter(max_iter=5, tol=1e-12, verbose=0, **backends)
+        fitter._force_solver_fail_at_step = 2
+        result = fitter.fit(init, X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.converged is False
+        assert result.n_iter == 2
+        assert one.solver_failed is False
+        _assert_model_finite(result.model)
+        for got, ref in zip(jax.tree.leaves(result.model), jax.tree.leaves(one.model)):
+            np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
+
+    def test_runtimeerror_is_solver_failed_on_the_python_loop(self):
+        init, X = _tiny_vg()
+        result = BatchEMFitter(
+            max_iter=4, tol=1e-12, verbose=0,
+            e_step_backend="cpu", m_step_backend="cpu",
+        ).fit(_SolverFailModel(init), X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.converged is False
+        assert result.n_iter == 1
+        for got, ref in zip(
+            jax.tree.leaves(result.model._inner), jax.tree.leaves(init),
+        ):
+            np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
+
+    def test_gig_fallback_passes_nonfinite_solve_through(self):
+        from normix import GIG
+        from normix.distributions.generalized_hyperbolic import (
+            _cpu_gig_or_previous,
+            _gig_or_previous,
+        )
+
+        current = GIG(p=0.5, a=1.0, b=1.0)
+        bad = GIG(p=jnp.nan, a=jnp.nan, b=jnp.nan)
+        kept = _gig_or_previous(bad, current)
+        assert not np.isfinite(float(kept.p))
+        assert not np.isfinite(float(_cpu_gig_or_previous(bad, current).p))
+        far = GIG(p=80.0, a=1.0, b=1.0)
+        assert float(_gig_or_previous(far, current).p) == pytest.approx(0.5)
+        assert float(_cpu_gig_or_previous(far, current).p) == pytest.approx(0.5)
 
 
 def _review_vg_setup(scale: float = 1.0):
