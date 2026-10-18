@@ -1,9 +1,10 @@
-"""Warm-start GIG ``η → θ`` timing (EM M-step hot path).
+"""Warm- and cold-start GIG ``η → θ`` timing.
 
 Source: ``benchmarks/bench_gig_solvers.py``. Easy = symmetric GIG;
 hard = ``a ≫ b`` (the ill-conditioned case η-rescaling targets).
-``theta0`` is a neighbouring valid GIG, not the exact solution, and is
-still close enough that the JAX path hits ``_gig_jax_newton_jit``.
+Warm ``theta0`` is a neighbouring valid GIG, not the exact solution.
+The JAX path still hits the cached Newton kernel.
+Cold starts include seed generation and the JAX multi-start solve.
 """
 
 from __future__ import annotations
@@ -65,6 +66,31 @@ class GIGFromExpectation:
             self.eta, theta0=self.theta0, backend=backend
         )
         jax.block_until_ready(gig.p)
+
+
+class GIGFromExpectationCold:
+    """Cold-start inversion after compilation, including eager dispatch."""
+
+    params = [["newton", "lbfgs", "bfgs"], ["eager", "jit"]]
+    param_names = ["method", "mode"]
+    timeout = 180.0
+    warmup_time = 0.0
+
+    def setup(self, method: str, mode: str) -> None:
+        require_requested_device()
+        self.eta = GIG(0.5, 1.0, 1.0).expectation_params()
+
+        def invert(eta):
+            return GIG.from_expectation(eta, method=method).natural_params()
+
+        self.invert = jax.jit(invert) if mode == "jit" else invert
+        try:
+            self.invert(self.eta).block_until_ready()
+        except jax.errors.ConcretizationTypeError as exc:
+            raise NotImplementedError("cold-start jit is unsupported at this commit") from exc
+
+    def time_from_expectation(self, method: str, mode: str) -> None:
+        self.invert(self.eta).block_until_ready()
 
 
 class Sampling:

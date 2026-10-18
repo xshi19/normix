@@ -687,10 +687,16 @@ class JointNormalMixture(ExponentialFamily):
         Normal-inverse-Gaussian needs :math:`E[1/Y] > 1/E[Y]` so
         :math:`\lambda > 0`.
 
-        Generalized hyperbolic also needs
-        :math:`-\log E[1/Y] \le E[\log Y] \le \log E[Y]`.
+        Generalized hyperbolic also needs finite moments with
+        :math:`E[Y] > 0`, :math:`E[1/Y] > 0`,
+        :math:`E[Y] E[1/Y] > 1`, and
+        :math:`-\log E[1/Y] < E[\log Y] < \log E[Y]`.
+        Equality is a point-mass boundary.
         Those bounds are necessary and not sufficient.
-        A failed host solve raises :class:`RuntimeError`.
+        A concrete GIG call raises :class:`ValueError` before the solve.
+        A traced invalid target returns a NaN model.
+        A failed host solve raises
+        :class:`~normix.fitting.solvers.SolverDidNotConverge`.
         Under ``jit`` the natural parameters are NaN.
 
         A flat array inverts the restricted log-partition, not ambient

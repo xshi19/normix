@@ -20,6 +20,7 @@ from normix.fitting.solvers import (
     solve_bregman,
     solve_bregman_multistart,
 )
+from normix.utils.constants import THETA_FLOOR
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -430,6 +431,127 @@ class TestSolveBregmanGIG:
 
 class TestSolveBregmanMultistart:
 
+    @pytest.mark.contract
+    def test_newton_stops_after_convergence(self):
+        result = solve_bregman(
+            quadratic_f, jnp.array([1.0, -0.5]), jnp.zeros(2),
+            method='newton', max_steps=30,
+        )
+        assert result.converged
+        assert result.num_steps < 5
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('method', ['newton', 'lbfgs', 'bfgs'])
+    def test_multistart_stops_after_first_finite_convergence(self, method):
+        visited = []
+
+        def objective(theta):
+            jax.debug.callback(lambda value: visited.append(float(value)), theta[0])
+            return quadratic_f(theta)
+
+        result = solve_bregman_multistart(
+            objective, jnp.array([1.0]), jnp.array([[0.0], [1000.0]]),
+            method=method, max_steps=10,
+        )
+        result.theta.block_until_ready()
+        jax.effects_barrier()
+        np.testing.assert_allclose(result.theta, [1.0], atol=1e-8)
+        assert result.converged
+        assert max(visited) < 2.0
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('method', ['newton', 'lbfgs', 'bfgs'])
+    def test_multistart_reuses_trace(self, method):
+        traces = []
+
+        def objective(theta):
+            traces.append(None)
+            return quadratic_f(theta)
+
+        seeds = jnp.array([[0.0], [2.0]])
+        for target in (1.0, 1.5):
+            result = solve_bregman_multistart(
+                objective, jnp.array([target]), seeds, method=method, max_steps=10,
+                tol=1e-10 if target == 1.0 else 1e-12,
+            )
+            np.testing.assert_allclose(result.theta, [target], atol=1e-8)
+            if target == 1.0:
+                first_trace_count = len(traces)
+        assert first_trace_count > 0
+        assert len(traces) == first_trace_count
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('method', ['newton', 'lbfgs', 'bfgs'])
+    @pytest.mark.parametrize('has_solution', [False, True])
+    def test_multistart_skips_nonfinite_and_unconverged_starts(self, method, has_solution):
+        seeds = [[jnp.nan], [-3.0], [0.5]]
+        if has_solution:
+            seeds.append([1.0])
+        result = solve_bregman_multistart(
+            quadratic_f, jnp.array([1.0]), jnp.array(seeds),
+            method=method, max_steps=0,
+        )
+        np.testing.assert_allclose(result.theta, [1.0 if has_solution else 0.5])
+        assert bool(result.converged) == has_solution
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('params', [(0.5, 1.0, 1.0), (-1.5, 2.0, 0.7), (2.5, 0.5, 3.0)])
+    def test_gig_cold_start_newton_step_budget(self, params):
+        from normix import GIG
+
+        eta = GIG(*params).expectation_params()
+        geom = jnp.sqrt(eta[1] * eta[2])
+        scaled = jnp.array([eta[0] + 0.5 * jnp.log(eta[1] / eta[2]), geom, geom])
+        result = solve_bregman_multistart(
+            GIG._log_partition_from_theta, scaled, jnp.stack(GIG._initial_guesses(scaled)),
+            method='newton', max_steps=30, tol=1e-12, bounds=GIG._theta_bounds(),
+            grad_fn=GIG._grad_log_partition, hess_fn=GIG._hessian_log_partition,
+        )
+        assert result.converged
+        assert result.num_steps < 25
+        np.testing.assert_allclose(GIG._grad_log_partition(result.theta), scaled,
+                                   rtol=1e-8, atol=1e-9)
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('solver', [solve_bregman_multistart, solve_bregman])
+    @pytest.mark.parametrize('method', ['newton', 'lbfgs', 'bfgs'])
+    @pytest.mark.parametrize('compiled', [False, True])
+    def test_verbose_summary_is_trace_safe(self, solver, method, compiled, capsys):
+        eta = jnp.array([1.0, -0.5])
+        theta0 = jnp.zeros(2)
+        if solver is solve_bregman_multistart:
+            theta0 = jnp.stack([theta0, jnp.array([-1.0, 0.5])])
+
+        def invert(target):
+            return solver(
+                quadratic_f, target, theta0, backend='jax', method=method,
+                max_steps=20, tol=1e-8, verbose=1,
+            ).theta
+
+        if compiled:
+            invert = jax.jit(invert)
+        np.testing.assert_allclose(invert(eta), eta, rtol=1e-7, atol=1e-8)
+        output = capsys.readouterr().out
+        if compiled:
+            assert output == ''
+        else:
+            assert 'converged' in output
+            assert '|grad|=' in output
+
+    @pytest.mark.contract
+    @pytest.mark.parametrize('geom', [1e3, 1e6])
+    @pytest.mark.parametrize('compiled', [False, True])
+    def test_gig_initial_guesses_stay_inside_rate_bounds(self, geom, compiled):
+        from normix import GIG
+
+        initial_guesses = GIG._initial_guesses
+        if compiled:
+            initial_guesses = jax.jit(initial_guesses)
+        seeds = np.asarray(initial_guesses(jnp.array([0.0, geom, geom])))
+
+        assert np.isfinite(seeds).all()
+        assert np.all(seeds[:, 1:] <= THETA_FLOOR)
+
     def test_jax_newton_vmap(self):
         """vmap multi-start on quadratic — all starts should converge."""
         eta = jnp.array([1.0, -0.5])
@@ -465,7 +587,6 @@ class TestSolveBregmanMultistart:
         from normix import GIG
         gig = GIG(p=0.5, a=1.0, b=1.0)
         eta = gig.expectation_params()
-        s = jnp.sqrt(eta[1] / eta[2])
         geom = jnp.sqrt(eta[1] * eta[2])
         eta_scaled = jnp.array([eta[0] + 0.5 * jnp.log(eta[1] / eta[2]), geom, geom])
 

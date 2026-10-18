@@ -53,6 +53,7 @@ Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
 """
 from __future__ import annotations
 
+from functools import partial
 from typing import Optional, Tuple
 
 import jax
@@ -1000,27 +1001,89 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         r"""
         :math:`\eta \to \theta` via :math:`\eta`-rescaling + optimization.
 
-        Rescaling makes the Fisher matrix symmetric (:math:`\tilde{a} = \tilde{b}`),
-        reducing condition number by up to :math:`10^{30}` for extreme :math:`a/b` ratios.
+        Rescaling balances the forward and inverse target moments before
+        optimization, reducing sensitivity to the units of :math:`X`.
+
+        The target layout is :math:`\eta=(\ell,m_-,m_+)`, with
+        :math:`\ell=E[\log X]`, :math:`m_-=E[1/X]`, and :math:`m_+=E[X]`.
+        Entries must be finite, :math:`m_-,m_+>0`, :math:`m_-m_+>1`, and
+        :math:`-\log m_-<\ell<\log m_+`. Equality is rejected as a
+        degenerate point-mass boundary. These necessary conditions do not
+        guarantee an interior GIG solution. Gamma/InverseGamma limits with
+        finite moments can satisfy all inequalities strictly.
 
         Parameters
         ----------
         theta0 : jax.Array, optional
-            Warm-start point (required for JAX solvers; if ``None``, uses
-            multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).
+            Warm-start point. If ``None``, uses the selected JAX method
+            with multiple starts, or multi-start L-BFGS-B on the CPU backend,
+            with InverseGaussian/Gamma/InverseGamma seeds. JAX stops at the
+            first finite converged solve, starting with the interior
+            inverse-Gaussian seed.
         backend : str
-            ``'jax'`` (default, JIT-able) or ``'cpu'`` (scipy, more robust).
+            ``'jax'`` (default): supports ``jit``, forward and reverse
+            AD through :math:`d\theta=H(\theta)^{-1}d\eta`. Solves and
+            initial guesses are not differentiated. Singular, nonfinite,
+            or bound-active solutions have NaN derivatives.
+            ``'cpu'``: eager-only optimization, without JAX AD.
         method : str
             ``'newton'``, ``'lbfgs'``, or ``'bfgs'``.
 
         Raises
         ------
+        ValueError
+            An eager target violates a necessary moment condition, before
+            any solve. Under JAX tracing an invalid target returns a NaN
+            model with NaN derivatives; scalar ``jit`` skips the solve.
         SolverDidNotConverge
-            The solve did not converge. Under ``jit`` / ``lax.scan`` the
-            returned natural parameters are NaN instead of a silent model.
+            The solve did not converge. Under ``jit`` the natural
+            parameters are NaN instead of a silent model.
         """
         _check_backend(backend)
         eta = jnp.asarray(eta, dtype=jnp.float64)
+        ell, m_minus, m_plus = eta
+        conditions = jnp.array([
+            jnp.all(jnp.isfinite(eta)),
+            m_minus > 0.0,
+            m_plus > 0.0,
+            m_minus * m_plus > 1.0,
+            ell > -jnp.log(m_minus),
+            ell < jnp.log(m_plus),
+        ])
+        kwargs = dict(theta0=theta0, maxiter=maxiter, tol=tol, backend=backend,
+                      method=method, verbose=verbose)
+        if not isinstance(eta, jax.core.Tracer):
+            requirements = (
+                "finite entries", "E[1/X] > 0", "E[X] > 0",
+                "E[X] * E[1/X] > 1", "-log(E[1/X]) < E[log X]",
+                "E[log X] < log(E[X])",
+            )
+            for satisfied, requirement in zip(np.asarray(conditions), requirements):
+                if not satisfied:
+                    raise ValueError(f"GIG.from_expectation requires {requirement}")
+            return cls._from_expectation_unchecked(eta, **kwargs)
+        return jax.lax.cond(
+            jnp.all(conditions),
+            lambda target: cls._from_expectation_unchecked(target, **kwargs),
+            lambda target: cls.from_natural(jnp.full_like(target, jnp.nan) * target),
+            eta,
+        )
+
+    @classmethod
+    def _from_expectation_unchecked(
+        cls,
+        eta: jax.Array,
+        *,
+        theta0: Optional[jax.Array] = None,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+        backend: str = "jax",
+        method: str = "newton",
+        verbose: int = 0,
+    ) -> "GeneralizedInverseGaussian":
+        """Invert a target that passed the public moment-domain check."""
+        eta_target = jnp.asarray(eta, dtype=jnp.float64)
+        eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
 
         s = jnp.sqrt(eta2 / eta3)
@@ -1040,7 +1103,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             hess_fn = cls._hessian_log_partition
 
         if theta0 is not None:
-            theta0 = jnp.asarray(theta0, dtype=jnp.float64)
+            theta0 = jax.lax.stop_gradient(jnp.asarray(theta0, dtype=jnp.float64))
             theta0_scaled = jnp.array([theta0[0],
                                        theta0[1] * s,
                                        theta0[2] / s])
@@ -1076,17 +1139,22 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 converged = result.converged
             theta_scaled = _require_solved_theta(
                 theta_scaled, converged, grad_norm=grad_norm,
+                traced=isinstance(eta_target, jax.core.Tracer),
+            )
+        elif backend == "jax":
+            theta_scaled, grad_norm, converged, _ = cls._jax_cold_start(
+                eta_scaled, maxiter=maxiter, tol=tol, method=method,
+            )
+            if verbose >= 1 and not isinstance(grad_norm, jax.core.Tracer):
+                status = "converged" if bool(converged) else "NOT converged"
+                print(f"GIG cold start [jax/{method}]: {status}, |grad|={float(grad_norm):.2e}")
+            theta_scaled = _require_solved_theta(
+                theta_scaled, converged, grad_norm=grad_norm,
+                traced=isinstance(eta_target, jax.core.Tracer),
             )
         else:
-            theta0_list = cls._initial_guesses(eta_scaled)
-            processed = []
-            for t0 in theta0_list:
-                t0_np = np.array(t0)
-                t0_np[1] = min(t0_np[1], THETA_FLOOR)
-                t0_np[2] = min(t0_np[2], THETA_FLOOR)
-                processed.append(jnp.asarray(t0_np, dtype=jnp.float64))
             result = solve_bregman_multistart(
-                cls._log_partition_cpu, eta_scaled, processed,
+                cls._log_partition_cpu, eta_scaled, cls._initial_guesses(eta_scaled),
                 backend="cpu", method="lbfgs",
                 bounds=_GIG_BOUNDS, max_steps=maxiter, tol=tol,
                 grad_fn=cls._grad_log_partition_cpu,
@@ -1099,6 +1167,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         theta = jnp.array([theta_scaled[0],
                            theta_scaled[1] / s,
                            s * theta_scaled[2]])
+        if backend == "jax":
+            theta = cls._implicit_natural_params(eta_target, theta)
         return cls.from_natural(theta)
 
     @classmethod
@@ -1108,64 +1178,48 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         upper = jnp.array([jnp.inf, 0.0, 0.0])
         return (lower, upper)
 
+    @classmethod
+    @partial(jax.jit, static_argnames=("cls", "maxiter", "method"))
+    def _jax_cold_start(cls, eta_scaled: jax.Array, *, maxiter: int, tol: float, method: str):
+        """Compile seed generation and inversion with fixed GIG rate bounds."""
+        result = solve_bregman_multistart(
+            cls._log_partition_from_theta, eta_scaled,
+            cls._initial_guesses(eta_scaled),
+            method=method, bounds=cls._theta_bounds(), max_steps=maxiter, tol=tol,
+            grad_fn=cls._grad_log_partition, hess_fn=cls._hessian_log_partition,
+        )
+        return result.theta, result.grad_norm, result.converged, result.num_steps
+
     @staticmethod
-    def _initial_guesses(eta_scaled: jax.Array) -> list:
+    @jax.jit
+    def _initial_guesses(eta_scaled: jax.Array) -> jax.Array:
         """
         Multi-start initial guesses for the scaled GIG problem.
 
-        Uses Gamma, InverseGamma, InverseGaussian special cases.
+        Tries the interior InverseGaussian seed before the Gamma and
+        InverseGamma boundary seeds and their perturbed copies.
+        Rate coordinates are clamped to ``THETA_FLOOR`` for both backends.
         """
         from normix.distributions.gamma import Gamma
         from normix.distributions.inverse_gamma import InverseGamma
         from normix.distributions.inverse_gaussian import InverseGaussian
 
-        eta1, eta2, eta3 = (float(eta_scaled[0]),
-                            float(eta_scaled[1]),
-                            float(eta_scaled[2]))
-        starting_points = []
+        eta1, eta2, eta3 = eta_scaled
         eps = GIG_THETA_PERTURB
-
-        # 1. Gamma limit (b→0): match η₁ = E[log X], η₃ = E[X]
-        try:
-            g = Gamma.from_expectation(jnp.array([eta1, eta3]))
-            g_theta = g.natural_params()
-            starting_points.append(
-                np.array([float(g_theta[0]), -eps / 2, float(g_theta[1])]))
-        except Exception:
-            pass
-
-        # 2. InverseGamma limit (a→0): match η₁ = E[log X], η₂ = E[1/X]
-        try:
-            ig = InverseGamma.from_expectation(jnp.array([-eta2, eta1]))
-            ig_theta = ig.natural_params()
-            starting_points.append(
-                np.array([float(ig_theta[1]), float(-ig_theta[0]), -eps / 2]))
-        except Exception:
-            pass
-
-        # 3. InverseGaussian limit (p=-1/2): match η₂ = E[1/X], η₃ = E[X]
-        if eta3 > 0 and eta2 > 1.0 / eta3:
-            try:
-                igauss = InverseGaussian.from_expectation(jnp.array([eta3, eta2]))
-                ig_theta = igauss.natural_params()
-                starting_points.append(
-                    np.array([-1.5, float(ig_theta[1]), float(ig_theta[0])]))
-            except Exception:
-                pass
-
-        # 4. Perturbed copies
-        for sp in list(starting_points):
-            for scale in [0.1, 0.5, 2.0, 10.0]:
-                perturbed = sp.copy()
-                perturbed[1] = min(perturbed[1], -eps * scale / 2)
-                perturbed[2] = min(perturbed[2], -eps * scale / 2)
-                starting_points.append(perturbed)
-
-        # 5. Fallback
-        if not starting_points:
-            starting_points.append(np.array([0.0, -0.5, -0.5]))
-
-        return starting_points
+        gamma = Gamma.from_expectation(jnp.array([eta1, eta3]))
+        invgamma = InverseGamma.from_expectation(jnp.array([-eta2, eta1]))
+        invgauss = InverseGaussian.from_expectation(jnp.array([eta3, eta2]))
+        starting_points = jnp.array([
+            [-1.5, -invgauss.lam / 2.0, -invgauss.lam / (2.0 * invgauss.mu**2)],
+            [gamma.alpha - 1.0, -eps / 2.0, -gamma.beta],
+            [-invgamma.alpha - 1.0, -invgamma.beta, -eps / 2.0],
+        ])
+        scales = jnp.array([0.1, 0.5, 2.0, 10.0])
+        rates = jnp.minimum(starting_points[:, None, 1:], -eps * scales[None, :, None] / 2.0)
+        orders = jnp.broadcast_to(starting_points[:, None, :1], (3, 4, 1))
+        perturbed = jnp.concatenate((orders, rates), axis=-1).reshape(-1, 3)
+        seeds = jnp.concatenate((starting_points, perturbed))
+        return seeds.at[:, 1:].set(jnp.minimum(seeds[:, 1:], THETA_FLOOR))
 
 
 # ---------------------------------------------------------------------------

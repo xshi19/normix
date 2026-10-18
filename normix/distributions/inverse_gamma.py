@@ -290,8 +290,11 @@ class InverseGamma(ExponentialFamily):
         Parameters
         ----------
         backend : str
-            ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
-            ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
+            ``'jax'`` (default): Newton with implicit forward/reverse derivatives
+            (JIT-compatible). The derivative is the inverse Fisher matrix
+            in the regular interior; singular or nonfinite solutions have
+            NaN derivatives.
+            ``'cpu'``: ``scipy.special`` digamma/polygamma (eager-only; no JAX AD).
 
         Raises
         ------
@@ -299,7 +302,8 @@ class InverseGamma(ExponentialFamily):
             ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
         _check_backend(backend)
-        eta = jnp.asarray(eta, dtype=jnp.float64)
+        eta_target = jnp.asarray(eta, dtype=jnp.float64)
+        eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2 = eta[0], eta[1]
         target = -eta2 - jnp.log(-eta1)
 
@@ -312,4 +316,7 @@ class InverseGamma(ExponentialFamily):
 
         alpha = jnp.maximum(jnp.asarray(alpha, dtype=jnp.float64), LOG_EPS)
         beta = jnp.maximum(alpha / (-eta1), LOG_EPS)
+        if backend == "jax":
+            theta = cls._implicit_natural_params(eta_target, jnp.array([beta, -(alpha + 1.0)]))
+            alpha, beta = -theta[1] - 1.0, theta[0]
         return cls(alpha=alpha, beta=beta)

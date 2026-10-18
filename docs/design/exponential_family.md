@@ -129,11 +129,15 @@ Subordinator bounds on the pytree path:
 - Normal-inverse-Gaussian needs $\mathbb{E}[Y] > 0$ and
   $\mathbb{E}[1/Y] > 1/\mathbb{E}[Y]$, so $\lambda > 0$.
   A smaller inverse moment is clamped at `LOG_EPS`.
-- Generalized hyperbolic needs $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$,
-  and $\mathbb{E}[Y]\,\mathbb{E}[1/Y] \ge 1$.
-  It also needs $-\log\mathbb{E}[1/Y] \le \mathbb{E}[\log Y] \le \log\mathbb{E}[Y]$.
-  These bounds are necessary and not sufficient.
-  A failed host solve raises `RuntimeError`.
+- Generalized hyperbolic needs finite moments with
+  $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$,
+  $\mathbb{E}[Y]\,\mathbb{E}[1/Y] > 1$, and
+  $-\log\mathbb{E}[1/Y] < \mathbb{E}[\log Y] < \log\mathbb{E}[Y]$.
+  Equality is a point-mass boundary.
+  These conditions are necessary and not sufficient.
+  A concrete `GIG.from_expectation` call raises `ValueError` before the solve.
+  A traced invalid target returns a NaN model.
+  A failed host solve raises `SolverDidNotConverge`.
   Under `jit` the natural parameters are NaN.
 
 ---
@@ -153,8 +157,8 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | Decision | Choice | Why |
 |---|---|---|
 | `grad_fn` + `hess_fn` (vs combined `grad_hess_fn`) | separate | Distributions don't know about φ-space; solver applies chain rule via `jax.jacobian(to_theta)` |
-| Newton implementation | hand-rolled `lax.scan` | No JAX library provides a Newton **minimizer** that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton) |
-| Multi-start | `jax.vmap` for JAX, Python `for` for CPU | Orthogonal wrapper, not baked into solver name |
+| Newton implementation | hand-rolled `lax.while_loop` | No JAX library provides a Newton **minimizer** that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton). The loop stops when the pre-step residual is inside `tol`. |
+| Multi-start | JAX `lax.while_loop` over ordered starts; Python `for` for CPU | JAX stops at the first finite converged start |
 | Result type | `BregmanResult` with `Any`-typed scalars | Survives `lax.scan` without `ConcretizationTypeError` |
 | Cached JIT | module-level `_gig_jax_newton_jit` via `make_jit_newton_solver` | The GIG warm-start hot path otherwise retraces per call |
 
@@ -162,7 +166,7 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 
 | backend | method | bounds | What runs |
 |---|---|---|---|
-| `jax` | `newton` | reparam | hand-rolled `lax.scan`, autodiff or supplied `grad_fn`/`hess_fn` |
+| `jax` | `newton` | reparam | hand-rolled `lax.while_loop`, autodiff or supplied `grad_fn`/`hess_fn` |
 | `jax` | `lbfgs` | native (LBFGSB) | [JAXopt](https://jaxopt.github.io/stable/) `LBFGSB` |
 | `jax` | `bfgs`  | reparam | [JAXopt](https://jaxopt.github.io/stable/) `BFGS` |
 | `cpu` | `newton`| reparam | [SciPy](https://docs.scipy.org/doc/scipy/) `minimize(method='trust-exact')` |
@@ -174,6 +178,8 @@ GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
 
 `BregmanResult.num_steps` counts steps taken.
 A one-step quadratic Newton solve reports 1.
+A start already inside the tolerance reports 0.
+The pre-step check that stops the loop is not a step.
 `reason` is an integer code.
 Eager and traced calls store that code as the same type.
 The codes are 0 converged, 1 atol, 2 max steps, and 3 non-finite.

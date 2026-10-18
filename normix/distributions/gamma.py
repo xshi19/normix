@@ -291,8 +291,11 @@ class Gamma(ExponentialFamily):
         Parameters
         ----------
         backend : str
-            ``'jax'`` (default): ``lax.fori_loop`` Newton (JIT-compatible).
-            ``'cpu'``: ``scipy.special`` digamma/polygamma (no XLA tracing).
+            ``'jax'`` (default): Newton with implicit forward/reverse derivatives
+            (JIT-compatible). The derivative is the inverse Fisher matrix
+            in the regular interior; singular or nonfinite solutions have
+            NaN derivatives.
+            ``'cpu'``: ``scipy.special`` digamma/polygamma (eager-only; no JAX AD).
         alpha_min : float, optional
             Lower bound on the fitted shape :math:`\alpha`. When set, the
             digamma-inversion result is clamped to ``jnp.maximum(alpha,
@@ -314,8 +317,9 @@ class Gamma(ExponentialFamily):
             ``eta`` (``jit``, ``vmap``) skips the moment check.
         """
         _check_backend(backend)
-        eta = jnp.asarray(eta, dtype=jnp.float64)
-        _reject_inadmissible_gamma_eta(eta)
+        eta_target = jnp.asarray(eta, dtype=jnp.float64)
+        _reject_inadmissible_gamma_eta(eta_target)
+        eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2 = eta[0], eta[1]
         target = eta1 - jnp.log(eta2)
 
@@ -325,9 +329,13 @@ class Gamma(ExponentialFamily):
             alpha = _newton_digamma(target)
 
         alpha = jnp.maximum(jnp.asarray(alpha, dtype=jnp.float64), LOG_EPS)
+        beta = jnp.maximum(alpha / eta2, LOG_EPS)
+        if backend == "jax":
+            theta = cls._implicit_natural_params(eta_target, jnp.array([alpha - 1.0, -beta]))
+            alpha, beta = theta[0] + 1.0, -theta[1]
         if alpha_min is not None:
             alpha = jnp.maximum(alpha, alpha_min)
-        beta = jnp.maximum(alpha / eta2, LOG_EPS)
+            beta = jnp.maximum(alpha / eta_target[1], LOG_EPS)
         return cls(alpha=alpha, beta=beta)
 
 

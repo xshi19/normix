@@ -540,6 +540,58 @@ class TestEMSolverFailure:
         np.testing.assert_allclose(float(result.model.a), 1.0)
         np.testing.assert_allclose(float(result.model.b), 1.0)
 
+    def test_real_gig_domain_error_follows_solver_failure(self):
+        """An eager GIG moment-domain ValueError uses the item-2 paths."""
+        from types import SimpleNamespace
+
+        from normix import GeneralizedHyperbolic
+        from normix.distributions.generalized_inverse_gaussian import GIG
+
+        bad = jnp.array([0.0, 1.0, 1.0])
+        with pytest.raises(ValueError, match="GIG.from_expectation"):
+            GIG.from_expectation(bad)
+
+        model = GeneralizedHyperbolic.from_classical(
+            mu=jnp.zeros(1), gamma=jnp.zeros(1), sigma=jnp.eye(1),
+            p=1.0, a=1.0, b=1.0,
+        )
+        eta = SimpleNamespace(E_log_Y=bad[0], E_inv_Y=bad[1], E_Y=bad[2])
+        kept = model.m_step_subordinator(eta, backend="cpu")
+        np.testing.assert_allclose(float(kept.p), 1.0)
+        np.testing.assert_allclose(float(kept.a), 1.0)
+        np.testing.assert_allclose(float(kept.b), 1.0)
+
+        init, X = _tiny_vg()
+
+        class _RealDomain:
+            def __init__(self, inner):
+                self._inner = inner
+
+            def replace(self, **kwargs):
+                return _RealDomain(self._inner.replace(**kwargs))
+
+            def e_step(self, X, backend="jax"):
+                return self._inner.e_step(X, backend=backend)
+
+            def m_step(self, eta, **kwargs):
+                GIG.from_expectation(bad)
+                return self._inner
+
+            def em_convergence_params(self):
+                return self._inner.em_convergence_params()
+
+            @property
+            def mu(self):
+                return self._inner.mu
+
+        result = BatchEMFitter(
+            max_iter=3, tol=1e-12, verbose=2,
+            e_step_backend="jax", m_step_backend="jax",
+        ).fit(_RealDomain(init), X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.n_iter == 1
+
 
 def _review_vg_setup(scale: float = 1.0):
     """2026-09-05 review VG: Gamma(0.7, rate=0.7), n=2000, seed 13, init α=β=2."""
