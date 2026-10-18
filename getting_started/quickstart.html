@@ -166,6 +166,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -492,7 +494,7 @@ loop in a dozen lines.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>converged: True in 48 iters
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>converged: True in 49 iters
 </pre></div>
 </div>
 </div>
@@ -516,12 +518,12 @@ distribution. Everything you would expect is one call away:</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>mean:
- [-0.04315824 -0.03346184  0.01276027]
+ [-0.04315993 -0.03346214  0.01275891]
 covariance:
- [[ 1.01881003 -0.02487624 -0.0088111 ]
- [-0.02487624  0.983122    0.00841424]
- [-0.0088111   0.00841424  1.01236164]]
-mean log-likelihood: -4.253845302222158
+ [[ 1.01862835 -0.02488637 -0.00878309]
+ [-0.02488637  0.98298389  0.00841276]
+ [-0.00878309  0.00841276  1.0121721 ]]
+mean log-likelihood: -4.253761057274868
 samples shape: (5, 3)
 </pre></div>
 </div>

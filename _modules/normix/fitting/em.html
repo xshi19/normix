@@ -165,6 +165,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
@@ -427,6 +429,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">_check_backend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDidNotConverge</span>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_materialize_incremental_subkeys</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -517,6 +522,34 @@
     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">rule</span><span class="p">)(</span><span class="n">rule</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">eta0</span><span class="p">,</span> <span class="n">rule</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_fit_data</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reject an empty or non-finite sample at the host boundary.</span>
+
+<span class="sd">    A traced ``X`` skips the check so ``jit`` of ``fit`` still traces.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fit received an empty sample&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">X</span><span class="p">))):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fit requires every observation to be finite&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inexact_finite</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when every floating leaf of ``tree`` is finite.&quot;&quot;&quot;</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">leaf</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inexact</span><span class="p">):</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">leaf</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ok</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mixing_finite</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when the subordinator parameters are finite.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_inexact_finite</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">subordinator</span><span class="p">())</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_restore_location</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;EMResult&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the sample mean back onto ``result.model.mu``.&quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">center</span><span class="p">)</span>
@@ -533,11 +566,15 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">EMResult</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of an EM fitting procedure.</span>
 
-<span class="sd">    ``converged`` and ``diverged`` are separate because batch EM has three</span>
-<span class="sd">    outcomes: tolerance met (``converged=True``), a non-finite iterate was</span>
-<span class="sd">    reverted (``diverged=True``), or ``max_iter`` was exhausted with neither</span>
-<span class="sd">    (both ``False``). They are not opposites — ``converged=False`` covers both</span>
-<span class="sd">    divergence and a finite but not-yet-converged stop.</span>
+<span class="sd">    ``converged``, ``diverged``, and ``solver_failed`` are separate.</span>
+<span class="sd">    Tolerance met is ``converged=True``. A non-finite normal-block change</span>
+<span class="sd">    or objective is ``diverged=True``: the last finite model is kept.</span>
+<span class="sd">    A non-finite mixing distribution after the M-step is</span>
+<span class="sd">    ``solver_failed=True``, again with the last finite model kept.</span>
+<span class="sd">    On the Python loop, :class:`~normix.fitting.solvers.SolverDidNotConverge`</span>
+<span class="sd">    or ``ValueError`` sets the same flag.</span>
+<span class="sd">    Exhausting ``max_iter`` leaves all three false. They are not</span>
+<span class="sd">    opposites.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Any</span>                              <span class="c1"># fitted distribution (eqx.Module)</span>
     <span class="n">log_likelihoods</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span>    <span class="c1"># (n_iter,) conjugacy mean LL, or None</span>
@@ -545,7 +582,8 @@
     <span class="n">n_iter</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">converged</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>               <span class="c1"># None for IncrementalEMFitter (no convergence criterion)</span>
     <span class="n">elapsed_time</span><span class="p">:</span> <span class="nb">float</span>                     <span class="c1"># wall-clock seconds</span>
-    <span class="n">diverged</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>                  <span class="c1"># True when a non-finite iterate was reverted</span></div>
+    <span class="n">diverged</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>                  <span class="c1"># True when a non-finite iterate was reverted</span>
+    <span class="n">solver_failed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>             <span class="c1"># True when mixing parameters were non-finite</span></div>
 
 
 
@@ -657,6 +695,8 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;regularization must be one of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="si">}</span><span class="s2">, &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">regularization</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_check_backend</span><span class="p">(</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;e_step_backend&quot;</span><span class="p">)</span>
+        <span class="n">_check_backend</span><span class="p">(</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;m_step_backend&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span> <span class="o">=</span> <span class="n">max_iter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span>
@@ -668,8 +708,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">eta_update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">track_ll</span> <span class="o">=</span> <span class="n">track_ll</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m_step_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">m_step_kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">m_step_kwargs</span> <span class="k">else</span> <span class="p">{}</span>
-        <span class="c1"># Test hook: force a non-finite max_change at this 1-based step.</span>
-        <span class="c1"># Used by ``tests/test_em_regression.py`` (``TestEMDivergenceGuard``).</span>
+        <span class="c1"># Test hook (1-based step). ``tests/test_em_regression.py``.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_force_nonfinite_at_step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -701,6 +740,7 @@
 <span class="sd">        population moment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">_validate_fit_data</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">center</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">center</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
@@ -879,21 +919,24 @@
         <span class="n">track_ll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_ll</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
-            <span class="n">mdl</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ll_prev</span><span class="p">,</span> <span class="n">ll_prev2</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="n">mdl</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">solver_failed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ll_prev</span><span class="p">,</span> <span class="n">ll_prev2</span> <span class="o">=</span> <span class="n">carry</span>
             <span class="n">mdl_new</span><span class="p">,</span> <span class="n">max_change</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span>
                 <span class="n">mdl</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="o">=</span><span class="n">target_log_det</span><span class="p">)</span>
             <span class="n">step_no</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
             <span class="n">force_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_force_nonfinite_at_step</span>
             <span class="k">if</span> <span class="n">force_at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">max_change</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">step_no</span> <span class="o">==</span> <span class="n">force_at</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">max_change</span><span class="p">)</span>
-            <span class="n">finite</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">max_change</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">done</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">diverged</span>
+            <span class="n">mix_ok</span> <span class="o">=</span> <span class="n">_mixing_finite</span><span class="p">(</span><span class="n">mdl_new</span><span class="p">)</span>
+            <span class="n">iterate_ok</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">max_change</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">finite</span> <span class="o">=</span> <span class="n">iterate_ok</span> <span class="o">&amp;</span> <span class="n">mix_ok</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">diverged</span> <span class="o">|</span> <span class="n">solver_failed</span>
             <span class="n">remaining</span> <span class="o">=</span> <span class="n">_aitken_remaining</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ll_prev</span><span class="p">,</span> <span class="n">ll_prev2</span><span class="p">)</span>
             <span class="n">ready</span> <span class="o">=</span> <span class="n">step_no</span> <span class="o">&gt;=</span> <span class="mi">3</span>
-            <span class="c1"># Freeze both flags after a prior stop so scan padding cannot</span>
-            <span class="c1"># flip converged↔diverged on an already-accepted / reverted model.</span>
+            <span class="c1"># Freeze flags after a prior stop so scan padding cannot</span>
+            <span class="c1"># flip converged↔diverged on an already-accepted model.</span>
             <span class="n">conv_new</span> <span class="o">=</span> <span class="o">~</span><span class="n">done</span> <span class="o">&amp;</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="n">ready</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">remaining</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
-            <span class="n">diverged_new</span> <span class="o">=</span> <span class="n">diverged</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">finite</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">done</span><span class="p">)</span>
+            <span class="n">solver_new</span> <span class="o">=</span> <span class="n">solver_failed</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">mix_ok</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">done</span><span class="p">)</span>
+            <span class="n">diverged_new</span> <span class="o">=</span> <span class="n">diverged</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="n">iterate_ok</span> <span class="o">&amp;</span> <span class="n">mix_ok</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">done</span><span class="p">)</span>
             <span class="n">keep_old</span> <span class="o">=</span> <span class="n">done</span> <span class="o">|</span> <span class="o">~</span><span class="n">finite</span>
             <span class="n">mdl_out</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">keep_old</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">),</span> <span class="n">mdl_new</span><span class="p">,</span> <span class="n">mdl</span><span class="p">)</span>
@@ -903,7 +946,7 @@
             <span class="n">ll_prev_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">keep_old</span><span class="p">,</span> <span class="n">ll_prev</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
             <span class="n">obj_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">done</span><span class="p">,</span> <span class="n">ll_prev</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
             <span class="n">carry_out</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">mdl_out</span><span class="p">,</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">conv_new</span><span class="p">,</span> <span class="n">diverged_new</span><span class="p">,</span> <span class="n">n_out</span><span class="p">,</span>
+                <span class="n">mdl_out</span><span class="p">,</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">conv_new</span><span class="p">,</span> <span class="n">diverged_new</span><span class="p">,</span> <span class="n">solver_new</span><span class="p">,</span> <span class="n">n_out</span><span class="p">,</span>
                 <span class="n">ll_prev_out</span><span class="p">,</span> <span class="n">ll_prev2_out</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">track_ll</span><span class="p">:</span>
@@ -911,19 +954,22 @@
             <span class="k">return</span> <span class="n">carry_out</span><span class="p">,</span> <span class="n">change_out</span>
 
         <span class="n">init</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">model</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">track_ll</span><span class="p">:</span>
             <span class="p">(</span>
-                <span class="p">(</span><span class="n">final_model</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">last_ll</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">final_model</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">solver_failed</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">last_ll</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span>
                 <span class="p">(</span><span class="n">param_changes</span><span class="p">,</span> <span class="n">lls</span><span class="p">),</span>
             <span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">)</span>
             <span class="n">log_likelihoods</span> <span class="o">=</span> <span class="n">lls</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="p">(</span><span class="n">final_model</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">last_ll</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="n">param_changes</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">))</span>
+            <span class="p">(</span>
+                <span class="p">(</span><span class="n">final_model</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">diverged</span><span class="p">,</span> <span class="n">solver_failed</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">last_ll</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span>
+                <span class="n">param_changes</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">)</span>
             <span class="n">log_likelihoods</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_iter</span><span class="p">)</span>
@@ -937,7 +983,12 @@
             <span class="k">if</span> <span class="n">log_likelihoods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">log_likelihoods</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">last_ll</span><span class="p">])</span>
             <span class="n">ll</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">last_ll</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">diverged</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solver_failed</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;Inner solver failed (non-finite mixing parameters; &quot;</span>
+                    <span class="s2">&quot;kept last finite model)&quot;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">diverged</span><span class="p">:</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;Diverged (non-finite iterate; kept last finite model)&quot;</span>
             <span class="k">elif</span> <span class="n">converged</span><span class="p">:</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;Converged&quot;</span>
@@ -956,6 +1007,7 @@
             <span class="n">converged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">converged</span><span class="p">),</span>
             <span class="n">elapsed_time</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
             <span class="n">diverged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">diverged</span><span class="p">),</span>
+            <span class="n">solver_failed</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">solver_failed</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -971,6 +1023,7 @@
         <span class="n">ll_prev2</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">n_iter</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">diverged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">solver_failed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">remaining</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
         <span class="n">max_change</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
@@ -986,14 +1039,35 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_iter</span><span class="p">):</span>
             <span class="n">t_iter</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
             <span class="n">prev_model</span> <span class="o">=</span> <span class="n">model</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">max_change</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span>
-                <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">target_log_det</span><span class="o">=</span><span class="n">target_log_det</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">model</span><span class="p">,</span> <span class="n">max_change</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">eta_state</span><span class="p">,</span> <span class="n">target_log_det</span><span class="o">=</span><span class="n">target_log_det</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">SolverDidNotConverge</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="n">solver_failed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">prev_model</span>
+                <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+                <span class="n">n_iter</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;  EM inner solver failed; keeping last finite iterate.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">break</span>
             <span class="n">force_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_force_nonfinite_at_step</span>
             <span class="k">if</span> <span class="n">force_at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">force_at</span><span class="p">:</span>
                 <span class="n">max_change</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
             <span class="n">dt</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t_iter</span>
             <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">max_change</span><span class="p">)</span>
             <span class="n">n_iter</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_mixing_finite</span><span class="p">(</span><span class="n">model</span><span class="p">)):</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">prev_model</span>
+                <span class="n">solver_failed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;  EM inner solver failed (non-finite mixing &quot;</span>
+                        <span class="s2">&quot;parameters); keeping last finite iterate.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">break</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">max_change</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">obj</span><span class="p">))):</span>
                 <span class="n">model</span> <span class="o">=</span> <span class="n">prev_model</span>
@@ -1046,6 +1120,7 @@
         <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t_total</span>
         <span class="n">converged</span> <span class="o">=</span> <span class="p">(</span>
             <span class="ow">not</span> <span class="n">diverged</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">solver_failed</span>
             <span class="ow">and</span> <span class="n">n_iter</span> <span class="o">&gt;=</span> <span class="mi">3</span>
             <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">remaining</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tol</span><span class="p">)</span>
         <span class="p">)</span>
@@ -1056,7 +1131,12 @@
                                <span class="nb">float</span><span class="p">(</span><span class="n">changes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
                                <span class="nb">float</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span> <span class="k">if</span> <span class="n">n_iter</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">diverged</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">solver_failed</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;Inner solver failed (non-finite mixing parameters; &quot;</span>
+                    <span class="s2">&quot;kept last finite model)&quot;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">diverged</span><span class="p">:</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;Diverged (non-finite iterate; kept last finite model)&quot;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;Converged&quot;</span> <span class="k">if</span> <span class="n">converged</span> <span class="k">else</span> <span class="s2">&quot;NOT converged&quot;</span>
@@ -1071,6 +1151,7 @@
             <span class="n">converged</span><span class="o">=</span><span class="n">converged</span><span class="p">,</span>
             <span class="n">elapsed_time</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
             <span class="n">diverged</span><span class="o">=</span><span class="n">diverged</span><span class="p">,</span>
+            <span class="n">solver_failed</span><span class="o">=</span><span class="n">solver_failed</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1196,6 +1277,8 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;regularization must be one of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_REGULARIZATIONS</span><span class="si">}</span><span class="s2">, &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">regularization</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_check_backend</span><span class="p">(</span><span class="n">e_step_backend</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;e_step_backend&quot;</span><span class="p">)</span>
+        <span class="n">_check_backend</span><span class="p">(</span><span class="n">m_step_backend</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;m_step_backend&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_update</span> <span class="o">=</span> <span class="n">eta_update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">=</span> <span class="n">max_steps</span>
@@ -1216,6 +1299,7 @@
 <span class="sd">        the initial model&#39;s own η is rebuilt in these coordinates.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">_validate_fit_data</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">center</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">center</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>

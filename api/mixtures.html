@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -694,11 +696,14 @@ Their restricted log-partition ignores the frozen slot, so
 GIG-layout triple plus the Gaussian blocks, with <span class="math notranslate nohighlight">\(+\infty\)</span> where
 the moment does not exist.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – <code class="docutils literal notranslate"><span class="pre">backend</span></code> is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -712,11 +717,14 @@ subordinator supplies <span class="math notranslate nohighlight">\(\mathrm{Cov}(
 <span class="math notranslate nohighlight">\(E[\mathrm{Cov}(t\mid Y)]\)</span>. An entry touched by a nonexistent
 second moment of <span class="math notranslate nohighlight">\(Y\)</span> is <span class="math notranslate nohighlight">\(+\infty\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – <code class="docutils literal notranslate"><span class="pre">backend</span></code> is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -865,6 +873,35 @@ subordinator via <code class="docutils literal notranslate"><span class="pre">_s
 it is exact (no Bregman iterations on the normal block) and uses
 the subordinator’s own <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> (closed-form for
 Gamma / InverseGamma / InverseGaussian; numerical for GIG).</p>
+<p class="rubric">Notes</p>
+<p>Necessary conditions for a <a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a>.
+The normal block needs <span class="math notranslate nohighlight">\(E[Y] &gt; 0\)</span>, <span class="math notranslate nohighlight">\(E[1/Y] &gt; 0\)</span>, and
+<span class="math notranslate nohighlight">\(E[Y] E[1/Y] \ge 1\)</span>.
+<span class="math notranslate nohighlight">\(|D|\)</span> for <span class="math notranslate nohighlight">\(D = 1 - E[Y] E[1/Y]\)</span> is floored at
+<code class="docutils literal notranslate"><span class="pre">SAFE_DENOMINATOR</span></code>.
+A violation is not rejected.
+The scatter must stay positive definite.</p>
+<p>Variance-gamma needs <span class="math notranslate nohighlight">\(E[Y] &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(E[\log Y] &lt; \log E[Y]\)</span>.
+A concrete Gamma call raises <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> on a violation.
+Normal-inverse-gamma needs <span class="math notranslate nohighlight">\(E[1/Y] &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(E[\log Y] &gt; -\log E[1/Y]\)</span>.
+Normal-inverse-Gaussian needs <span class="math notranslate nohighlight">\(E[1/Y] &gt; 1/E[Y]\)</span> so
+<span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>.</p>
+<p>Generalized hyperbolic also needs finite moments with
+<span class="math notranslate nohighlight">\(E[Y] &gt; 0\)</span>, <span class="math notranslate nohighlight">\(E[1/Y] &gt; 0\)</span>,
+<span class="math notranslate nohighlight">\(E[Y] E[1/Y] &gt; 1\)</span>, and
+<span class="math notranslate nohighlight">\(-\log E[1/Y] &lt; E[\log Y] &lt; \log E[Y]\)</span>.
+Equality is a point-mass boundary.
+Those bounds are necessary and not sufficient.
+A concrete GIG call raises <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> before the solve.
+A traced invalid target returns a NaN model.
+A failed host solve raises
+<a class="reference internal" href="fitting.html#normix.fitting.solvers.SolverDidNotConverge" title="normix.fitting.solvers.SolverDidNotConverge"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code></a>.
+Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> the natural parameters are NaN.</p>
+<p>A flat array inverts the restricted log-partition, not ambient
+<span class="math notranslate nohighlight">\(E[t]\)</span>, except for interior joint GH.
+See <a class="reference internal" href="../design/exponential_family.html"><span class="doc">Exponential Family Core</span></a> section 2.5.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

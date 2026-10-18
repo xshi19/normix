@@ -58,7 +58,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/exponential_family';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Fitting with EM" href="em_fitting.html" />
+    <link rel="next" title="Autodiff surface" href="capabilities.html" />
     <link rel="prev" title="Distributions" href="distributions.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -168,6 +168,8 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
@@ -496,8 +498,10 @@ p(x \mid \theta) = h(x)\, \exp\!\big(\langle \theta,\, t(x)\rangle - \psi(\theta
 </section>
 <section id="three-parametrizations">
 <h2>Three parametrizations<a class="headerlink" href="#three-parametrizations" title="Link to this heading">#</a></h2>
-<p>The same distribution can be described three equivalent ways, and normix
-converts between them losslessly:</p>
+<p>The same distribution has three parametrizations. Classical parameters
+and natural <span class="math notranslate nohighlight">\(\theta\)</span> convert exactly. <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code> inverts
+<span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>. A closed form is exact. A numerical inverse
+stops at the solver tolerance.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Parametrization</p></th>
@@ -551,9 +555,10 @@ Hessian — in two backends:</p>
 <li><p>a <strong><a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a></strong> backend (<code class="docutils literal notranslate"><span class="pre">expectation_params()</span></code>,
 <code class="docutils literal notranslate"><span class="pre">fisher_information()</span></code>, default <code class="docutils literal notranslate"><span class="pre">backend=&quot;jax&quot;</span></code>) that is JIT-able,
 differentiable, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-friendly;</p></li>
-<li><p>a <strong>CPU</strong> backend (<code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code>) using
-<a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a>/<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a>,
-used inside the EM hot loop where SciPy’s Bessel routines are fastest.</p></li>
+<li><p>a <strong>CPU</strong> backend (<code class="docutils literal notranslate"><span class="pre">backend=&quot;cpu&quot;</span></code>) that runs the same <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> kernel
+in <a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a>.
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> supplies L-BFGS-B and
+trust-exact. <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> is a test oracle, not this path.</p></li>
 </ul>
 <p>Defaults use <code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.hessian</span></code>; distributions with closed forms (e.g.
 <code class="docutils literal notranslate"><span class="pre">Gamma</span></code> via <code class="docutils literal notranslate"><span class="pre">digamma</span></code>/<code class="docutils literal notranslate"><span class="pre">trigamma</span></code>) override them. The two backends are
@@ -604,11 +609,11 @@ instance rather than mutating in place, which is what lets the EM loop,
       </div>
     </a>
     <a class="right-next"
-       href="em_fitting.html"
+       href="capabilities.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Fitting with EM</p>
+        <p class="prev-next-title">Autodiff surface</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

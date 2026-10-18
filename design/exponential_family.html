@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -462,6 +464,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ambient-moments-on-the-curved-joints">2.4 Ambient moments on the curved joints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#valid-input-for-joint-from-expectation">2.5 Valid input for joint <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>
@@ -593,6 +596,47 @@ has the same defect at <span class="math notranslate nohighlight">\(b = 0\)</spa
 itself stays on the triad. In the interior, <span class="math notranslate nohighlight">\(\nabla\psi = E[t]\)</span> and
 <span class="math notranslate nohighlight">\(\nabla^2\psi = \mathrm{Cov}[t]\)</span>.</p>
 </section>
+<section id="valid-input-for-joint-from-expectation">
+<h3>2.5 Valid input for joint <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code><a class="headerlink" href="#valid-input-for-joint-from-expectation" title="Link to this heading">#</a></h3>
+<p>The canonical input is a <code class="docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code> pytree.
+A flat array uses the restricted-<span class="math notranslate nohighlight">\(\psi\)</span> Bregman solver.
+For variance-gamma, normal-inverse-gamma, and normal-inverse-Gaussian,
+<span class="math notranslate nohighlight">\(\nabla\psi\)</span> omits the frozen slot, so it is not the ambient moment.
+Only the pytree path inverts ambient <span class="math notranslate nohighlight">\(\eta\)</span> for those three families.
+Interior joint GH is the exception: flat <span class="math notranslate nohighlight">\(\eta = \nabla\psi\)</span> is the ambient moment.
+That GH solve is still numerical.</p>
+<p>The normal block needs <span class="math notranslate nohighlight">\(\mathbb{E}[Y] &gt; 0\)</span>, <span class="math notranslate nohighlight">\(\mathbb{E}[1/Y] &gt; 0\)</span>, and
+<span class="math notranslate nohighlight">\(\mathbb{E}[Y]\,\mathbb{E}[1/Y] \ge 1\)</span>.
+The update sets <span class="math notranslate nohighlight">\(D = 1 - \mathbb{E}[Y]\,\mathbb{E}[1/Y]\)</span> and floors <span class="math notranslate nohighlight">\(|D|\)</span> at
+<code class="docutils literal notranslate"><span class="pre">SAFE_DENOMINATOR</span></code>.
+A violation of the product bound is not rejected.
+The scatter must stay positive definite, or the Cholesky factor fails.</p>
+<p>Subordinator bounds on the pytree path:</p>
+<ul class="simple">
+<li><p>Variance-gamma needs <span class="math notranslate nohighlight">\(\mathbb{E}[Y] &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(\mathbb{E}[\log Y] &lt; \log\mathbb{E}[Y]\)</span>.
+Equality is the infinite-shape limit.
+A concrete <code class="docutils literal notranslate"><span class="pre">Gamma.from_expectation</span></code> call raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> on that <span class="math notranslate nohighlight">\(\eta\)</span>.
+A traced <span class="math notranslate nohighlight">\(\eta\)</span> skips the check.</p></li>
+<li><p>Normal-inverse-gamma needs <span class="math notranslate nohighlight">\(\mathbb{E}[1/Y] &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(\mathbb{E}[\log Y] &gt; -\log\mathbb{E}[1/Y]\)</span>.
+That is Jensen’s inequality for the Gamma law of <span class="math notranslate nohighlight">\(1/Y\)</span>.
+The inverse-gamma map does not raise when the inequality fails.</p></li>
+<li><p>Normal-inverse-Gaussian needs <span class="math notranslate nohighlight">\(\mathbb{E}[Y] &gt; 0\)</span> and
+<span class="math notranslate nohighlight">\(\mathbb{E}[1/Y] &gt; 1/\mathbb{E}[Y]\)</span>, so <span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>.
+A smaller inverse moment is clamped at <code class="docutils literal notranslate"><span class="pre">LOG_EPS</span></code>.</p></li>
+<li><p>Generalized hyperbolic needs finite moments with
+<span class="math notranslate nohighlight">\(\mathbb{E}[Y] &gt; 0\)</span>, <span class="math notranslate nohighlight">\(\mathbb{E}[1/Y] &gt; 0\)</span>,
+<span class="math notranslate nohighlight">\(\mathbb{E}[Y]\,\mathbb{E}[1/Y] &gt; 1\)</span>, and
+<span class="math notranslate nohighlight">\(-\log\mathbb{E}[1/Y] &lt; \mathbb{E}[\log Y] &lt; \log\mathbb{E}[Y]\)</span>.
+Equality is a point-mass boundary.
+These conditions are necessary and not sufficient.
+A concrete <code class="docutils literal notranslate"><span class="pre">GIG.from_expectation</span></code> call raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> before the solve.
+A traced invalid target returns a NaN model.
+A failed host solve raises <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code>.
+Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> the natural parameters are NaN.</p></li>
+</ul>
+</section>
 </section>
 <hr class="docutils" />
 <section id="bregman-solver-interface">
@@ -619,11 +663,11 @@ gradient/Hessian; bounds are handled by the solver via
 </tr>
 <tr class="row-odd"><td><p>Newton implementation</p></td>
 <td><p>hand-rolled <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code></p></td>
-<td><p>No JAX library provides a Newton <strong>minimizer</strong> that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton)</p></td>
+<td><p>No JAX library provides a Newton <strong>minimizer</strong> that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton). The loop stops when the pre-step residual is inside <code class="docutils literal notranslate"><span class="pre">tol</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p>Multi-start</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> for JAX, Python <code class="docutils literal notranslate"><span class="pre">for</span></code> for CPU</p></td>
-<td><p>Orthogonal wrapper, not baked into solver name</p></td>
+<td><p>JAX <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code> over ordered starts; Python <code class="docutils literal notranslate"><span class="pre">for</span></code> for CPU</p></td>
+<td><p>JAX stops at the first finite converged start</p></td>
 </tr>
 <tr class="row-odd"><td><p>Result type</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">BregmanResult</span></code> with <code class="docutils literal notranslate"><span class="pre">Any</span></code>-typed scalars</p></td>
@@ -649,7 +693,7 @@ gradient/Hessian; bounds are handled by the solver via
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">newton</span></code></p></td>
 <td><p>reparam</p></td>
-<td><p>hand-rolled <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>, autodiff or supplied <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>/<code class="docutils literal notranslate"><span class="pre">hess_fn</span></code></p></td>
+<td><p>hand-rolled <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code>, autodiff or supplied <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>/<code class="docutils literal notranslate"><span class="pre">hess_fn</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">jax</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">lbfgs</span></code></p></td>
@@ -673,8 +717,8 @@ gradient/Hessian; bounds are handled by the solver via
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cpu</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">bfgs</span></code></p></td>
-<td><p>none</p></td>
-<td><p>SciPy <code class="docutils literal notranslate"><span class="pre">minimize(method='BFGS')</span></code></p></td>
+<td><p>reparam</p></td>
+<td><p>SciPy <code class="docutils literal notranslate"><span class="pre">minimize(method='BFGS')</span></code> in <span class="math notranslate nohighlight">\(\phi\)</span>-space</p></td>
 </tr>
 </tbody>
 </table>
@@ -683,6 +727,19 @@ gradient/Hessian; bounds are handled by the solver via
 <ul class="simple">
 <li><p>numpy <code class="docutils literal notranslate"><span class="pre">log_kv</span></code>) avoids GPU dispatch on this 3-D scalar problem.</p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">BregmanResult.num_steps</span></code> counts steps taken.
+A one-step quadratic Newton solve reports 1.
+A start already inside the tolerance reports 0.
+The pre-step check that stops the loop is not a step.
+<code class="docutils literal notranslate"><span class="pre">reason</span></code> is an integer code.
+Eager and traced calls store that code as the same type.
+The codes are 0 converged, 1 atol, 2 max steps, and 3 non-finite.
+<code class="docutils literal notranslate"><span class="pre">kkt_residual</span></code> is the free residual of <span class="math notranslate nohighlight">\(\nabla f(\theta) - \eta\)</span>, with a bound multiplier removed.</p>
+<p>CPU BFGS and trust-exact apply box bounds in <span class="math notranslate nohighlight">\(\phi\)</span>-space.
+The derivatives of that diagonal map are closed form.
+SciPy <code class="docutils literal notranslate"><span class="pre">gtol</span></code> is the <span class="math notranslate nohighlight">\(\phi\)</span>-gradient.
+Acceptance is the free <span class="math notranslate nohighlight">\(\theta\)</span> residual.
+CPU L-BFGS-B keeps the bounds natively.</p>
 </section>
 <hr class="docutils" />
 <section id="pre-1-0-decisions-recorded-here">
@@ -816,6 +873,7 @@ and are hard to override.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#why-the-cpu-tier-exists">2.2 Why the CPU tier exists</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fusion-vs-coordinate-separation">2.3 Fusion vs coordinate separation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ambient-moments-on-the-curved-joints">2.4 Ambient moments on the curved joints</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#valid-input-for-joint-from-expectation">2.5 Valid input for joint <code class="docutils literal notranslate"><span class="pre">from_expectation</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bregman-solver-interface">3. Bregman Solver Interface</a></li>

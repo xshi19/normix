@@ -59,7 +59,8 @@ Hessian:
 | [JAXopt](https://jaxopt.github.io/stable/) | none | n/a | yes (LBFGSB only) |
 | [Optax](https://optax.readthedocs.io/en/latest/) | none | n/a | n/a |
 
-So we ship a hand-rolled Newton via `lax.scan`. For repeated warm-started
+So we ship a hand-rolled Newton via `lax.while_loop`. The loop stops
+when the pre-step residual is inside `tol`. For repeated warm-started
 solves on the same shape (the GIG EM hot path),
 `make_jit_newton_solver(f, grad_fn, hess_fn, bounds)` builds a
 `@jax.jit`-decorated specialised solve whose XLA cache survives across
@@ -171,9 +172,10 @@ trust-exact status 2 stalls near `10^{-9}` with `success=False`.
 Neither is an uninverted η. `grad_norm` still stores the full
 residual, multiplier included. The same free-residual test replaces
 jaxopt's φ-gradient norm, which is the false stop on an exp bound.
-Eager calls raise `RuntimeError`. Inside `jit` or `lax.scan` the
-natural parameters are NaN, and the GH M-step sanity check keeps the
-previous subordinator.
+Eager calls raise `SolverDidNotConverge`. Inside `jit` the natural
+parameters are NaN. A CPU GH warm start that fails keeps the previous
+GIG and EM continues. A non-finite JAX solve stays non-finite so EM
+can set `solver_failed`.
 
 When `theta0` is **not** provided, `GeneralizedInverseGaussian.from_expectation`
 runs `solve_bregman_multistart` on the η-rescaled problem, with seeds

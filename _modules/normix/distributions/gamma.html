@@ -165,6 +165,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
@@ -439,10 +441,11 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.quadrature</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiscreteMeasure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCENARIO_QUAD_NODES</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span><span class="p">,</span> <span class="n">_check_backend</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.gammainc</span><span class="w"> </span><span class="kn">import</span> <span class="n">gammaincinv</span>
 
@@ -763,8 +766,20 @@
 <span class="sd">            it restricts the estimator to a region where the VG marginal</span>
 <span class="sd">            likelihood is bounded. ``None`` (default) leaves the estimate</span>
 <span class="sd">            unconstrained. JIT-safe (no Python branch on traced values).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            ``backend`` is not ``&#39;jax&#39;`` or ``&#39;cpu&#39;``, or a concrete</span>
+<span class="sd">            ``eta`` is not a finite Gamma moment. A finite Gamma needs</span>
+<span class="sd">            :math:`\\mathbb{E}[X] &gt; 0` and</span>
+<span class="sd">            :math:`\\mathbb{E}[\\log X] &lt; \\log\\mathbb{E}[X]`</span>
+<span class="sd">            (Jensen; equality is the infinite-shape limit). A traced</span>
+<span class="sd">            ``eta`` (``jit``, ``vmap``) skips the moment check.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
         <span class="n">eta_target</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">_reject_inadmissible_gamma_eta</span><span class="p">(</span><span class="n">eta_target</span><span class="p">)</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">eta_target</span><span class="p">)</span> <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="k">else</span> <span class="n">eta_target</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">eta1</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">eta2</span><span class="p">)</span>
@@ -785,6 +800,25 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
 </div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reject_inadmissible_gamma_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Host-side Jensen check. Traced ``eta`` is left to the Newton loop.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">admissible</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
+        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="ow">and</span> <span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+        <span class="ow">and</span> <span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">admissible</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Gamma.from_expectation: no finite Gamma has these moments. &quot;</span>
+            <span class="s2">&quot;Need a length-2 finite eta with E[X] &gt; 0 and &quot;</span>
+            <span class="s2">&quot;E[log X] &lt; log E[X].&quot;</span>
+        <span class="p">)</span>
 
 
 <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>

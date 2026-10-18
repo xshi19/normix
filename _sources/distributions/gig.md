@@ -25,9 +25,10 @@ where $K_p$ is the modified Bessel function of the second kind. It nests the
 
 ## Density gallery
 
-The shape parameter $p$ controls the behaviour near the origin (monotone for
-$p \le 1$, unimodal with an interior mode for $p > 1$), while $a$ and $b$ set
-the scale and the two tails.
+For $a > 0$ and $b > 0$ the density tends to 0 at the origin and has one
+interior mode for every real $p$. The parameters $a$ and $b$ set the scale
+and the two tails. The monotone Gamma shape is the limit $b \to 0$ with
+$p \le 1$.
 
 ```{code-cell} python
 :tags: [hide-input]

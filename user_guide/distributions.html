@@ -168,6 +168,8 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
@@ -513,8 +515,9 @@ X \mid Y \sim \mathcal{N}(\mu + \gamma\, Y,\; \Sigma\, Y), \qquad Y \sim \text{s
 </table>
 </div>
 <p>The shared location/shape parameters are always <span class="math notranslate nohighlight">\(\mu\)</span> (<code class="docutils literal notranslate"><span class="pre">mu</span></code>), <span class="math notranslate nohighlight">\(\gamma\)</span>
-(<code class="docutils literal notranslate"><span class="pre">gamma</span></code>), and the covariance <span class="math notranslate nohighlight">\(\Sigma\)</span> given through its Cholesky factor
-<code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>. Because the <code class="docutils literal notranslate"><span class="pre">GIG</span></code> nests the Gamma, Inverse Gamma, and Inverse
+(<code class="docutils literal notranslate"><span class="pre">gamma</span></code>), and the dispersion <span class="math notranslate nohighlight">\(\Sigma\)</span> given through its Cholesky factor
+<code class="docutils literal notranslate"><span class="pre">L_Sigma</span></code>. <span class="math notranslate nohighlight">\(\Sigma\)</span> is the conditional scale, not the marginal covariance
+from <code class="docutils literal notranslate"><span class="pre">cov()</span></code>. Because the <code class="docutils literal notranslate"><span class="pre">GIG</span></code> nests the Gamma, Inverse Gamma, and Inverse
 Gaussian as limits, <code class="docutils literal notranslate"><span class="pre">GeneralizedHyperbolic</span></code> nests all the others — see
 <a class="reference internal" href="../tutorials/core/02_gh_family_tour.html"><span class="doc">A tour of the GH family</span></a>.</p>
 </section>

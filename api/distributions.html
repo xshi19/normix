@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -1041,8 +1043,16 @@ unconstrained. JIT-safe (no Python branch on traced values).</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><em>Gamma</em></a></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – <code class="docutils literal notranslate"><span class="pre">backend</span></code> is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>, or a concrete
+    <code class="docutils literal notranslate"><span class="pre">eta</span></code> is not a finite Gamma moment. A finite Gamma needs
+    <span class="math notranslate nohighlight">\(\\mathbb{E}[X] &gt; 0\)</span> and
+    <span class="math notranslate nohighlight">\(\\mathbb{E}[\\log X] &lt; \\log\\mathbb{E}[X]\)</span>
+    (Jensen; equality is the infinite-shape limit). A traced
+    <code class="docutils literal notranslate"><span class="pre">eta</span></code> (<code class="docutils literal notranslate"><span class="pre">jit</span></code>, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>) skips the moment check.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><em>Gamma</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1325,8 +1335,11 @@ NaN derivatives.
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><em>InverseGamma</em></a></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – <code class="docutils literal notranslate"><span class="pre">backend</span></code> is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><em>InverseGamma</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1623,19 +1636,24 @@ and ignored.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.inverse_gaussian.InverseGaussian.from_expectation">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/inverse_gaussian.html#InverseGaussian.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.inverse_gaussian.InverseGaussian.from_expectation" title="Link to this definition">#</a></dt>
 <dd><p>Closed-form from <span class="math notranslate nohighlight">\(\eta = [E[X],\; E[1/X]] = [\mu,\; 1/\mu + 1/\lambda]\)</span>:</p>
 <p><span class="math notranslate nohighlight">\(\mu = \eta_1\)</span>, <span class="math notranslate nohighlight">\(\lambda = 1/(\eta_2 - 1/\eta_1)\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – Accepted for a uniform constructor signature. The map is
+closed form and does not dispatch on it.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><em>InverseGaussian</em></a></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – <code class="docutils literal notranslate"><span class="pre">backend</span></code> is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><em>InverseGaussian</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2055,8 +2073,8 @@ or bound-active solutions have NaN derivatives.
 <li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – An eager target violates a necessary moment condition, before
     any solve. Under JAX tracing an invalid target returns a NaN
     model with NaN derivatives; scalar <code class="docutils literal notranslate"><span class="pre">jit</span></code> skips the solve.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><strong>RuntimeError</strong></a> – The solve did not converge. Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> / <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> the
-    returned natural parameters are NaN instead of a silent model.</p></li>
+<li><p><a class="reference internal" href="fitting.html#normix.fitting.solvers.SolverDidNotConverge" title="normix.fitting.solvers.SolverDidNotConverge"><strong>SolverDidNotConverge</strong></a> – The solve did not converge. Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> the natural
+    parameters are NaN instead of a silent model.</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -2371,7 +2389,7 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span
 <dd><p>Log joint density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p(x,y)^q\,dx\,dy\)</span>.</p>
 <p>Finite iff <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and <span class="math notranslate nohighlight">\(q(\alpha-1)+(1-q)d/2 &gt; -1\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimension of <span class="math notranslate nohighlight">\(X\)</span>. Equality diverges.
-Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code> supplies
+Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a> supplies
 the sign through <span class="math notranslate nohighlight">\(R(q)/(1-q)\)</span>. Supports <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2627,7 +2645,7 @@ beyond the textbook Normal-inverse-gamma conjugate prior — see
 <dd><p>Log joint density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p(x,y)^q\,dx\,dy\)</span>.</p>
 <p>Finite iff <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and <span class="math notranslate nohighlight">\(q(\alpha+1)-(1-q)d/2 &gt; 1\)</span>,
 where <span class="math notranslate nohighlight">\(d\)</span> is the dimension of <span class="math notranslate nohighlight">\(X\)</span>. Equality diverges.
-Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code> supplies
+Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <a class="reference internal" href="index.html#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a> supplies
 the sign through <span class="math notranslate nohighlight">\(R(q)/(1-q)\)</span>. Supports <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3335,11 +3353,12 @@ unsane regions; both are managed by
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">
 <span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator" title="Link to this definition">#</a></dt>
-<dd><p>M-step for the subordinator only (MCECM Cycle 2).</p>
-<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>; normal
-parameters are read from <code class="docutils literal notranslate"><span class="pre">self._joint</span></code> and copied unchanged.
-Subclasses with iterative solvers may override to add warm-start
-or sanity-check fallbacks.</p>
+<dd><p>Warm-start the GIG solve from the current subordinator.</p>
+<p>On CPU, a failed solve keeps this GIG and EM continues.
+That includes <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> and <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.
+A finite solve outside the clamp does the same.
+A non-finite JAX solve is left in place so EM can set
+<code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
@@ -3510,11 +3529,12 @@ warm-start and fall-back.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">
 <span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator" title="Link to this definition">#</a></dt>
-<dd><p>M-step for the subordinator only (MCECM cycle 2).</p>
-<p>Reads the subordinator-relevant fields of <code class="docutils literal notranslate"><span class="pre">eta</span></code>;
-<span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span> are read from <code class="docutils literal notranslate"><span class="pre">self</span></code> and copied
-unchanged. Subclasses with iterative solvers may override to
-add a warm-start or sanity-check fallback.</p>
+<dd><p>Warm-start the GIG solve from the current subordinator.</p>
+<p>On CPU, a failed solve keeps this GIG and EM continues.
+That includes <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> and <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.
+A finite solve outside the clamp does the same.
+A non-finite JAX solve is left in place so EM can set
+<code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic"><em>FactorGeneralizedHyperbolic</em></a></p>

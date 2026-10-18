@@ -165,6 +165,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
@@ -435,9 +437,9 @@
 <span class="sd">backend=&#39;jax&#39;, method=&#39;newton&#39;  custom lax.while_loop Newton, autodiff or analytical Hessian</span>
 <span class="sd">backend=&#39;jax&#39;, method=&#39;lbfgs&#39;   jaxopt LBFGSB (bounds native) or LBFGS (reparam)</span>
 <span class="sd">backend=&#39;jax&#39;, method=&#39;bfgs&#39;    jaxopt BFGS with reparameterization for bounds</span>
-<span class="sd">backend=&#39;cpu&#39;, method=&#39;lbfgs&#39;   scipy L-BFGS-B</span>
-<span class="sd">backend=&#39;cpu&#39;, method=&#39;bfgs&#39;    scipy BFGS</span>
-<span class="sd">backend=&#39;cpu&#39;, method=&#39;newton&#39;  scipy trust-exact with Hessian</span>
+<span class="sd">backend=&#39;cpu&#39;, method=&#39;lbfgs&#39;   scipy L-BFGS-B (native bounds)</span>
+<span class="sd">backend=&#39;cpu&#39;, method=&#39;bfgs&#39;    scipy BFGS; bounds via the same reparametrization</span>
+<span class="sd">backend=&#39;cpu&#39;, method=&#39;newton&#39;  scipy trust-exact; bounds via the same reparametrization</span>
 
 <span class="sd">Gradient / Hessian sources</span>
 <span class="sd">--------------------------</span>
@@ -455,7 +457,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -484,9 +486,18 @@
     <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>    <span class="c1"># optimal θ*</span>
     <span class="n">fun</span><span class="p">:</span> <span class="n">Any</span>            <span class="c1"># f(θ*) − θ*·η at solution</span>
     <span class="n">grad_norm</span><span class="p">:</span> <span class="n">Any</span>      <span class="c1"># ‖∇f(θ*) − η‖∞</span>
-    <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span>      <span class="c1"># iterations performed</span>
-    <span class="n">converged</span><span class="p">:</span> <span class="n">Any</span>      <span class="c1"># whether tolerance was met</span>
-    <span class="n">elapsed_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># wall-clock seconds</span></div>
+    <span class="n">num_steps</span><span class="p">:</span> <span class="n">Any</span>      <span class="c1"># steps taken (SciPy nit, jaxopt iter_num)</span>
+    <span class="n">converged</span><span class="p">:</span> <span class="n">Any</span>      <span class="c1"># _inversion_converged; traceable</span>
+    <span class="n">elapsed_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># wall-clock seconds</span>
+    <span class="n">kkt_residual</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># free residual of g_θ (bound multipliers dropped)</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># int code, eager and traced; names in _REASON_NAMES</span></div>
+
+
+
+<div class="viewcode-block" id="SolverDidNotConverge">
+<a class="viewcode-back" href="../../../api/fitting.html#normix.fitting.solvers.SolverDidNotConverge">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SolverDidNotConverge</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eager Bregman inversion did not meet the residual tolerance.&quot;&quot;&quot;</span></div>
 
 
 
@@ -504,6 +515,37 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;f(θ) − θ·η — convex dual whose minimum gives ∇f(θ*) = η.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span></div>
 
+
+
+<span class="n">_REASON_CONVERGED</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">_REASON_ATOL</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">_REASON_MAX_STEPS</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">_REASON_NONFINITE</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">_REASON_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;converged&quot;</span><span class="p">,</span> <span class="s2">&quot;atol&quot;</span><span class="p">,</span> <span class="s2">&quot;max_steps&quot;</span><span class="p">,</span> <span class="s2">&quot;non_finite&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_stop_parts</span><span class="p">(</span><span class="n">kkt</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">near</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finite flag, strict tolerance, and the atol clause. One predicate.&quot;&quot;&quot;</span>
+    <span class="n">tol_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tol</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">))</span>
+    <span class="n">atol</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">BREGMAN_INVERT_ATOL</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tol_b</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">kkt</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">near</span><span class="p">)</span>
+    <span class="n">strict</span> <span class="o">=</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">kkt</span> <span class="o">&lt;</span> <span class="n">tol_b</span><span class="p">)</span>
+    <span class="n">atol_hit</span> <span class="o">=</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">strict</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">near</span> <span class="o">&lt;</span> <span class="n">atol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">finite</span><span class="p">,</span> <span class="n">strict</span><span class="p">,</span> <span class="n">atol_hit</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_stop_reason</span><span class="p">(</span><span class="n">kkt</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">near</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integer stop code. See :data:`_REASON_NAMES`.&quot;&quot;&quot;</span>
+    <span class="n">finite</span><span class="p">,</span> <span class="n">strict</span><span class="p">,</span> <span class="n">atol_hit</span> <span class="o">=</span> <span class="n">_stop_parts</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="o">~</span><span class="n">finite</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_REASON_NONFINITE</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">strict</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_REASON_CONVERGED</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">atol_hit</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_REASON_ATOL</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_REASON_MAX_STEPS</span><span class="p">)),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -541,12 +583,14 @@
 <span class="sd">    method : &#39;lbfgs&#39;, &#39;bfgs&#39;, or &#39;newton&#39;</span>
 <span class="sd">    bounds : tuple of jax.Array, or None</span>
 <span class="sd">        ``(lower, upper)`` pair, each shape ``(d,)``; ``None`` → unconstrained.</span>
-<span class="sd">        For backend=&#39;jax&#39;: enforced via reparameterization.</span>
-<span class="sd">        For backend=&#39;cpu&#39;: converted to scipy format internally.</span>
+<span class="sd">        JAX Newton, JAX BFGS, CPU BFGS, and CPU trust-exact enforce bounds</span>
+<span class="sd">        by reparameterization. CPU L-BFGS-B takes them natively.</span>
 <span class="sd">    max_steps : int</span>
 <span class="sd">        Iteration budget.</span>
 <span class="sd">    tol : float</span>
 <span class="sd">        Convergence tolerance on ‖∇f(θ) − η‖∞.</span>
+<span class="sd">        On a reparametrised CPU solve, SciPy ``gtol`` is the φ-gradient.</span>
+<span class="sd">        ``converged`` is still the free θ residual.</span>
 <span class="sd">    grad_fn : Callable, optional</span>
 <span class="sd">        θ → ∇f(θ).</span>
 <span class="sd">        For backend=&#39;cpu&#39;: must accept and return numpy arrays.</span>
@@ -572,34 +616,27 @@
 
     <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
-            <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">conv</span><span class="p">,</span> <span class="n">steps</span> <span class="o">=</span> <span class="n">_jax_newton_raw</span><span class="p">(</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">conv</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">kkt</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">_jax_newton_raw</span><span class="p">(</span>
                 <span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="c1"># No float()/bool() here — values may be JAX tracers inside lax.scan</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span>
                 <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span>
                 <span class="n">fun</span><span class="o">=</span><span class="n">fun</span><span class="p">,</span>
                 <span class="n">grad_norm</span><span class="o">=</span><span class="n">gn</span><span class="p">,</span>
-                <span class="n">num_steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                <span class="n">num_steps</span><span class="o">=</span><span class="n">n_iter</span><span class="p">,</span>
                 <span class="n">converged</span><span class="o">=</span><span class="n">conv</span><span class="p">,</span>
                 <span class="n">elapsed_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span>
+                <span class="n">kkt_residual</span><span class="o">=</span><span class="n">kkt</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span> <span class="s2">&quot;bfgs&quot;</span><span class="p">):</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">_jax_quasi_newton</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span>
-                <span class="n">theta</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
-                <span class="n">num_steps</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">converged</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span>
-                <span class="n">elapsed_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown method </span><span class="si">{</span><span class="n">method</span><span class="si">!r}</span><span class="s2">. Choose &#39;newton&#39;, &#39;lbfgs&#39;, &#39;bfgs&#39;.&quot;</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">_cpu_solve</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span>
-            <span class="n">theta</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
-            <span class="n">num_steps</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">converged</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span>
-            <span class="n">elapsed_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown backend </span><span class="si">{</span><span class="n">backend</span><span class="si">!r}</span><span class="s2">. Choose &#39;jax&#39; or &#39;cpu&#39;.&quot;</span><span class="p">)</span>
 
@@ -646,11 +683,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;newton&quot;</span><span class="p">,</span> <span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span> <span class="s2">&quot;bfgs&quot;</span><span class="p">):</span>
-        <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">conv</span><span class="p">,</span> <span class="n">steps</span> <span class="o">=</span> <span class="n">_multistart_jax</span><span class="p">(</span>
+        <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">conv</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">kkt</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">_multistart_jax</span><span class="p">(</span>
             <span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
             <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">conv</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">gn</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">conv</span><span class="p">,</span>
+            <span class="n">kkt_residual</span><span class="o">=</span><span class="n">kkt</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">theta0_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">theta0_batch</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theta0_batch</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">theta0_batch</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">_multistart_loop</span><span class="p">(</span>
@@ -659,17 +699,13 @@
             <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="o">=</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="o">=</span><span class="n">hess_fn</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">BregmanResult</span><span class="p">(</span>
-        <span class="n">theta</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
-        <span class="n">num_steps</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">converged</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span>
-        <span class="n">elapsed_time</span><span class="o">=</span><span class="n">elapsed</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="o">=</span><span class="n">elapsed</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
         <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta0_batch</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">theta0_batch</span><span class="p">,</span> <span class="s1">&#39;__len__&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;?&#39;</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;converged&quot;</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span> <span class="k">else</span> <span class="s2">&quot;NOT converged&quot;</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;converged&quot;</span> <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;NOT converged&quot;</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Bregman multistart [</span><span class="si">{</span><span class="n">backend</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> starts]: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s), |grad|=</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s), |grad|=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">)</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span></div>
 
@@ -683,6 +719,65 @@
 <span class="n">_POS_EXP</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">_IDENTITY</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">_BOUNDED</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reparam_coeffs</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bound type, safe lower endpoint, and span for each coordinate.&quot;&quot;&quot;</span>
+    <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">is_neg_inf_lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">is_pos_inf_hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">upper</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">btype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">is_neg_inf_lo</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">upper</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">_NEG_EXP</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">lower</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">is_pos_inf_hi</span><span class="p">,</span> <span class="n">_POS_EXP</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">is_neg_inf_lo</span> <span class="o">&amp;</span> <span class="n">is_pos_inf_hi</span><span class="p">,</span> <span class="n">_IDENTITY</span><span class="p">,</span>
+                <span class="n">_BOUNDED</span><span class="p">)))</span>
+    <span class="n">lo_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">lower</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">lower</span><span class="p">)</span>
+    <span class="n">hi_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">upper</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">hi_safe</span> <span class="o">-</span> <span class="n">lo_safe</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">btype</span><span class="p">,</span> <span class="n">lo_safe</span><span class="p">,</span> <span class="n">span</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sigmoid_np</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">phi</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">phi</span><span class="p">)),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">phi</span><span class="p">)),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_theta_map_np</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">btype</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">span</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;θ(φ), θ&#39;(φ), θ&#39;&#39;(φ). The map is diagonal.</span>
+
+<span class="sd">    Exp, either sign: θ&#39; = θ&#39;&#39; = θ.</span>
+<span class="sd">    Sigmoid on a finite span: θ&#39; = span·s·(1−s),</span>
+<span class="sd">    θ&#39;&#39; = span·s·(1−s)·(1−2s).</span>
+<span class="sd">    Identity: θ&#39; = 1, θ&#39;&#39; = 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">btype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">btype</span><span class="p">)</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">span</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">_sigmoid_np</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">exp_phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">btype</span> <span class="o">==</span> <span class="n">_NEG_EXP</span><span class="p">,</span> <span class="o">-</span><span class="n">exp_phi</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">btype</span> <span class="o">==</span> <span class="n">_POS_EXP</span><span class="p">,</span> <span class="n">exp_phi</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_BOUNDED</span><span class="p">,</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">span</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span> <span class="n">phi</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span>
+    <span class="n">exp_bound</span> <span class="o">=</span> <span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_NEG_EXP</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_POS_EXP</span><span class="p">)</span>
+    <span class="n">d1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">exp_bound</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_BOUNDED</span><span class="p">,</span> <span class="n">span</span> <span class="o">*</span> <span class="n">s1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="n">d2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">exp_bound</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_BOUNDED</span><span class="p">,</span> <span class="n">span</span> <span class="o">*</span> <span class="n">s1</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">s</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_setup_reparam</span><span class="p">(</span>
@@ -705,24 +800,7 @@
     <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">theta0</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">phi</span><span class="p">:</span> <span class="n">phi</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">theta</span><span class="p">:</span> <span class="n">theta</span>
 
-    <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">bounds</span>
-    <span class="n">lower</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">upper</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-
-    <span class="n">is_neg_inf_lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lower</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">is_pos_inf_hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">upper</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-
-    <span class="n">btype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-        <span class="n">is_neg_inf_lo</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">upper</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">_NEG_EXP</span><span class="p">,</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">lower</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">is_pos_inf_hi</span><span class="p">,</span> <span class="n">_POS_EXP</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
-                <span class="n">is_neg_inf_lo</span> <span class="o">&amp;</span> <span class="n">is_pos_inf_hi</span><span class="p">,</span> <span class="n">_IDENTITY</span><span class="p">,</span>
-                <span class="n">_BOUNDED</span><span class="p">)))</span>
-
-    <span class="n">lo_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">lower</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">lower</span><span class="p">)</span>
-    <span class="n">hi_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">upper</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
-    <span class="n">span</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">hi_safe</span> <span class="o">-</span> <span class="n">lo_safe</span><span class="p">,</span> <span class="n">LOG_EPS</span><span class="p">)</span>
+    <span class="n">btype</span><span class="p">,</span> <span class="n">lo_safe</span><span class="p">,</span> <span class="n">span</span> <span class="o">=</span> <span class="n">_reparam_coeffs</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_theta</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">btype</span> <span class="o">==</span> <span class="n">_NEG_EXP</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span>
@@ -819,10 +897,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">kkt</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
     <span class="n">near</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">KKT_NEAR_GAP</span><span class="p">)</span>
-    <span class="n">tol_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tol</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">))</span>
-    <span class="n">atol</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">BREGMAN_INVERT_ATOL</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tol_b</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">finite</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">kkt</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">near</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="p">((</span><span class="n">kkt</span> <span class="o">&lt;</span> <span class="n">tol_b</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">near</span> <span class="o">&lt;</span> <span class="n">atol</span><span class="p">))</span>
+    <span class="n">_finite</span><span class="p">,</span> <span class="n">strict</span><span class="p">,</span> <span class="n">atol_hit</span> <span class="o">=</span> <span class="n">_stop_parts</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">strict</span> <span class="o">|</span> <span class="n">atol_hit</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_jax_newton_raw</span><span class="p">(</span>
@@ -834,7 +910,7 @@
     <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">grad_fn</span><span class="p">,</span>   <span class="c1"># theta → ∇ψ(θ), or None</span>
     <span class="n">hess_fn</span><span class="p">,</span>   <span class="c1"># theta → ∇²ψ(θ), or None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Gauss–Newton in reparametrised :math:`\phi`-space with early stopping.</span>
 
 <span class="sd">    When ``grad_fn`` and ``hess_fn`` are both provided the chain rule is</span>
@@ -876,8 +952,14 @@
 <span class="sd">    step, accepted at a tiny Armijo length, walks the GIG warm start</span>
 <span class="sd">    into that bound.</span>
 
-<span class="sd">    Returns ``(theta_opt, fun, grad_norm, converged, num_steps)`` as JAX</span>
-<span class="sd">    arrays. Iteration stops at the strict KKT tolerance or ``max_steps``.</span>
+<span class="sd">    Returns ``(theta_opt, fun, grad_norm, converged, num_steps, kkt, reason)``</span>
+<span class="sd">    as JAX arrays. The loop stops when the pre-step residual is inside</span>
+<span class="sd">    ``tol`` or the budget is spent. ``num_steps`` counts steps taken.</span>
+<span class="sd">    The check that finds an interior start, and the check after the last</span>
+<span class="sd">    step, do not increment it. A start already inside ``tol`` reports 0.</span>
+<span class="sd">    ``converged`` is :func:`_inversion_converged` at the returned point.</span>
+<span class="sd">    ``kkt`` is the free residual there. ``reason`` is an integer code</span>
+<span class="sd">    (:data:`_REASON_NAMES`), the same array type eager and traced.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">phi0</span><span class="p">,</span> <span class="n">to_theta</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_setup_reparam</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
 
@@ -937,7 +1019,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">step</span> <span class="o">&lt;</span> <span class="n">max_steps</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">converged</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">newton_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="n">step</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">step</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">_converged</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">g</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">g_theta</span> <span class="o">=</span> <span class="n">get_g_H</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
         <span class="n">H_safe</span> <span class="o">=</span> <span class="n">_damped_hessian</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="k">if</span> <span class="n">damp_phi</span> <span class="k">else</span> <span class="n">H</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H_safe</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
@@ -957,25 +1039,23 @@
                 <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-        <span class="n">converged_new</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="p">(</span><span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">)</span>
-        <span class="n">phi_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">converged_new</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">phi_new</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">phi_out</span><span class="p">,</span> <span class="n">converged_new</span>
+        <span class="n">pre_ok</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
+        <span class="n">phi_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pre_ok</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">phi_new</span><span class="p">)</span>
+        <span class="n">step_out</span> <span class="o">=</span> <span class="n">step</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pre_ok</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">step_out</span><span class="p">,</span> <span class="n">phi_out</span><span class="p">,</span> <span class="n">pre_ok</span>
 
-    <span class="n">num_steps</span><span class="p">,</span> <span class="n">phi_opt</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+    <span class="n">num_steps</span><span class="p">,</span> <span class="n">phi_opt</span><span class="p">,</span> <span class="n">_stopped</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
         <span class="n">newton_cond</span><span class="p">,</span> <span class="n">newton_body</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">phi0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">)),</span>
     <span class="p">)</span>
     <span class="n">theta_opt</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi_opt</span><span class="p">)</span>
     <span class="n">g_final</span> <span class="o">=</span> <span class="n">_natural_grad</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">)</span>
     <span class="n">grad_norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g_final</span><span class="p">))</span>
-    <span class="c1"># The loop stops once the pre-step KKT residual is under tol. The</span>
-    <span class="c1"># last accepted step can land inside tol without a further frozen check.</span>
-    <span class="c1"># The returned flag is wider: a free residual under BREGMAN_INVERT_ATOL</span>
-    <span class="c1"># (multiplier dropped inside KKT_NEAR_GAP) is an inverted η.</span>
-    <span class="n">strict</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_final</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
-    <span class="n">converged</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">_inversion_converged</span><span class="p">(</span><span class="n">g_final</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
-    <span class="n">converged</span> <span class="o">=</span> <span class="n">converged</span> <span class="o">|</span> <span class="n">strict</span>
+    <span class="n">kkt</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_final</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+    <span class="n">near</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_final</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">KKT_NEAR_GAP</span><span class="p">)</span>
+    <span class="n">converged</span> <span class="o">=</span> <span class="n">_inversion_converged</span><span class="p">(</span><span class="n">g_final</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+    <span class="n">reason</span> <span class="o">=</span> <span class="n">_stop_reason</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
     <span class="n">final_obj</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">theta_opt</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta_opt</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">final_obj</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">num_steps</span>
+    <span class="k">return</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">final_obj</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">kkt</span><span class="p">,</span> <span class="n">reason</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_require_solved_theta</span><span class="p">(</span>
@@ -985,15 +1065,12 @@
     <span class="n">grad_norm</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">traced</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``theta`` only when the Bregman solve converged.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``theta`` when the Bregman solve converged.</span>
 
-<span class="sd">    ``traced`` preserves the caller&#39;s trace context when solve inputs</span>
-<span class="sd">    were stopped for implicit differentiation. Eager calls raise</span>
-<span class="sd">    :class:`RuntimeError`. Under tracing (``jit``,</span>
-<span class="sd">    ``lax.scan``, EM) a failed solve is NaN, so the caller cannot treat</span>
-<span class="sd">    an uninverted :math:`\\eta` as a model. GH M-step sanity checks</span>
-<span class="sd">    already reject non-finite subordinator parameters and keep the</span>
-<span class="sd">    previous ones.</span>
+<span class="sd">    ``traced`` keeps the caller&#39;s trace when the solve inputs were</span>
+<span class="sd">    stopped for implicit differentiation. An eager call raises</span>
+<span class="sd">    :class:`SolverDidNotConverge`. A traced call returns NaN, so a</span>
+<span class="sd">    failed solve is not a model.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">converged_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">converged</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">)</span>
     <span class="n">masked</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">converged_b</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
@@ -1007,7 +1084,7 @@
             <span class="n">detail</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; (‖∇f(θ)−η‖∞=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">grad_norm</span><span class="p">)</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">)&quot;</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ConcretizationTypeError</span><span class="p">):</span>
             <span class="n">detail</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+    <span class="k">raise</span> <span class="n">SolverDidNotConverge</span><span class="p">(</span>
         <span class="s2">&quot;Bregman solve did not converge&quot;</span>
         <span class="o">+</span> <span class="n">detail</span>
         <span class="o">+</span> <span class="s2">&quot;; refusing to return a model whose expectation parameters were not inverted.&quot;</span>
@@ -1063,9 +1140,10 @@
               <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">):</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_jax_newton_raw</span><span class="p">(</span>
+        <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="o">*</span><span class="n">_rest</span> <span class="o">=</span> <span class="n">_jax_newton_raw</span><span class="p">(</span>
             <span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span>
-        <span class="p">)[:</span><span class="mi">4</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">fun</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span>
 
     <span class="k">return</span> <span class="n">solve</span></div>
 
@@ -1082,8 +1160,11 @@
                 <span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">_jax_quasi_newton</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
-                <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">kkt_residual</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
         <span class="n">i</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="n">state</span>
@@ -1099,8 +1180,13 @@
         <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">best</span>
 
     <span class="n">unsolved</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">theta0_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta0_batch</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta0_batch</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">theta0_batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta0_batch</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta0_batch</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">theta0_batch</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_REASON_NONFINITE</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">unsolved</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">best</span>
@@ -1142,13 +1228,16 @@
     <span class="c1"># while g_θ is still O(1). Acceptance is the natural residual.</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">state</span>
     <span class="n">n_iter</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">iter_num</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;iter_num&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">max_steps</span>
-
+    <span class="n">kkt</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+    <span class="n">near</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">KKT_NEAR_GAP</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">BregmanResult</span><span class="p">(</span>
         <span class="n">theta</span><span class="o">=</span><span class="n">theta_opt</span><span class="p">,</span>
         <span class="n">fun</span><span class="o">=</span><span class="n">final_obj</span><span class="p">,</span>
         <span class="n">grad_norm</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g</span><span class="p">)),</span>
         <span class="n">num_steps</span><span class="o">=</span><span class="n">n_iter</span><span class="p">,</span>
         <span class="n">converged</span><span class="o">=</span><span class="n">_inversion_converged</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">),</span>
+        <span class="n">kkt_residual</span><span class="o">=</span><span class="n">kkt</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">_stop_reason</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">,</span> <span class="n">tol</span><span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -1167,6 +1256,12 @@
 <span class="sd">        No JAX dispatch — suitable when f itself uses scipy (e.g. CPU Bessel).</span>
 <span class="sd">    Hybrid  (grad_fn=None): f is a JAX function; gradient via jax.grad.</span>
 <span class="sd">        Inputs are converted to jnp arrays for tracing.</span>
+
+<span class="sd">    BFGS and trust-exact have no box constraints. Bounds use the same</span>
+<span class="sd">    diagonal φ map as the JAX solver. θ&#39; and θ&#39;&#39; are closed form.</span>
+<span class="sd">    SciPy ``gtol`` stops on the φ-gradient. ``converged`` is the free</span>
+<span class="sd">    θ residual. Trust-exact keeps</span>
+<span class="sd">    :math:`\\sum_i (g_\\theta)_i \\theta_i&#39;&#39;(\\phi)` in the Hessian.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
@@ -1193,17 +1288,46 @@
 
     <span class="n">scipy_method</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">:</span> <span class="s2">&quot;L-BFGS-B&quot;</span><span class="p">,</span> <span class="s2">&quot;bfgs&quot;</span><span class="p">:</span> <span class="s2">&quot;BFGS&quot;</span><span class="p">,</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span> <span class="s2">&quot;trust-exact&quot;</span><span class="p">}[</span><span class="n">method</span><span class="p">]</span>
 
-    <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">lo_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">hi_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">lo_np</span><span class="p">,</span> <span class="n">hi_np</span><span class="p">))</span>
+    <span class="n">use_reparam</span> <span class="o">=</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">!=</span> <span class="s2">&quot;lbfgs&quot;</span>
+    <span class="n">map_coeffs</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">use_reparam</span><span class="p">:</span>
+        <span class="n">phi0</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_setup_reparam</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0_np</span><span class="p">),</span> <span class="n">bounds</span><span class="p">)</span>
+        <span class="n">btype</span><span class="p">,</span> <span class="n">lo_safe</span><span class="p">,</span> <span class="n">span</span> <span class="o">=</span> <span class="n">_reparam_coeffs</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">map_coeffs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">btype</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lo_safe</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">span</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_at</span><span class="p">(</span><span class="n">phi_np</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_theta_map_np</span><span class="p">(</span><span class="n">phi_np</span><span class="p">,</span> <span class="o">*</span><span class="n">map_coeffs</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">fun_phi</span><span class="p">(</span><span class="n">phi_np</span><span class="p">):</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">_d1</span><span class="p">,</span> <span class="n">_d2</span> <span class="o">=</span> <span class="n">_at</span><span class="p">(</span><span class="n">phi_np</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fun_np</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">jac_phi</span><span class="p">(</span><span class="n">phi_np</span><span class="p">):</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="n">_d2</span> <span class="o">=</span> <span class="n">_at</span><span class="p">(</span><span class="n">phi_np</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">d1</span> <span class="o">*</span> <span class="n">jac_np</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">phi0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="n">fun_phi</span>
+        <span class="n">jac_used</span> <span class="o">=</span> <span class="n">jac_phi</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">theta0_np</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="n">fun_np</span>
+        <span class="n">jac_used</span> <span class="o">=</span> <span class="n">jac_np</span>
 
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;jac&quot;</span><span class="p">:</span> <span class="n">jac_np</span><span class="p">,</span>
+        <span class="s2">&quot;jac&quot;</span><span class="p">:</span> <span class="n">jac_used</span><span class="p">,</span>
         <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;maxiter&quot;</span><span class="p">:</span> <span class="n">max_steps</span><span class="p">,</span> <span class="s2">&quot;gtol&quot;</span><span class="p">:</span> <span class="n">tol</span><span class="p">},</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;lbfgs&quot;</span><span class="p">:</span>
+        <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lo_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">hi_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">lo_np</span><span class="p">,</span> <span class="n">hi_np</span><span class="p">))</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy_bounds</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">][</span><span class="s2">&quot;ftol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tol</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
@@ -1212,24 +1336,45 @@
                 <span class="s2">&quot;method=&#39;newton&#39; with backend=&#39;cpu&#39; requires hess_fn. &quot;</span>
                 <span class="s2">&quot;Provide _hessian_log_partition_cpu or equivalent.&quot;</span>
             <span class="p">)</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">hess_np</span><span class="p">(</span><span class="n">theta_np</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
                 <span class="n">hess_fn</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;hess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hess_np</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">fun_np</span><span class="p">,</span> <span class="n">theta0_np</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">scipy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">theta_opt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">jac_val</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">jac</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">jac_np</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_reparam</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">hess_phi</span><span class="p">(</span><span class="n">phi_np</span><span class="p">):</span>
+                <span class="n">theta</span><span class="p">,</span> <span class="n">d1</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="n">_at</span><span class="p">(</span><span class="n">phi_np</span><span class="p">)</span>
+                <span class="n">g_theta</span> <span class="o">=</span> <span class="n">jac_np</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">hess</span> <span class="o">=</span> <span class="n">hess_np</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="n">sandwiched</span> <span class="o">=</span> <span class="n">d1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">hess</span> <span class="o">*</span> <span class="n">d1</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="k">return</span> <span class="n">sandwiched</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">g_theta</span> <span class="o">*</span> <span class="n">d2</span><span class="p">)</span>
+
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;hess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hess_phi</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;hess&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hess_np</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">scipy_method</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">use_reparam</span><span class="p">:</span>
+        <span class="n">theta_np</span><span class="p">,</span> <span class="n">_d1</span><span class="p">,</span> <span class="n">_d2</span> <span class="o">=</span> <span class="n">_at</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">theta_opt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">jac_val</span> <span class="o">=</span> <span class="n">jac_np</span><span class="p">(</span><span class="n">theta_np</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">theta_opt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">jac_val</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">jac</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">jac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">jac_np</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jac_val</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="c1"># scipy success is not the natural residual: trust-exact status 2</span>
     <span class="c1"># stops just above gtol, and L-BFGS-B can report success with a</span>
     <span class="c1"># large bound multiplier. Gate on the free residual.</span>
+    <span class="n">kkt</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+    <span class="n">near</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">KKT_NEAR_GAP</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">BregmanResult</span><span class="p">(</span>
         <span class="n">theta</span><span class="o">=</span><span class="n">theta_opt</span><span class="p">,</span>
         <span class="n">fun</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fun</span><span class="p">),</span>
         <span class="n">grad_norm</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">jac_val</span><span class="p">))),</span>
         <span class="n">num_steps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">nit</span><span class="p">),</span>
-        <span class="n">converged</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">_inversion_converged</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">)),</span>
+        <span class="n">converged</span><span class="o">=</span><span class="n">_inversion_converged</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">),</span>
+        <span class="n">kkt_residual</span><span class="o">=</span><span class="n">kkt</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">_stop_reason</span><span class="p">(</span><span class="n">kkt</span><span class="p">,</span> <span class="n">near</span><span class="p">,</span> <span class="n">tol</span><span class="p">),</span>
     <span class="p">)</span>
 
 

@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -465,6 +467,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.converged"><code class="docutils literal notranslate"><span class="pre">EMResult.converged</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">EMResult.elapsed_time</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.diverged"><code class="docutils literal notranslate"><span class="pre">EMResult.diverged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.solver_failed"><code class="docutils literal notranslate"><span class="pre">EMResult.solver_failed</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a><ul class="nav section-nav flex-column">
@@ -488,8 +491,11 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.num_steps"><code class="docutils literal notranslate"><span class="pre">BregmanResult.num_steps</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.converged"><code class="docutils literal notranslate"><span class="pre">BregmanResult.converged</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">BregmanResult.elapsed_time</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.kkt_residual"><code class="docutils literal notranslate"><span class="pre">BregmanResult.kkt_residual</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.reason"><code class="docutils literal notranslate"><span class="pre">BregmanResult.reason</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.SolverDidNotConverge"><code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.bregman_objective"><code class="docutils literal notranslate"><span class="pre">bregman_objective()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman"><code class="docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman_multistart"><code class="docutils literal notranslate"><span class="pre">solve_bregman_multistart()</span></code></a></li>
@@ -612,14 +618,18 @@ when both backends are JAX, otherwise a Python for-loop).
 update rules.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">EMResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diverged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#EMResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.EMResult" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.em.</span></span><span class="sig-name descname"><span class="pre">EMResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_likelihoods</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_changes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diverged</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_failed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/em.html#EMResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.em.EMResult" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Result of an EM fitting procedure.</p>
-<p><code class="docutils literal notranslate"><span class="pre">converged</span></code> and <code class="docutils literal notranslate"><span class="pre">diverged</span></code> are separate because batch EM has three
-outcomes: tolerance met (<code class="docutils literal notranslate"><span class="pre">converged=True</span></code>), a non-finite iterate was
-reverted (<code class="docutils literal notranslate"><span class="pre">diverged=True</span></code>), or <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> was exhausted with neither
-(both <code class="docutils literal notranslate"><span class="pre">False</span></code>). They are not opposites — <code class="docutils literal notranslate"><span class="pre">converged=False</span></code> covers both
-divergence and a finite but not-yet-converged stop.</p>
+<p><code class="docutils literal notranslate"><span class="pre">converged</span></code>, <code class="docutils literal notranslate"><span class="pre">diverged</span></code>, and <code class="docutils literal notranslate"><span class="pre">solver_failed</span></code> are separate.
+Tolerance met is <code class="docutils literal notranslate"><span class="pre">converged=True</span></code>. A non-finite normal-block change
+or objective is <code class="docutils literal notranslate"><span class="pre">diverged=True</span></code>: the last finite model is kept.
+A non-finite mixing distribution after the M-step is
+<code class="docutils literal notranslate"><span class="pre">solver_failed=True</span></code>, again with the last finite model kept.
+On the Python loop, <a class="reference internal" href="#normix.fitting.solvers.SolverDidNotConverge" title="normix.fitting.solvers.SolverDidNotConverge"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code></a>
+or <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> sets the same flag.
+Exhausting <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> leaves all three false. They are not
+opposites.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -630,6 +640,7 @@ divergence and a finite but not-yet-converged stop.</p>
 <li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
 <li><p><strong>diverged</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
+<li><p><strong>solver_failed</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><em>bool</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -666,6 +677,11 @@ divergence and a finite but not-yet-converged stop.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.em.EMResult.diverged">
 <span class="sig-name descname"><span class="pre">diverged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#normix.fitting.em.EMResult.diverged" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.em.EMResult.solver_failed">
+<span class="sig-name descname"><span class="pre">solver_failed</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#normix.fitting.em.EMResult.solver_failed" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -855,9 +871,9 @@ that <code class="docutils literal notranslate"><span class="pre">solve_bregman<
 <p>backend=’jax’, method=’newton’  custom lax.while_loop Newton, autodiff or analytical Hessian
 backend=’jax’, method=’lbfgs’   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
 backend=’jax’, method=’bfgs’    jaxopt BFGS with reparameterization for bounds
-backend=’cpu’, method=’lbfgs’   scipy L-BFGS-B
-backend=’cpu’, method=’bfgs’    scipy BFGS
-backend=’cpu’, method=’newton’  scipy trust-exact with Hessian</p>
+backend=’cpu’, method=’lbfgs’   scipy L-BFGS-B (native bounds)
+backend=’cpu’, method=’bfgs’    scipy BFGS; bounds via the same reparametrization
+backend=’cpu’, method=’newton’  scipy trust-exact; bounds via the same reparametrization</p>
 </section>
 <section id="gradient-hessian-sources">
 <h3>Gradient / Hessian sources<a class="headerlink" href="#gradient-hessian-sources" title="Link to this heading">#</a></h3>
@@ -875,7 +891,7 @@ The solver handles all reparameterization internally via the chain rule.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">BregmanResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#BregmanResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.BregmanResult" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">BregmanResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fun</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_norm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kkt_residual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#BregmanResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.BregmanResult" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Result of a Bregman divergence minimization.</p>
 <p>Scalar fields accept both Python and JAX types so the result
@@ -886,9 +902,11 @@ can live inside a lax.scan carry without concretization errors.</p>
 <li><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>fun</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
 <li><p><strong>grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
-<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>num_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
 <li><p><strong>converged</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
 <li><p><strong>elapsed_time</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
+<li><p><strong>kkt_residual</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
+<li><p><strong>reason</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><em>Any</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -909,7 +927,7 @@ can live inside a lax.scan carry without concretization errors.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.num_steps">
-<span class="sig-name descname"><span class="pre">num_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.num_steps" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">num_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.num_steps" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -922,6 +940,23 @@ can live inside a lax.scan carry without concretization errors.</p>
 <span class="sig-name descname"><span class="pre">elapsed_time</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.elapsed_time" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.kkt_residual">
+<span class="sig-name descname"><span class="pre">kkt_residual</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.kkt_residual" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.solvers.BregmanResult.reason">
+<span class="sig-name descname"><span class="pre">reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#normix.fitting.solvers.BregmanResult.reason" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="normix.fitting.solvers.SolverDidNotConverge">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">SolverDidNotConverge</span></span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#SolverDidNotConverge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.SolverDidNotConverge" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a></p>
+<p>Eager Bregman inversion did not meet the residual tolerance.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -955,10 +990,12 @@ can live inside a lax.scan carry without concretization errors.</p>
 <li><p><strong>backend</strong> (<em>'jax'</em><em> or </em><em>'cpu'</em>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> is JIT-able; <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> uses scipy and is not JIT-able.</p></li>
 <li><p><strong>method</strong> (<em>'lbfgs'</em><em>, </em><em>'bfgs'</em><em>, or </em><em>'newton'</em>)</p></li>
 <li><p><strong>bounds</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><em>tuple</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, or </em><em>None</em>) – <code class="docutils literal notranslate"><span class="pre">(lower,</span> <span class="pre">upper)</span></code> pair, each shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> → unconstrained.
-For backend=’jax’: enforced via reparameterization.
-For backend=’cpu’: converted to scipy format internally.</p></li>
+JAX Newton, JAX BFGS, CPU BFGS, and CPU trust-exact enforce bounds
+by reparameterization. CPU L-BFGS-B takes them natively.</p></li>
 <li><p><strong>max_steps</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – Iteration budget.</p></li>
-<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Convergence tolerance on ‖∇f(θ) − η‖∞.</p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Convergence tolerance on ‖∇f(θ) − η‖∞.
+On a reparametrised CPU solve, SciPy <code class="docutils literal notranslate"><span class="pre">gtol</span></code> is the φ-gradient.
+<code class="docutils literal notranslate"><span class="pre">converged</span></code> is still the free θ residual.</p></li>
 <li><p><strong>grad_fn</strong> (<em>Callable</em><em>, </em><em>optional</em>) – θ → ∇f(θ).
 For backend=’cpu’: must accept and return numpy arrays.
 For backend=’jax’, method=’newton’: must be JAX-traceable.
@@ -1724,6 +1761,7 @@ Must be positive semi-definite (not checked).</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.converged"><code class="docutils literal notranslate"><span class="pre">EMResult.converged</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">EMResult.elapsed_time</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.diverged"><code class="docutils literal notranslate"><span class="pre">EMResult.diverged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.EMResult.solver_failed"><code class="docutils literal notranslate"><span class="pre">EMResult.solver_failed</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.em.BatchEMFitter"><code class="docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a><ul class="nav section-nav flex-column">
@@ -1747,8 +1785,11 @@ Must be positive semi-definite (not checked).</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.num_steps"><code class="docutils literal notranslate"><span class="pre">BregmanResult.num_steps</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.converged"><code class="docutils literal notranslate"><span class="pre">BregmanResult.converged</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.elapsed_time"><code class="docutils literal notranslate"><span class="pre">BregmanResult.elapsed_time</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.kkt_residual"><code class="docutils literal notranslate"><span class="pre">BregmanResult.kkt_residual</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.BregmanResult.reason"><code class="docutils literal notranslate"><span class="pre">BregmanResult.reason</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.SolverDidNotConverge"><code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.bregman_objective"><code class="docutils literal notranslate"><span class="pre">bregman_objective()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman"><code class="docutils literal notranslate"><span class="pre">solve_bregman()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.solvers.solve_bregman_multistart"><code class="docutils literal notranslate"><span class="pre">solve_bregman_multistart()</span></code></a></li>

@@ -59,7 +59,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Divergences" href="divergences.html" />
-    <link rel="prev" title="Exponential-family structure" href="exponential_family.html" />
+    <link rel="prev" title="CDF and PPF accuracy" href="cdf_ppf.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.4" />
@@ -168,6 +168,8 @@
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="finance.html">Finance</a></li>
@@ -506,6 +508,14 @@ machinery as ordinary maximum likelihood (see <a class="reference internal" href
 <p><code class="docutils literal notranslate"><span class="pre">fit</span></code> returns an <code class="docutils literal notranslate"><span class="pre">EMResult</span></code> with fields <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">converged</span></code>, <code class="docutils literal notranslate"><span class="pre">n_iter</span></code>,
 <code class="docutils literal notranslate"><span class="pre">log_likelihoods</span></code>, <code class="docutils literal notranslate"><span class="pre">param_changes</span></code>, and <code class="docutils literal notranslate"><span class="pre">elapsed_time</span></code>. The likelihood is
 guaranteed non-decreasing across iterations — a handy invariant when debugging.</p>
+<p><code class="docutils literal notranslate"><span class="pre">solver_failed</span></code> and <code class="docutils literal notranslate"><span class="pre">diverged</span></code> are separate flags on that result.
+A non-finite mixing distribution sets <code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.
+On the Python loop, <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> or <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> sets that flag too.
+A CPU GH warm start does not: a failed GIG solve keeps the previous GIG, and EM continues.</p>
+<p>A non-finite normal-block update sets <code class="docutils literal notranslate"><span class="pre">diverged</span></code>.
+Each flag keeps the last finite model.
+<code class="docutils literal notranslate"><span class="pre">fit</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the sample is empty or non-finite.
+It also raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a backend is not <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>.</p>
 </section>
 <section id="batch-em">
 <h2>Batch EM<a class="headerlink" href="#batch-em" title="Link to this heading">#</a></h2>
@@ -591,12 +601,12 @@ models, is in <a class="reference internal" href="../design/why_not_gradient_des
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="exponential_family.html"
+       href="cdf_ppf.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Exponential-family structure</p>
+        <p class="prev-next-title">CDF and PPF accuracy</p>
       </div>
     </a>
     <a class="right-next"

@@ -165,6 +165,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide/finance.html">Finance</a></li>
@@ -1109,6 +1111,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utils.html#normix.utils.constants.KKT_NEAR_GAP">KKT_NEAR_GAP (in module normix.utils.constants)</a>
 </li>
+      <li><a href="api/fitting.html#normix.fitting.solvers.BregmanResult.kkt_residual">kkt_residual (normix.fitting.solvers.BregmanResult attribute)</a>
+</li>
       <li><a href="api/index.html#normix.divergences.kl_divergence">kl_divergence() (in module normix.divergences)</a>
 
       <ul>
@@ -1823,6 +1827,8 @@
         <li><a href="api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.raw_moments">(normix.distributions.inverse_gaussian.InverseGaussian method)</a>
 </li>
       </ul></li>
+      <li><a href="api/fitting.html#normix.fitting.solvers.BregmanResult.reason">reason (normix.fitting.solvers.BregmanResult attribute)</a>
+</li>
       <li><a href="api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.regularize_a_eq_b">regularize_a_eq_b() (normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic method)</a>
 
       <ul>
@@ -1959,6 +1965,12 @@
 </li>
       <li><a href="api/finance.html#normix.finance.transaction_costs.solve_transaction_cost_qp">solve_transaction_cost_qp() (in module normix.finance.transaction_costs)</a>
 </li>
+      <li><a href="api/fitting.html#normix.fitting.em.EMResult.solver_failed">solver_failed (normix.fitting.em.EMResult attribute)</a>
+</li>
+      <li><a href="api/fitting.html#normix.fitting.solvers.SolverDidNotConverge">SolverDidNotConverge</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/index.html#normix.divergences.squared_hellinger">squared_hellinger() (in module normix.divergences)</a>
 
       <ul>
@@ -1967,8 +1979,6 @@
         <li><a href="api/mixtures.html#normix.mixtures.marginal.NormalMixture.squared_hellinger">(normix.mixtures.marginal.NormalMixture method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/index.html#normix.divergences.squared_hellinger_from_psi">squared_hellinger_from_psi() (in module normix.divergences)</a>
 </li>
       <li><a href="api/index.html#normix.exponential_family.ExponentialFamily.std">std() (normix.exponential_family.ExponentialFamily method)</a>

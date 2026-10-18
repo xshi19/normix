@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -607,7 +609,8 @@ Hessian:</p>
 </tbody>
 </table>
 </div>
-<p>So we ship a hand-rolled Newton via <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>. For repeated warm-started
+<p>So we ship a hand-rolled Newton via <code class="docutils literal notranslate"><span class="pre">lax.while_loop</span></code>. The loop stops
+when the pre-step residual is inside <code class="docutils literal notranslate"><span class="pre">tol</span></code>. For repeated warm-started
 solves on the same shape (the GIG EM hot path),
 <code class="docutils literal notranslate"><span class="pre">make_jit_newton_solver(f,</span> <span class="pre">grad_fn,</span> <span class="pre">hess_fn,</span> <span class="pre">bounds)</span></code> builds a
 <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated specialised solve whose XLA cache survives across
@@ -710,9 +713,10 @@ trust-exact status 2 stalls near <code class="docutils literal notranslate"><spa
 Neither is an uninverted η. <code class="docutils literal notranslate"><span class="pre">grad_norm</span></code> still stores the full
 residual, multiplier included. The same free-residual test replaces
 jaxopt’s φ-gradient norm, which is the false stop on an exp bound.
-Eager calls raise <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>. Inside <code class="docutils literal notranslate"><span class="pre">jit</span></code> or <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> the
-natural parameters are NaN, and the GH M-step sanity check keeps the
-previous subordinator.</p>
+Eager calls raise <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code>. Inside <code class="docutils literal notranslate"><span class="pre">jit</span></code> the natural
+parameters are NaN. A CPU GH warm start that fails keeps the previous
+GIG and EM continues. A non-finite JAX solve stays non-finite so EM
+can set <code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.</p>
 <p>When <code class="docutils literal notranslate"><span class="pre">theta0</span></code> is <strong>not</strong> provided, <code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.from_expectation</span></code>
 runs <code class="docutils literal notranslate"><span class="pre">solve_bregman_multistart</span></code> on the η-rescaled problem, with seeds
 from the Gamma / InverseGamma / InverseGaussian special cases.</p>

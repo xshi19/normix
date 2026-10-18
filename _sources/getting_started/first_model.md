@@ -31,7 +31,18 @@ np.set_printoptions(precision=4, suppress=True)
 
 We start with a known 2-D Normal-Inverse Gaussian so we have a ground truth to
 recover. It is specified by a location $\mu$, a skewness vector $\gamma$, a
-covariance $\Sigma$, and the subordinator parameters $(\mu_{IG}, \lambda)$:
+dispersion $\Sigma$, and the subordinator parameters $(\mu_{IG}, \lambda)$.
+$\Sigma$ is the scale in the conditional law
+$X \mid Y \sim \mathcal{N}(\mu + \gamma Y,\, \Sigma Y)$.
+The marginal moments are different:
+
+$$
+\mathbb{E}[X] = \mu + \gamma\,\mathbb{E}[Y],
+\qquad
+\mathrm{Cov}(X) = \mathbb{E}[Y]\,\Sigma + \mathrm{Var}(Y)\,\gamma\gamma^\top.
+$$
+
+`sigma()` returns $\Sigma$. `mean()` and `cov()` return the marginal moments:
 
 ```{code-cell} python
 truth = NormalInverseGaussian.from_classical(
@@ -40,8 +51,9 @@ truth = NormalInverseGaussian.from_classical(
     sigma=jnp.array([[1.0, 0.5], [0.5, 1.5]]),
     mu_ig=1.0, lam=1.2)
 
-print("mean:", np.asarray(truth.mean()))
-print("cov:\n", np.asarray(truth.cov()))
+print("dispersion Σ:\n", np.asarray(truth.sigma()))
+print("marginal mean:", np.asarray(truth.mean()))
+print("marginal cov:\n", np.asarray(truth.cov()))
 ```
 
 ## 2. Sample some data
@@ -81,7 +93,7 @@ print("fitted gamma:", np.asarray(fitted.gamma), " (true [0.6, -0.4])")
 ## 4. Check the fit
 
 A good fit recovers the parameters and assigns high likelihood. We compare the
-fitted mean/covariance to the truth and look at the log-likelihood ascent:
+fitted marginal mean and covariance to the truth and look at the log-likelihood ascent:
 
 ```{code-cell} python
 print(f"‖mean − true‖  = {float(jnp.linalg.norm(fitted.mean() - truth.mean())):.4f}")

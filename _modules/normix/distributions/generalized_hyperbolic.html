@@ -165,6 +165,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../user_guide/finance.html">Finance</a></li>
@@ -435,6 +437,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -448,6 +451,40 @@
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOG_EPS</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">,</span> <span class="n">GIG_P_MAX</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep ``current`` only when the solve is finite and outside the clamp.</span>
+
+<span class="sd">    A non-finite solve is returned as-is so EM can set ``solver_failed``</span>
+<span class="sd">    instead of silently continuing with the previous subordinator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">out_of_range</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">GIG_P_MAX</span><span class="p">)</span>
+        <span class="o">|</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+        <span class="o">|</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">finite</span> <span class="o">&amp;</span> <span class="n">out_of_range</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">),</span>
+        <span class="n">gig_new</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cpu_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Host twin of :func:`_gig_or_previous`.&quot;&quot;&quot;</span>
+    <span class="n">p_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">a_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">b_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">a_new</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">b_new</span><span class="p">)</span>
+    <span class="n">out_of_range</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">GIG_P_MAX</span>
+        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span>
+        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">finite</span> <span class="ow">and</span> <span class="n">out_of_range</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">current</span>
+    <span class="k">return</span> <span class="n">gig_new</span>
 
 
 <span class="c1"># ============================================================================</span>
@@ -826,6 +863,14 @@
 <div class="viewcode-block" id="GeneralizedHyperbolic.m_step_subordinator">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warm-start the GIG solve from the current subordinator.</span>
+
+<span class="sd">        On CPU, a failed solve keeps this GIG and EM continues.</span>
+<span class="sd">        That includes ``SolverDidNotConverge`` and ``ValueError``.</span>
+<span class="sd">        A finite solve outside the clamp does the same.</span>
+<span class="sd">        A non-finite JAX solve is left in place so EM can set</span>
+<span class="sd">        ``solver_failed``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
@@ -842,30 +887,17 @@
                     <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                     <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">p_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
-                <span class="n">a_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
-                <span class="n">b_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">GIG_P_MAX</span>
-                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span>
-                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span><span class="p">):</span>
-                    <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_cpu_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">gig_new</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
                 <span class="n">gig_eta</span><span class="p">,</span>
                 <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                 <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">sane</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GIG_P_MAX</span><span class="p">)</span>
-                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sane</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
-                <span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>
 
         <span class="n">joint_new</span> <span class="o">=</span> <span class="n">JointGeneralizedHyperbolic</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">L_Sigma</span><span class="o">=</span><span class="n">j</span><span class="o">.</span><span class="n">L_Sigma</span><span class="p">,</span>
@@ -1152,6 +1184,14 @@
 <div class="viewcode-block" id="FactorGeneralizedHyperbolic.m_step_subordinator">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Warm-start the GIG solve from the current subordinator.</span>
+
+<span class="sd">        On CPU, a failed solve keeps this GIG and EM continues.</span>
+<span class="sd">        That includes ``SolverDidNotConverge`` and ``ValueError``.</span>
+<span class="sd">        A finite solve outside the clamp does the same.</span>
+<span class="sd">        A non-finite JAX solve is left in place so EM can set</span>
+<span class="sd">        ``solver_failed``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="n">backend</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;backend&#39;</span><span class="p">,</span> <span class="s1">&#39;jax&#39;</span><span class="p">)</span>
         <span class="n">method</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;newton&#39;</span><span class="p">)</span>
@@ -1167,30 +1207,17 @@
                     <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                     <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">p_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
-                <span class="n">a_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span><span class="p">)</span>
-                <span class="n">b_new</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p_new</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">GIG_P_MAX</span>
-                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&gt;</span> <span class="n">GIG_CLAMP_HI</span>
-                        <span class="ow">or</span> <span class="n">a_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span> <span class="ow">or</span> <span class="n">b_new</span> <span class="o">&lt;</span> <span class="n">GIG_CLAMP_LO</span><span class="p">):</span>
-                    <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_cpu_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">gig_new</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
                 <span class="n">gig_eta</span><span class="p">,</span>
                 <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                 <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">sane</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">p</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">GIG_P_MAX</span><span class="p">)</span>
-                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-                <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&gt;=</span> <span class="n">GIG_CLAMP_LO</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">gig_new</span><span class="o">.</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sane</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span>
-                <span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_with_subordinator</span><span class="p">(</span><span class="n">gig_new</span><span class="p">)</span></div>
 
 

@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide/finance.html">Finance</a></li>
@@ -540,10 +542,10 @@ returns an <code class="docutils literal notranslate"><span class="pre">EMResult
   Regularize   : none
   Tolerance    : 1.0e-04 nats/obs (Aitken remaining)
   Max iters    : 150
-  Converged after 14 iterations (5.15s), E-step LL=-4.129337
+  Converged after 14 iterations (5.98s), E-step LL=-4.129337
 converged : True
 iterations: 14
-elapsed   : 5.15s
+elapsed   : 5.98s
 </pre></div>
 </div>
 </div>
@@ -558,7 +560,7 @@ elapsed   : 5.15s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fields: [&#39;model&#39;, &#39;log_likelihoods&#39;, &#39;param_changes&#39;, &#39;n_iter&#39;, &#39;converged&#39;, &#39;elapsed_time&#39;, &#39;diverged&#39;]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>fields: [&#39;model&#39;, &#39;log_likelihoods&#39;, &#39;param_changes&#39;, &#39;n_iter&#39;, &#39;converged&#39;, &#39;elapsed_time&#39;, &#39;diverged&#39;, &#39;solver_failed&#39;]
 fitted γ: [ 0.4027 -0.3274  0.079 ]
 true   γ: [ 0.4 -0.3  0.1]
 </pre></div>
@@ -636,8 +638,8 @@ subordinator. <code class="docutils literal notranslate"><span class="pre">Batch
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 1.0000000000000002
-log|Σ|             : 1.97758476261356e-16
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>det Σ (regularized): 1.0000000000000007
+log|Σ|             : 4.484260185400046e-16
 </pre></div>
 </div>
 </div>

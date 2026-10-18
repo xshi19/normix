@@ -168,6 +168,8 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
@@ -486,9 +488,10 @@ x^{p-1}\exp\!\Big(-\tfrac12\big(a x + b/x\big)\Big), \qquad x &gt; 0,
 (<span class="math notranslate nohighlight">\(a \to 0\)</span>), and <a class="reference internal" href="inverse_gaussian.html"><span class="doc">InverseGaussian</span></a> (<span class="math notranslate nohighlight">\(p = -\tfrac12\)</span>).</p>
 <section id="density-gallery">
 <h2>Density gallery<a class="headerlink" href="#density-gallery" title="Link to this heading">#</a></h2>
-<p>The shape parameter <span class="math notranslate nohighlight">\(p\)</span> controls the behaviour near the origin (monotone for
-<span class="math notranslate nohighlight">\(p \le 1\)</span>, unimodal with an interior mode for <span class="math notranslate nohighlight">\(p &gt; 1\)</span>), while <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span> set
-the scale and the two tails.</p>
+<p>For <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span> the density tends to 0 at the origin and has one
+interior mode for every real <span class="math notranslate nohighlight">\(p\)</span>. The parameters <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span> set the scale
+and the two tails. The monotone Gamma shape is the limit <span class="math notranslate nohighlight">\(b \to 0\)</span> with
+<span class="math notranslate nohighlight">\(p \le 1\)</span>.</p>
 <div class="cell tag_hide-input docutils container">
 <details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">

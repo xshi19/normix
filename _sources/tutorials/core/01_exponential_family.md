@@ -64,8 +64,9 @@ float(jnp.max(jnp.abs(jnp.exp(log_p) - pdf)))  # pdf == exp(log_prob)
 ## Three parametrizations
 
 The classical parameters map to **natural** parameters $\theta$ and to
-**expectation** parameters $\eta = \nabla\psi(\theta) = \mathbb{E}[t(X)]$. normix
-exposes all three and converts between them losslessly:
+**expectation** parameters $\eta = \nabla\psi(\theta) = \mathbb{E}[t(X)]$.
+Classical parameters and $\theta$ convert exactly. `from_expectation`
+inverts the digamma equation to the Newton tolerance:
 
 ```{code-cell} python
 theta = dist.natural_params()        # natural θ
