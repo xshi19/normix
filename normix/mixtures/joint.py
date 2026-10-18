@@ -78,7 +78,7 @@ from typing import Dict, Tuple
 import jax
 import jax.numpy as jnp
 
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 
 
 from normix.utils.constants import B_POST_FLOOR, SAFE_DENOMINATOR, SIGMA_REG
@@ -177,7 +177,13 @@ class JointNormalMixture(ExponentialFamily):
         :math:`\nabla\psi` is not :math:`E[t]`. The value is the subordinator
         GIG-layout triple plus the Gaussian blocks, with :math:`+\infty` where
         the moment does not exist.
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         if self._ambient_moment_contract():
             eta_fin, m, v = self._divergence_eta(backend=backend)
             return self._combine_split(eta_fin, m, v)
@@ -190,7 +196,13 @@ class JointNormalMixture(ExponentialFamily):
         subordinator supplies :math:`\mathrm{Cov}(b)`, and this class adds
         :math:`E[\mathrm{Cov}(t\mid Y)]`. An entry touched by a nonexistent
         second moment of :math:`Y` is :math:`+\infty`.
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         if not self._ambient_moment_contract():
             return super().fisher_information(backend)
         sub = self.subordinator()
@@ -656,6 +668,40 @@ class JointNormalMixture(ExponentialFamily):
         it is exact (no Bregman iterations on the normal block) and uses
         the subordinator's own ``from_expectation`` (closed-form for
         Gamma / InverseGamma / InverseGaussian; numerical for GIG).
+
+        Notes
+        -----
+        Necessary conditions for a :class:`~normix.fitting.eta.NormalMixtureEta`.
+        The normal block needs :math:`E[Y] > 0`, :math:`E[1/Y] > 0`, and
+        :math:`E[Y] E[1/Y] \ge 1`.
+        :math:`|D|` for :math:`D = 1 - E[Y] E[1/Y]` is floored at
+        ``SAFE_DENOMINATOR``.
+        A violation is not rejected.
+        The scatter must stay positive definite.
+
+        Variance-gamma needs :math:`E[Y] > 0` and
+        :math:`E[\log Y] < \log E[Y]`.
+        A concrete Gamma call raises :class:`ValueError` on a violation.
+        Normal-inverse-gamma needs :math:`E[1/Y] > 0` and
+        :math:`E[\log Y] > -\log E[1/Y]`.
+        Normal-inverse-Gaussian needs :math:`E[1/Y] > 1/E[Y]` so
+        :math:`\lambda > 0`.
+
+        Generalized hyperbolic also needs finite moments with
+        :math:`E[Y] > 0`, :math:`E[1/Y] > 0`,
+        :math:`E[Y] E[1/Y] > 1`, and
+        :math:`-\log E[1/Y] < E[\log Y] < \log E[Y]`.
+        Equality is a point-mass boundary.
+        Those bounds are necessary and not sufficient.
+        A concrete GIG call raises :class:`ValueError` before the solve.
+        A traced invalid target returns a NaN model.
+        A failed host solve raises
+        :class:`~normix.fitting.solvers.SolverDidNotConverge`.
+        Under ``jit`` the natural parameters are NaN.
+
+        A flat array inverts the restricted log-partition, not ambient
+        :math:`E[t]`, except for interior joint GH.
+        See :doc:`/design/exponential_family` section 2.5.
 
         Parameters
         ----------

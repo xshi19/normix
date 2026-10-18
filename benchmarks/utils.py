@@ -15,19 +15,16 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 def timeit(fn, n_runs: int = 100, warmup: int = 5) -> float:
-    """Return median elapsed time (seconds) over *n_runs* calls."""
+    """Return median elapsed time (seconds) over *n_runs* calls.
+
+    A failing call propagates. Warmup and timed iterations are not swallowed.
+    """
     for _ in range(warmup):
-        try:
-            fn()
-        except Exception:
-            pass
+        fn()
     times = []
     for _ in range(n_runs):
         t0 = time.perf_counter()
-        try:
-            fn()
-        except Exception:
-            pass
+        fn()
         times.append(time.perf_counter() - t0)
     return float(np.median(times))
 

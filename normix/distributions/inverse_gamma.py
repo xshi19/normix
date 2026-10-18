@@ -33,7 +33,7 @@ import jax.numpy as jnp
 
 from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.constants import SCENARIO_QUAD_NODES
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 from normix.utils.constants import LOG_EPS
 from normix.utils.gammainc import gammaincinv
 
@@ -295,7 +295,13 @@ class InverseGamma(ExponentialFamily):
             in the regular interior; singular or nonfinite solutions have
             NaN derivatives.
             ``'cpu'``: ``scipy.special`` digamma/polygamma (eager-only; no JAX AD).
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``.
         """
+        _check_backend(backend)
         eta_target = jnp.asarray(eta, dtype=jnp.float64)
         eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2 = eta[0], eta[1]

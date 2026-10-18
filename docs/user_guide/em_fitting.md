@@ -34,6 +34,16 @@ fitted = result.model
 `log_likelihoods`, `param_changes`, and `elapsed_time`. The likelihood is
 guaranteed non-decreasing across iterations — a handy invariant when debugging.
 
+`solver_failed` and `diverged` are separate flags on that result.
+A non-finite mixing distribution sets `solver_failed`.
+On the Python loop, `SolverDidNotConverge` or `ValueError` sets that flag too.
+A CPU GH warm start does not: a failed GIG solve keeps the previous GIG, and EM continues.
+
+A non-finite normal-block update sets `diverged`.
+Each flag keeps the last finite model.
+`fit` raises `ValueError` when the sample is empty or non-finite.
+It also raises `ValueError` when a backend is not `'jax'` or `'cpu'`.
+
 ## Batch EM
 
 For full control, build a `BatchEMFitter` directly:

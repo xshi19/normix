@@ -24,8 +24,10 @@ $\psi$.
 
 ## Three parametrizations
 
-The same distribution can be described three equivalent ways, and normix
-converts between them losslessly:
+The same distribution has three parametrizations. Classical parameters
+and natural $\theta$ convert exactly. `from_expectation` inverts
+$\eta = \nabla\psi(\theta)$. A closed form is exact. A numerical inverse
+stops at the solver tolerance.
 
 | Parametrization | Symbol | API |
 |---|---|---|
@@ -65,9 +67,10 @@ Hessian — in two backends:
 - a **[JAX](https://docs.jax.dev/en/latest/)** backend (`expectation_params()`,
   `fisher_information()`, default `backend="jax"`) that is JIT-able,
   differentiable, and `vmap`-friendly;
-- a **CPU** backend (`backend="cpu"`) using
-  [NumPy](https://numpy.org/doc/stable/)/[SciPy](https://docs.scipy.org/doc/scipy/),
-  used inside the EM hot loop where SciPy's Bessel routines are fastest.
+- a **CPU** backend (`backend="cpu"`) that runs the same `log_kv` kernel
+  in [NumPy](https://numpy.org/doc/stable/).
+  [SciPy](https://docs.scipy.org/doc/scipy/) supplies L-BFGS-B and
+  trust-exact. `scipy.special.kve` is a test oracle, not this path.
 
 Defaults use `jax.grad` / `jax.hessian`; distributions with closed forms (e.g.
 `Gamma` via `digamma`/`trigamma`) override them. The two backends are

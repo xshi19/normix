@@ -10,6 +10,8 @@ see the {doc}`tutorials <../tutorials/index>`; for class reference see the
 
 distributions
 exponential_family
+capabilities
+cdf_ppf
 em_fitting
 divergences
 finance

@@ -98,6 +98,48 @@ has the same defect at $b = 0$ or $a = 0$. Joint generalized hyperbolic
 itself stays on the triad. In the interior, $\nabla\psi = E[t]$ and
 $\nabla^2\psi = \mathrm{Cov}[t]$.
 
+### 2.5 Valid input for joint `from_expectation`
+
+The canonical input is a `NormalMixtureEta` pytree.
+A flat array uses the restricted-$\psi$ Bregman solver.
+For variance-gamma, normal-inverse-gamma, and normal-inverse-Gaussian,
+$\nabla\psi$ omits the frozen slot, so it is not the ambient moment.
+Only the pytree path inverts ambient $\eta$ for those three families.
+Interior joint GH is the exception: flat $\eta = \nabla\psi$ is the ambient moment.
+That GH solve is still numerical.
+
+The normal block needs $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$, and
+$\mathbb{E}[Y]\,\mathbb{E}[1/Y] \ge 1$.
+The update sets $D = 1 - \mathbb{E}[Y]\,\mathbb{E}[1/Y]$ and floors $|D|$ at
+`SAFE_DENOMINATOR`.
+A violation of the product bound is not rejected.
+The scatter must stay positive definite, or the Cholesky factor fails.
+
+Subordinator bounds on the pytree path:
+
+- Variance-gamma needs $\mathbb{E}[Y] > 0$ and
+  $\mathbb{E}[\log Y] < \log\mathbb{E}[Y]$.
+  Equality is the infinite-shape limit.
+  A concrete `Gamma.from_expectation` call raises `ValueError` on that $\eta$.
+  A traced $\eta$ skips the check.
+- Normal-inverse-gamma needs $\mathbb{E}[1/Y] > 0$ and
+  $\mathbb{E}[\log Y] > -\log\mathbb{E}[1/Y]$.
+  That is Jensen's inequality for the Gamma law of $1/Y$.
+  The inverse-gamma map does not raise when the inequality fails.
+- Normal-inverse-Gaussian needs $\mathbb{E}[Y] > 0$ and
+  $\mathbb{E}[1/Y] > 1/\mathbb{E}[Y]$, so $\lambda > 0$.
+  A smaller inverse moment is clamped at `LOG_EPS`.
+- Generalized hyperbolic needs finite moments with
+  $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$,
+  $\mathbb{E}[Y]\,\mathbb{E}[1/Y] > 1$, and
+  $-\log\mathbb{E}[1/Y] < \mathbb{E}[\log Y] < \log\mathbb{E}[Y]$.
+  Equality is a point-mass boundary.
+  These conditions are necessary and not sufficient.
+  A concrete `GIG.from_expectation` call raises `ValueError` before the solve.
+  A traced invalid target returns a NaN model.
+  A failed host solve raises `SolverDidNotConverge`.
+  Under `jit` the natural parameters are NaN.
+
 ---
 
 ## 3. Bregman Solver Interface
@@ -115,8 +157,8 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 | Decision | Choice | Why |
 |---|---|---|
 | `grad_fn` + `hess_fn` (vs combined `grad_hess_fn`) | separate | Distributions don't know about φ-space; solver applies chain rule via `jax.jacobian(to_theta)` |
-| Newton implementation | hand-rolled `lax.while_loop` | No JAX library provides a Newton **minimizer** that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton) |
-| Multi-start | `jax.vmap` for JAX, Python `for` for CPU | Orthogonal wrapper, not baked into solver name |
+| Newton implementation | hand-rolled `lax.while_loop` | No JAX library provides a Newton **minimizer** that accepts a user-supplied Hessian (Optimistix Newton is root-finding only, JAXopt has no Newton). The loop stops when the pre-step residual is inside `tol`. |
+| Multi-start | JAX `lax.while_loop` over ordered starts; Python `for` for CPU | JAX stops at the first finite converged start |
 | Result type | `BregmanResult` with `Any`-typed scalars | Survives `lax.scan` without `ConcretizationTypeError` |
 | Cached JIT | module-level `_gig_jax_newton_jit` via `make_jit_newton_solver` | The GIG warm-start hot path otherwise retraces per call |
 
@@ -124,15 +166,30 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 
 | backend | method | bounds | What runs |
 |---|---|---|---|
-| `jax` | `newton` | reparam | hand-rolled `while_loop`, autodiff or supplied `grad_fn`/`hess_fn` |
+| `jax` | `newton` | reparam | hand-rolled `lax.while_loop`, autodiff or supplied `grad_fn`/`hess_fn` |
 | `jax` | `lbfgs` | native (LBFGSB) | [JAXopt](https://jaxopt.github.io/stable/) `LBFGSB` |
 | `jax` | `bfgs`  | reparam | [JAXopt](https://jaxopt.github.io/stable/) `BFGS` |
 | `cpu` | `newton`| reparam | [SciPy](https://docs.scipy.org/doc/scipy/) `minimize(method='trust-exact')` |
 | `cpu` | `lbfgs` | native | SciPy `minimize(method='L-BFGS-B')` |
-| `cpu` | `bfgs`  | none   | SciPy `minimize(method='BFGS')` |
+| `cpu` | `bfgs`  | reparam | SciPy `minimize(method='BFGS')` in $\phi$-space |
 
 GIG warm-start hot path: `backend='cpu', method='lbfgs'` (scipy's L-BFGS-B
 + numpy `log_kv`) avoids GPU dispatch on this 3-D scalar problem.
+
+`BregmanResult.num_steps` counts steps taken.
+A one-step quadratic Newton solve reports 1.
+A start already inside the tolerance reports 0.
+The pre-step check that stops the loop is not a step.
+`reason` is an integer code.
+Eager and traced calls store that code as the same type.
+The codes are 0 converged, 1 atol, 2 max steps, and 3 non-finite.
+`kkt_residual` is the free residual of $\nabla f(\theta) - \eta$, with a bound multiplier removed.
+
+CPU BFGS and trust-exact apply box bounds in $\phi$-space.
+The derivatives of that diagonal map are closed form.
+SciPy `gtol` is the $\phi$-gradient.
+Acceptance is the free $\theta$ residual.
+CPU L-BFGS-B keeps the bounds natively.
 
 ---
 

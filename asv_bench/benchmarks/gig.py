@@ -2,7 +2,8 @@
 
 Source: ``benchmarks/bench_gig_solvers.py``. Easy = symmetric GIG;
 hard = ``a ≫ b`` (the ill-conditioned case η-rescaling targets).
-Warm starts pass ``theta0`` to exercise the cached EM M-step kernel.
+Warm ``theta0`` is a neighbouring valid GIG, not the exact solution.
+The JAX path still hits the cached Newton kernel.
 Cold starts include seed generation and the JAX multi-start solve.
 """
 
@@ -49,7 +50,12 @@ class GIGFromExpectation:
             b=jnp.asarray(b, dtype=jnp.float64),
         )
         self.eta = gig.expectation_params()
-        self.theta0 = gig.natural_params()
+        neighbour = GIG(
+            p=jnp.asarray(p + 0.25, dtype=jnp.float64),
+            a=jnp.asarray(a * 1.5, dtype=jnp.float64),
+            b=jnp.asarray(b * 0.5, dtype=jnp.float64),
+        )
+        self.theta0 = neighbour.natural_params()
         warm = GIG.from_expectation(
             self.eta, theta0=self.theta0, backend=backend
         )

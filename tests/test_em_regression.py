@@ -15,6 +15,7 @@ from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter
+from normix.fitting.solvers import SolverDidNotConverge
 from normix.fitting.eta import NormalMixtureEta
 from normix.mixtures.joint import JointNormalMixture
 
@@ -406,10 +407,190 @@ class TestEMDivergenceGuard:
         result = self._fit_with_forced_divergence(
             fitter, init, X, at_step=2)
         assert result.diverged is True
+        assert result.solver_failed is False
         assert not result.converged
         _assert_model_finite(result.model)
         assert int(result.n_iter) >= 1
         assert jnp.any(~jnp.isfinite(result.param_changes))
+
+
+def _tiny_vg():
+    X = jnp.array([[-0.4], [0.2], [0.7], [-0.1], [0.3], [1.1], [-0.8], [0.0]])
+    return VarianceGamma.default_init(X), X
+
+
+class _SolverFailModel:
+    """Delegates to a real mixture and fails the M-step like a dead solver."""
+
+    def __init__(self, inner, exc):
+        self._inner = inner
+        self._exc = exc
+
+    def replace(self, **kwargs):
+        return _SolverFailModel(self._inner.replace(**kwargs), self._exc)
+
+    def e_step(self, X, backend="jax"):
+        return self._inner.e_step(X, backend=backend)
+
+    def m_step(self, eta, **kwargs):
+        raise self._exc
+
+    def em_convergence_params(self):
+        return self._inner.em_convergence_params()
+
+    @property
+    def mu(self):
+        return self._inner.mu
+
+
+class TestEMSolverFailure:
+    """A failed inner solve is solver_failed, not a silent NaN model."""
+
+    @pytest.mark.parametrize("loop", ["scan", "python"])
+    def test_nonfinite_mixing_keeps_last_finite(self, loop, monkeypatch):
+        import equinox as eqx
+        from normix.mixtures.marginal import NormalMixture
+
+        init, X = _tiny_vg()
+        original = NormalMixture.m_step
+
+        def nan_mixing(self, eta, **kwargs):
+            new = original(self, eta, **kwargs)
+            return eqx.tree_at(lambda m: m._joint.alpha, new, jnp.nan)
+
+        monkeypatch.setattr(NormalMixture, "m_step", nan_mixing)
+        if loop == "scan":
+            backends = dict(e_step_backend="jax", m_step_backend="jax", verbose=0)
+        else:
+            backends = dict(e_step_backend="cpu", m_step_backend="cpu", verbose=0)
+        result = BatchEMFitter(max_iter=5, tol=1e-12, **backends).fit(init, X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.converged is False
+        assert result.n_iter == 1
+        _assert_model_finite(result.model)
+        for got, ref in zip(jax.tree.leaves(result.model), jax.tree.leaves(init)):
+            np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
+
+    @pytest.mark.parametrize("exc", [
+        SolverDidNotConverge("not inverted"),
+        ValueError("GIG domain"),
+    ])
+    @pytest.mark.parametrize("loop", ["cpu", "eager_jax"])
+    def test_solver_exception_keeps_last_finite(self, exc, loop):
+        init, X = _tiny_vg()
+        if loop == "cpu":
+            fitter = BatchEMFitter(
+                max_iter=4, tol=1e-12, verbose=0,
+                e_step_backend="cpu", m_step_backend="cpu",
+            )
+        else:
+            fitter = BatchEMFitter(
+                max_iter=4, tol=1e-12, verbose=2,
+                e_step_backend="jax", m_step_backend="jax",
+            )
+        result = fitter.fit(_SolverFailModel(init, exc), X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.converged is False
+        assert result.n_iter == 1
+        for got, ref in zip(
+            jax.tree.leaves(result.model._inner), jax.tree.leaves(init),
+        ):
+            np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
+
+    def test_unrelated_runtimeerror_propagates(self):
+        init, X = _tiny_vg()
+        with pytest.raises(RuntimeError, match="boom"):
+            BatchEMFitter(
+                max_iter=4, tol=1e-12, verbose=0,
+                e_step_backend="cpu", m_step_backend="cpu",
+            ).fit(_SolverFailModel(init, RuntimeError("boom")), X)
+
+    @pytest.mark.parametrize("exc", [
+        SolverDidNotConverge("not inverted"),
+        ValueError("GIG domain"),
+    ])
+    def test_cpu_gh_warm_failure_keeps_gig_and_continues(self, exc, monkeypatch):
+        from normix import GeneralizedHyperbolic
+        from normix.distributions.generalized_inverse_gaussian import GIG
+
+        model = GeneralizedHyperbolic.from_classical(
+            mu=jnp.zeros(1), gamma=jnp.zeros(1), sigma=jnp.eye(1),
+            p=1.0, a=1.0, b=1.0,
+        )
+        X = jnp.array([[0.2], [-0.4], [0.1], [0.5], [-0.2], [0.0]])
+
+        def fail(cls, eta, **kwargs):
+            raise exc
+
+        monkeypatch.setattr(GIG, "from_expectation", classmethod(fail))
+        updated = model.m_step_subordinator(model.e_step(X).eta, backend="cpu")
+        np.testing.assert_allclose(float(updated.p), 1.0)
+        np.testing.assert_allclose(float(updated.a), 1.0)
+        np.testing.assert_allclose(float(updated.b), 1.0)
+        result = BatchEMFitter(
+            max_iter=2, tol=1e-18, verbose=0,
+            e_step_backend="jax", m_step_backend="cpu",
+        ).fit(model, X)
+        assert result.solver_failed is False
+        assert result.diverged is False
+        assert result.n_iter == 2
+        np.testing.assert_allclose(float(result.model.p), 1.0)
+        np.testing.assert_allclose(float(result.model.a), 1.0)
+        np.testing.assert_allclose(float(result.model.b), 1.0)
+
+    def test_real_gig_domain_error_follows_solver_failure(self):
+        """An eager GIG moment-domain ValueError uses the item-2 paths."""
+        from types import SimpleNamespace
+
+        from normix import GeneralizedHyperbolic
+        from normix.distributions.generalized_inverse_gaussian import GIG
+
+        bad = jnp.array([0.0, 1.0, 1.0])
+        with pytest.raises(ValueError, match="GIG.from_expectation"):
+            GIG.from_expectation(bad)
+
+        model = GeneralizedHyperbolic.from_classical(
+            mu=jnp.zeros(1), gamma=jnp.zeros(1), sigma=jnp.eye(1),
+            p=1.0, a=1.0, b=1.0,
+        )
+        eta = SimpleNamespace(E_log_Y=bad[0], E_inv_Y=bad[1], E_Y=bad[2])
+        kept = model.m_step_subordinator(eta, backend="cpu")
+        np.testing.assert_allclose(float(kept.p), 1.0)
+        np.testing.assert_allclose(float(kept.a), 1.0)
+        np.testing.assert_allclose(float(kept.b), 1.0)
+
+        init, X = _tiny_vg()
+
+        class _RealDomain:
+            def __init__(self, inner):
+                self._inner = inner
+
+            def replace(self, **kwargs):
+                return _RealDomain(self._inner.replace(**kwargs))
+
+            def e_step(self, X, backend="jax"):
+                return self._inner.e_step(X, backend=backend)
+
+            def m_step(self, eta, **kwargs):
+                GIG.from_expectation(bad)
+                return self._inner
+
+            def em_convergence_params(self):
+                return self._inner.em_convergence_params()
+
+            @property
+            def mu(self):
+                return self._inner.mu
+
+        result = BatchEMFitter(
+            max_iter=3, tol=1e-12, verbose=2,
+            e_step_backend="jax", m_step_backend="jax",
+        ).fit(_RealDomain(init), X)
+        assert result.solver_failed is True
+        assert result.diverged is False
+        assert result.n_iter == 1
 
 
 def _review_vg_setup(scale: float = 1.0):

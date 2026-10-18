@@ -17,6 +17,9 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.exponential_family import _check_backend
+from normix.fitting.solvers import SolverDidNotConverge
+
 
 
 def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Array:
@@ -107,6 +110,34 @@ def _recenter_eta_update(model, rule, center: jax.Array):
     return type(rule)(rule.base, eta0, rule.tau)
 
 
+def _validate_fit_data(X: jax.Array) -> None:
+    """Reject an empty or non-finite sample at the host boundary.
+
+    A traced ``X`` skips the check so ``jit`` of ``fit`` still traces.
+    """
+    if isinstance(X, jax.core.Tracer):
+        return
+    if X.ndim == 0 or X.size == 0 or X.shape[0] == 0:
+        raise ValueError("fit received an empty sample")
+    if not bool(jnp.all(jnp.isfinite(X))):
+        raise ValueError("fit requires every observation to be finite")
+
+
+def _inexact_finite(tree) -> jax.Array:
+    """True when every floating leaf of ``tree`` is finite."""
+    ok = jnp.ones((), dtype=jnp.bool_)
+    for leaf in jax.tree.leaves(tree):
+        dtype = getattr(leaf, "dtype", None)
+        if dtype is not None and jnp.issubdtype(dtype, jnp.inexact):
+            ok = ok & jnp.all(jnp.isfinite(leaf))
+    return ok
+
+
+def _mixing_finite(model) -> jax.Array:
+    """True when the subordinator parameters are finite."""
+    return _inexact_finite(model.subordinator())
+
+
 def _restore_location(result: "EMResult", center: jax.Array) -> "EMResult":
     """Add the sample mean back onto ``result.model.mu``."""
     model = result.model.replace(mu=result.model.mu + center)
@@ -121,11 +152,15 @@ def _restore_location(result: "EMResult", center: jax.Array) -> "EMResult":
 class EMResult:
     """Result of an EM fitting procedure.
 
-    ``converged`` and ``diverged`` are separate because batch EM has three
-    outcomes: tolerance met (``converged=True``), a non-finite iterate was
-    reverted (``diverged=True``), or ``max_iter`` was exhausted with neither
-    (both ``False``). They are not opposites — ``converged=False`` covers both
-    divergence and a finite but not-yet-converged stop.
+    ``converged``, ``diverged``, and ``solver_failed`` are separate.
+    Tolerance met is ``converged=True``. A non-finite normal-block change
+    or objective is ``diverged=True``: the last finite model is kept.
+    A non-finite mixing distribution after the M-step is
+    ``solver_failed=True``, again with the last finite model kept.
+    On the Python loop, :class:`~normix.fitting.solvers.SolverDidNotConverge`
+    or ``ValueError`` sets the same flag.
+    Exhausting ``max_iter`` leaves all three false. They are not
+    opposites.
     """
     model: Any                              # fitted distribution (eqx.Module)
     log_likelihoods: Optional[jax.Array]    # (n_iter,) conjugacy mean LL, or None
@@ -134,6 +169,7 @@ class EMResult:
     converged: Optional[bool]               # None for IncrementalEMFitter (no convergence criterion)
     elapsed_time: float                     # wall-clock seconds
     diverged: bool = False                  # True when a non-finite iterate was reverted
+    solver_failed: bool = False             # True when mixing parameters were non-finite
 
 
 # ---------------------------------------------------------------------------
@@ -242,6 +278,8 @@ class BatchEMFitter:
             raise ValueError(
                 f"regularization must be one of {self._REGULARIZATIONS}, "
                 f"got {regularization!r}")
+        _check_backend(e_step_backend, name="e_step_backend")
+        _check_backend(m_step_backend, name="m_step_backend")
         self.algorithm = algorithm
         self.max_iter = max_iter
         self.tol = tol
@@ -253,8 +291,7 @@ class BatchEMFitter:
         self.eta_update = eta_update
         self.track_ll = track_ll
         self.m_step_kwargs = dict(m_step_kwargs) if m_step_kwargs else {}
-        # Test hook: force a non-finite max_change at this 1-based step.
-        # Used by ``tests/test_em_regression.py`` (``TestEMDivergenceGuard``).
+        # Test hook (1-based step). ``tests/test_em_regression.py``.
         self._force_nonfinite_at_step: int | None = None
 
     # ------------------------------------------------------------------
@@ -284,6 +321,7 @@ class BatchEMFitter:
         population moment.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
+        _validate_fit_data(X)
         center = jnp.mean(X, axis=0)
         X = X - center
         model = model.replace(mu=model.mu - center)
@@ -461,21 +499,24 @@ class BatchEMFitter:
         track_ll = self.track_ll
 
         def body(carry, _):
-            mdl, converged, diverged, n, ll_prev, ll_prev2 = carry
+            mdl, converged, diverged, solver_failed, n, ll_prev, ll_prev2 = carry
             mdl_new, max_change, _, obj = self._step(
                 mdl, X, target_log_det=target_log_det)
             step_no = n + 1
             force_at = self._force_nonfinite_at_step
             if force_at is not None:
                 max_change = jnp.where(step_no == force_at, jnp.nan, max_change)
-            finite = jnp.isfinite(max_change) & jnp.isfinite(obj)
-            done = converged | diverged
+            mix_ok = _mixing_finite(mdl_new)
+            iterate_ok = jnp.isfinite(max_change) & jnp.isfinite(obj)
+            finite = iterate_ok & mix_ok
+            done = converged | diverged | solver_failed
             remaining = _aitken_remaining(obj, ll_prev, ll_prev2)
             ready = step_no >= 3
-            # Freeze both flags after a prior stop so scan padding cannot
-            # flip converged↔diverged on an already-accepted / reverted model.
+            # Freeze flags after a prior stop so scan padding cannot
+            # flip converged↔diverged on an already-accepted model.
             conv_new = ~done & finite & ready & (remaining < self.tol)
-            diverged_new = diverged | (~finite & ~done)
+            solver_new = solver_failed | (~mix_ok & ~done)
+            diverged_new = diverged | (~iterate_ok & mix_ok & ~done)
             keep_old = done | ~finite
             mdl_out = jax.tree.map(
                 lambda new, old: jnp.where(keep_old, old, new), mdl_new, mdl)
@@ -485,7 +526,7 @@ class BatchEMFitter:
             ll_prev_out = jnp.where(keep_old, ll_prev, obj)
             obj_out = jnp.where(done, ll_prev, obj)
             carry_out = (
-                mdl_out, converged | conv_new, diverged_new, n_out,
+                mdl_out, converged | conv_new, diverged_new, solver_new, n_out,
                 ll_prev_out, ll_prev2_out,
             )
             if track_ll:
@@ -493,19 +534,22 @@ class BatchEMFitter:
             return carry_out, change_out
 
         init = (
-            model, jnp.bool_(False), jnp.bool_(False), jnp.int32(0),
+            model, jnp.bool_(False), jnp.bool_(False), jnp.bool_(False),
+            jnp.int32(0),
             jnp.asarray(0.0, dtype=jnp.float64),
             jnp.asarray(0.0, dtype=jnp.float64),
         )
         if track_ll:
             (
-                (final_model, converged, diverged, n_iter, last_ll, _),
+                (final_model, converged, diverged, solver_failed, n_iter, last_ll, _),
                 (param_changes, lls),
             ) = jax.lax.scan(body, init, None, length=self.max_iter)
             log_likelihoods = lls
         else:
-            (final_model, converged, diverged, n_iter, last_ll, _), param_changes = (
-                jax.lax.scan(body, init, None, length=self.max_iter))
+            (
+                (final_model, converged, diverged, solver_failed, n_iter, last_ll, _),
+                param_changes,
+            ) = jax.lax.scan(body, init, None, length=self.max_iter)
             log_likelihoods = None
 
         n_keep = int(n_iter)
@@ -519,7 +563,12 @@ class BatchEMFitter:
             if log_likelihoods is None:
                 log_likelihoods = jnp.array([last_ll])
             ll = float(last_ll)
-            if diverged:
+            if solver_failed:
+                status = (
+                    "Inner solver failed (non-finite mixing parameters; "
+                    "kept last finite model)"
+                )
+            elif diverged:
                 status = "Diverged (non-finite iterate; kept last finite model)"
             elif converged:
                 status = "Converged"
@@ -538,6 +587,7 @@ class BatchEMFitter:
             converged=bool(converged),
             elapsed_time=elapsed,
             diverged=bool(diverged),
+            solver_failed=bool(solver_failed),
         )
 
     # ------------------------------------------------------------------
@@ -553,6 +603,7 @@ class BatchEMFitter:
         ll_prev2 = None
         n_iter = 0
         diverged = False
+        solver_failed = False
         remaining = jnp.array(jnp.inf)
         max_change = jnp.array(jnp.inf)
 
@@ -568,14 +619,35 @@ class BatchEMFitter:
         for i in range(self.max_iter):
             t_iter = time.perf_counter()
             prev_model = model
-            model, max_change, eta_state, obj = self._step(
-                model, X, eta_state, target_log_det=target_log_det)
+            try:
+                model, max_change, eta_state, obj = self._step(
+                    model, X, eta_state, target_log_det=target_log_det)
+            except (SolverDidNotConverge, ValueError):
+                solver_failed = True
+                model = prev_model
+                changes.append(jnp.array(jnp.nan))
+                n_iter = i + 1
+                if self.verbose >= 1:
+                    print(
+                        "  EM inner solver failed; keeping last finite iterate."
+                    )
+                break
             force_at = self._force_nonfinite_at_step
             if force_at is not None and (i + 1) == force_at:
                 max_change = jnp.array(jnp.nan)
             dt = time.perf_counter() - t_iter
             changes.append(max_change)
             n_iter = i + 1
+
+            if not bool(_mixing_finite(model)):
+                model = prev_model
+                solver_failed = True
+                if self.verbose >= 1:
+                    print(
+                        "  EM inner solver failed (non-finite mixing "
+                        "parameters); keeping last finite iterate."
+                    )
+                break
 
             if not (bool(jnp.isfinite(max_change)) and bool(jnp.isfinite(obj))):
                 model = prev_model
@@ -628,6 +700,7 @@ class BatchEMFitter:
         elapsed = time.perf_counter() - t_total
         converged = (
             not diverged
+            and not solver_failed
             and n_iter >= 3
             and bool(remaining < self.tol)
         )
@@ -638,7 +711,12 @@ class BatchEMFitter:
                                float(changes[-1]),
                                float(remaining) if n_iter >= 3 else None)
         elif self.verbose == 1:
-            if diverged:
+            if solver_failed:
+                status = (
+                    "Inner solver failed (non-finite mixing parameters; "
+                    "kept last finite model)"
+                )
+            elif diverged:
                 status = "Diverged (non-finite iterate; kept last finite model)"
             else:
                 status = "Converged" if converged else "NOT converged"
@@ -653,6 +731,7 @@ class BatchEMFitter:
             converged=converged,
             elapsed_time=elapsed,
             diverged=diverged,
+            solver_failed=solver_failed,
         )
 
     # ------------------------------------------------------------------
@@ -775,6 +854,8 @@ class IncrementalEMFitter:
             raise ValueError(
                 f"regularization must be one of {self._REGULARIZATIONS}, "
                 f"got {regularization!r}")
+        _check_backend(e_step_backend, name="e_step_backend")
+        _check_backend(m_step_backend, name="m_step_backend")
         self.eta_update = eta_update
         self.batch_size = batch_size
         self.max_steps = max_steps
@@ -793,6 +874,7 @@ class IncrementalEMFitter:
         the initial model's own η is rebuilt in these coordinates.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
+        _validate_fit_data(X)
         center = jnp.mean(X, axis=0)
         X = X - center
         model = model.replace(mu=model.mu - center)

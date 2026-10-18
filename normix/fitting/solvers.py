@@ -25,9 +25,9 @@ Backends × methods
 backend='jax', method='newton'  custom lax.while_loop Newton, autodiff or analytical Hessian
 backend='jax', method='lbfgs'   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
 backend='jax', method='bfgs'    jaxopt BFGS with reparameterization for bounds
-backend='cpu', method='lbfgs'   scipy L-BFGS-B
-backend='cpu', method='bfgs'    scipy BFGS
-backend='cpu', method='newton'  scipy trust-exact with Hessian
+backend='cpu', method='lbfgs'   scipy L-BFGS-B (native bounds)
+backend='cpu', method='bfgs'    scipy BFGS; bounds via the same reparametrization
+backend='cpu', method='newton'  scipy trust-exact; bounds via the same reparametrization
 
 Gradient / Hessian sources
 --------------------------
@@ -45,7 +45,7 @@ The solver handles all reparameterization internally via the chain rule.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import partial
 from typing import Any, Callable, Optional, Tuple
 
@@ -72,9 +72,15 @@ class BregmanResult:
     theta: jax.Array    # optimal θ*
     fun: Any            # f(θ*) − θ*·η at solution
     grad_norm: Any      # ‖∇f(θ*) − η‖∞
-    num_steps: int      # iterations performed
-    converged: Any      # whether tolerance was met
+    num_steps: Any      # steps taken (SciPy nit, jaxopt iter_num)
+    converged: Any      # _inversion_converged; traceable
     elapsed_time: float = 0.0  # wall-clock seconds
+    kkt_residual: Any = None  # free residual of g_θ (bound multipliers dropped)
+    reason: Any = None  # int code, eager and traced; names in _REASON_NAMES
+
+
+class SolverDidNotConverge(RuntimeError):
+    """Eager Bregman inversion did not meet the residual tolerance."""
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +94,37 @@ def bregman_objective(
 ) -> jax.Array:
     """f(θ) − θ·η — convex dual whose minimum gives ∇f(θ*) = η."""
     return f(theta) - jnp.dot(theta, eta)
+
+
+_REASON_CONVERGED = 0
+_REASON_ATOL = 1
+_REASON_MAX_STEPS = 2
+_REASON_NONFINITE = 3
+_REASON_NAMES = ("converged", "atol", "max_steps", "non_finite")
+
+
+def _stop_parts(kkt: jax.Array, near: jax.Array, tol: float):
+    """Finite flag, strict tolerance, and the atol clause. One predicate."""
+    tol_b = jnp.asarray(tol, dtype=jnp.result_type(kkt, near))
+    atol = jnp.asarray(BREGMAN_INVERT_ATOL, dtype=tol_b.dtype)
+    finite = jnp.isfinite(kkt) & jnp.isfinite(near)
+    strict = finite & (kkt < tol_b)
+    atol_hit = finite & ~strict & (near < atol)
+    return finite, strict, atol_hit
+
+
+def _stop_reason(kkt: jax.Array, near: jax.Array, tol: float) -> jax.Array:
+    """Integer stop code. See :data:`_REASON_NAMES`."""
+    finite, strict, atol_hit = _stop_parts(kkt, near, tol)
+    return jnp.where(
+        ~finite,
+        jnp.int32(_REASON_NONFINITE),
+        jnp.where(
+            strict,
+            jnp.int32(_REASON_CONVERGED),
+            jnp.where(atol_hit, jnp.int32(_REASON_ATOL), jnp.int32(_REASON_MAX_STEPS)),
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -123,12 +160,14 @@ def solve_bregman(
     method : 'lbfgs', 'bfgs', or 'newton'
     bounds : tuple of jax.Array, or None
         ``(lower, upper)`` pair, each shape ``(d,)``; ``None`` → unconstrained.
-        For backend='jax': enforced via reparameterization.
-        For backend='cpu': converted to scipy format internally.
+        JAX Newton, JAX BFGS, CPU BFGS, and CPU trust-exact enforce bounds
+        by reparameterization. CPU L-BFGS-B takes them natively.
     max_steps : int
         Iteration budget.
     tol : float
         Convergence tolerance on ‖∇f(θ) − η‖∞.
+        On a reparametrised CPU solve, SciPy ``gtol`` is the φ-gradient.
+        ``converged`` is still the free θ residual.
     grad_fn : Callable, optional
         θ → ∇f(θ).
         For backend='cpu': must accept and return numpy arrays.
@@ -154,34 +193,27 @@ def solve_bregman(
 
     if backend == "jax":
         if method == "newton":
-            theta, fun, gn, conv, steps = _jax_newton_raw(
+            theta, fun, gn, conv, n_iter, kkt, reason = _jax_newton_raw(
                 f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
             )
-            # No float()/bool() here — values may be JAX tracers inside lax.scan
             result = BregmanResult(
                 theta=theta,
                 fun=fun,
                 grad_norm=gn,
-                num_steps=steps,
+                num_steps=n_iter,
                 converged=conv,
                 elapsed_time=time.perf_counter() - t0,
+                kkt_residual=kkt,
+                reason=reason,
             )
         elif method in ("lbfgs", "bfgs"):
             result = _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method)
-            result = BregmanResult(
-                theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
-                num_steps=result.num_steps, converged=result.converged,
-                elapsed_time=time.perf_counter() - t0,
-            )
+            result = replace(result, elapsed_time=time.perf_counter() - t0)
         else:
             raise ValueError(f"Unknown method {method!r}. Choose 'newton', 'lbfgs', 'bfgs'.")
     elif backend == "cpu":
         result = _cpu_solve(f, eta, theta0, bounds, max_steps, tol, method, grad_fn, hess_fn)
-        result = BregmanResult(
-            theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
-            num_steps=result.num_steps, converged=result.converged,
-            elapsed_time=time.perf_counter() - t0,
-        )
+        result = replace(result, elapsed_time=time.perf_counter() - t0)
     else:
         raise ValueError(f"Unknown backend {backend!r}. Choose 'jax' or 'cpu'.")
 
@@ -225,11 +257,14 @@ def solve_bregman_multistart(
     """
     t0 = time.perf_counter()
     if backend == "jax" and method in ("newton", "lbfgs", "bfgs"):
-        theta, fun, gn, conv, steps = _multistart_jax(
+        theta, fun, gn, conv, steps, kkt, reason = _multistart_jax(
             f, eta, jnp.asarray(theta0_batch, dtype=jnp.float64),
             bounds, max_steps, tol, grad_fn, hess_fn, method,
         )
-        result = BregmanResult(theta, fun, gn, steps, conv)
+        result = BregmanResult(
+            theta, fun, gn, steps, conv,
+            kkt_residual=kkt, reason=reason,
+        )
     else:
         theta0_list = list(theta0_batch) if not isinstance(theta0_batch, list) else theta0_batch
         result = _multistart_loop(
@@ -238,17 +273,13 @@ def solve_bregman_multistart(
             max_steps=max_steps, tol=tol, grad_fn=grad_fn, hess_fn=hess_fn,
         )
     elapsed = time.perf_counter() - t0
-    result = BregmanResult(
-        theta=result.theta, fun=result.fun, grad_norm=result.grad_norm,
-        num_steps=result.num_steps, converged=result.converged,
-        elapsed_time=elapsed,
-    )
+    result = replace(result, elapsed_time=elapsed)
     if verbose >= 1 and not isinstance(result.grad_norm, jax.core.Tracer):
         k = len(theta0_batch) if hasattr(theta0_batch, '__len__') else '?'
-        status = "converged" if result.converged else "NOT converged"
+        status = "converged" if bool(np.asarray(result.converged)) else "NOT converged"
         print(
             f"Bregman multistart [{backend}/{method}, {k} starts]: "
-            f"{status} ({elapsed:.3f}s), |grad|={result.grad_norm:.2e}"
+            f"{status} ({elapsed:.3f}s), |grad|={float(result.grad_norm):.2e}"
         )
     return result
 
@@ -261,6 +292,65 @@ _NEG_EXP = 0
 _POS_EXP = 1
 _IDENTITY = 2
 _BOUNDED = 3
+
+
+def _reparam_coeffs(bounds: Tuple[jax.Array, jax.Array]):
+    """Bound type, safe lower endpoint, and span for each coordinate."""
+    lower, upper = bounds
+    lower = jnp.asarray(lower, dtype=jnp.float64)
+    upper = jnp.asarray(upper, dtype=jnp.float64)
+    is_neg_inf_lo = jnp.isinf(lower) & (lower < 0)
+    is_pos_inf_hi = jnp.isinf(upper) & (upper > 0)
+    btype = jnp.where(
+        is_neg_inf_lo & (upper == 0.0), _NEG_EXP,
+        jnp.where(
+            (lower == 0.0) & is_pos_inf_hi, _POS_EXP,
+            jnp.where(
+                is_neg_inf_lo & is_pos_inf_hi, _IDENTITY,
+                _BOUNDED)))
+    lo_safe = jnp.where(jnp.isinf(lower), 0.0, lower)
+    hi_safe = jnp.where(jnp.isinf(upper), 1.0, upper)
+    span = jnp.maximum(hi_safe - lo_safe, LOG_EPS)
+    return btype, lo_safe, span
+
+
+def _sigmoid_np(phi: np.ndarray) -> np.ndarray:
+    return np.where(
+        phi >= 0.0,
+        1.0 / (1.0 + np.exp(-phi)),
+        np.exp(phi) / (1.0 + np.exp(phi)),
+    )
+
+
+def _theta_map_np(phi, btype, lo, span):
+    """θ(φ), θ'(φ), θ''(φ). The map is diagonal.
+
+    Exp, either sign: θ' = θ'' = θ.
+    Sigmoid on a finite span: θ' = span·s·(1−s),
+    θ'' = span·s·(1−s)·(1−2s).
+    Identity: θ' = 1, θ'' = 0.
+    """
+    phi = np.asarray(phi, dtype=np.float64)
+    btype = np.asarray(btype)
+    lo = np.asarray(lo, dtype=np.float64)
+    span = np.asarray(span, dtype=np.float64)
+    s = _sigmoid_np(phi)
+    exp_phi = np.exp(phi)
+    theta = np.where(
+        btype == _NEG_EXP, -exp_phi,
+        np.where(
+            btype == _POS_EXP, exp_phi,
+            np.where(btype == _BOUNDED, lo + span * s, phi),
+        ),
+    )
+    s1 = s * (1.0 - s)
+    exp_bound = (btype == _NEG_EXP) | (btype == _POS_EXP)
+    d1 = np.where(exp_bound, theta, np.where(btype == _BOUNDED, span * s1, 1.0))
+    d2 = np.where(
+        exp_bound, theta,
+        np.where(btype == _BOUNDED, span * s1 * (1.0 - 2.0 * s), 0.0),
+    )
+    return theta, d1, d2
 
 
 def _setup_reparam(
@@ -283,24 +373,7 @@ def _setup_reparam(
     if bounds is None:
         return theta0, lambda phi: phi, lambda theta: theta
 
-    lower, upper = bounds
-    lower = jnp.asarray(lower, dtype=jnp.float64)
-    upper = jnp.asarray(upper, dtype=jnp.float64)
-
-    is_neg_inf_lo = jnp.isinf(lower) & (lower < 0)
-    is_pos_inf_hi = jnp.isinf(upper) & (upper > 0)
-
-    btype = jnp.where(
-        is_neg_inf_lo & (upper == 0.0), _NEG_EXP,
-        jnp.where(
-            (lower == 0.0) & is_pos_inf_hi, _POS_EXP,
-            jnp.where(
-                is_neg_inf_lo & is_pos_inf_hi, _IDENTITY,
-                _BOUNDED)))
-
-    lo_safe = jnp.where(jnp.isinf(lower), 0.0, lower)
-    hi_safe = jnp.where(jnp.isinf(upper), 1.0, upper)
-    span = jnp.maximum(hi_safe - lo_safe, LOG_EPS)
+    btype, lo_safe, span = _reparam_coeffs(bounds)
 
     def to_theta(phi: jax.Array) -> jax.Array:
         return jnp.where(btype == _NEG_EXP, -jnp.exp(phi),
@@ -397,10 +470,8 @@ def _inversion_converged(g, theta, bounds, tol) -> jax.Array:
     """
     kkt = _kkt_residual(g, theta, bounds)
     near = _kkt_residual(g, theta, bounds, gap=KKT_NEAR_GAP)
-    tol_b = jnp.asarray(tol, dtype=jnp.result_type(g, theta))
-    atol = jnp.asarray(BREGMAN_INVERT_ATOL, dtype=tol_b.dtype)
-    finite = jnp.isfinite(kkt) & jnp.isfinite(near)
-    return finite & ((kkt < tol_b) | (near < atol))
+    _finite, strict, atol_hit = _stop_parts(kkt, near, tol)
+    return strict | atol_hit
 
 
 def _jax_newton_raw(
@@ -412,7 +483,7 @@ def _jax_newton_raw(
     tol: float,
     grad_fn,   # theta → ∇ψ(θ), or None
     hess_fn,   # theta → ∇²ψ(θ), or None
-) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array, jax.Array]:
     r"""Gauss–Newton in reparametrised :math:`\phi`-space with early stopping.
 
     When ``grad_fn`` and ``hess_fn`` are both provided the chain rule is
@@ -454,8 +525,14 @@ def _jax_newton_raw(
     step, accepted at a tiny Armijo length, walks the GIG warm start
     into that bound.
 
-    Returns ``(theta_opt, fun, grad_norm, converged, num_steps)`` as JAX
-    arrays. Iteration stops at the strict KKT tolerance or ``max_steps``.
+    Returns ``(theta_opt, fun, grad_norm, converged, num_steps, kkt, reason)``
+    as JAX arrays. The loop stops when the pre-step residual is inside
+    ``tol`` or the budget is spent. ``num_steps`` counts steps taken.
+    The check that finds an interior start, and the check after the last
+    step, do not increment it. A start already inside ``tol`` reports 0.
+    ``converged`` is :func:`_inversion_converged` at the returned point.
+    ``kkt`` is the free residual there. ``reason`` is an integer code
+    (:data:`_REASON_NAMES`), the same array type eager and traced.
     """
     phi0, to_theta, _ = _setup_reparam(theta0, bounds)
 
@@ -515,7 +592,7 @@ def _jax_newton_raw(
         return (step < max_steps) & ~converged
 
     def newton_body(carry):
-        step, phi, converged = carry
+        step, phi, _converged = carry
         g, H, g_theta = get_g_H(phi)
         H_safe = _damped_hessian(H) if damp_phi else H
         delta = jnp.linalg.solve(H_safe, g)
@@ -535,25 +612,23 @@ def _jax_newton_raw(
                 operand=None,
             )
         theta = to_theta(phi)
-        converged_new = converged | (_kkt_residual(g_theta, theta, bounds) < tol)
-        phi_out = jnp.where(converged_new, phi, phi_new)
-        return step + 1, phi_out, converged_new
+        pre_ok = _kkt_residual(g_theta, theta, bounds) < tol
+        phi_out = jnp.where(pre_ok, phi, phi_new)
+        step_out = step + jnp.where(pre_ok, jnp.int32(0), jnp.int32(1))
+        return step_out, phi_out, pre_ok
 
-    num_steps, phi_opt, converged = jax.lax.while_loop(
+    num_steps, phi_opt, _stopped = jax.lax.while_loop(
         newton_cond, newton_body, (jnp.int32(0), phi0, jnp.bool_(False)),
     )
     theta_opt = to_theta(phi_opt)
     g_final = _natural_grad(f, eta, theta_opt, grad_fn)
     grad_norm = jnp.max(jnp.abs(g_final))
-    # The loop stops once the pre-step KKT residual is under tol. The
-    # last accepted step can land inside tol without a further frozen check.
-    # The returned flag is wider: a free residual under BREGMAN_INVERT_ATOL
-    # (multiplier dropped inside KKT_NEAR_GAP) is an inverted η.
-    strict = _kkt_residual(g_final, theta_opt, bounds) < tol
-    converged = converged | _inversion_converged(g_final, theta_opt, bounds, tol)
-    converged = converged | strict
+    kkt = _kkt_residual(g_final, theta_opt, bounds)
+    near = _kkt_residual(g_final, theta_opt, bounds, gap=KKT_NEAR_GAP)
+    converged = _inversion_converged(g_final, theta_opt, bounds, tol)
+    reason = _stop_reason(kkt, near, tol)
     final_obj = f(theta_opt) - jnp.dot(theta_opt, eta)
-    return theta_opt, final_obj, grad_norm, converged, num_steps
+    return theta_opt, final_obj, grad_norm, converged, num_steps, kkt, reason
 
 
 def _require_solved_theta(
@@ -563,15 +638,12 @@ def _require_solved_theta(
     grad_norm: Any = None,
     traced: bool = False,
 ) -> jax.Array:
-    """Return ``theta`` only when the Bregman solve converged.
+    """Return ``theta`` when the Bregman solve converged.
 
-    ``traced`` preserves the caller's trace context when solve inputs
-    were stopped for implicit differentiation. Eager calls raise
-    :class:`RuntimeError`. Under tracing (``jit``,
-    ``lax.scan``, EM) a failed solve is NaN, so the caller cannot treat
-    an uninverted :math:`\\eta` as a model. GH M-step sanity checks
-    already reject non-finite subordinator parameters and keep the
-    previous ones.
+    ``traced`` keeps the caller's trace when the solve inputs were
+    stopped for implicit differentiation. An eager call raises
+    :class:`SolverDidNotConverge`. A traced call returns NaN, so a
+    failed solve is not a model.
     """
     converged_b = jnp.asarray(converged, dtype=jnp.bool_)
     masked = jnp.where(converged_b, theta, jnp.full_like(theta, jnp.nan))
@@ -585,7 +657,7 @@ def _require_solved_theta(
             detail = f" (‖∇f(θ)−η‖∞={float(grad_norm):.3e})"
         except (TypeError, ValueError, jax.errors.ConcretizationTypeError):
             detail = ""
-    raise RuntimeError(
+    raise SolverDidNotConverge(
         "Bregman solve did not converge"
         + detail
         + "; refusing to return a model whose expectation parameters were not inverted."
@@ -639,9 +711,10 @@ def make_jit_newton_solver(
               max_steps: int = 20, tol: float = 1e-10):
         eta = jnp.asarray(eta, dtype=jnp.float64)
         theta0 = jnp.asarray(theta0, dtype=jnp.float64)
-        return _jax_newton_raw(
+        theta, fun, grad_norm, converged, *_rest = _jax_newton_raw(
             f, eta, theta0, bounds, max_steps, tol, grad_fn, hess_fn,
-        )[:4]
+        )
+        return theta, fun, grad_norm, converged
 
     return solve
 
@@ -657,8 +730,11 @@ def _multistart_jax(
                 f, eta, t0, bounds, max_steps, tol, grad_fn, hess_fn,
             )
         result = _jax_quasi_newton(f, eta, t0, bounds, max_steps, tol, method)
-        return (result.theta, result.fun, result.grad_norm,
-                result.converged, jnp.asarray(result.num_steps, dtype=jnp.int32))
+        return (
+            result.theta, result.fun, result.grad_norm, result.converged,
+            jnp.asarray(result.num_steps, dtype=jnp.int32),
+            result.kkt_residual, result.reason,
+        )
 
     def cond(state):
         i, best = state
@@ -674,8 +750,13 @@ def _multistart_jax(
         return i + 1, best
 
     unsolved = (
-        theta0_batch[0], jnp.array(jnp.inf, dtype=theta0_batch.dtype),
-        jnp.array(jnp.inf, dtype=theta0_batch.dtype), jnp.bool_(False), jnp.int32(0),
+        theta0_batch[0],
+        jnp.array(jnp.inf, dtype=theta0_batch.dtype),
+        jnp.array(jnp.inf, dtype=theta0_batch.dtype),
+        jnp.bool_(False),
+        jnp.int32(0),
+        jnp.array(jnp.inf, dtype=theta0_batch.dtype),
+        jnp.int32(_REASON_NONFINITE),
     )
     _, best = jax.lax.while_loop(cond, body, (jnp.int32(0), unsolved))
     return best
@@ -717,13 +798,16 @@ def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> Bregman
     # while g_θ is still O(1). Acceptance is the natural residual.
     state = result.state
     n_iter = state.iter_num if hasattr(state, "iter_num") else max_steps
-
+    kkt = _kkt_residual(g, theta_opt, bounds)
+    near = _kkt_residual(g, theta_opt, bounds, gap=KKT_NEAR_GAP)
     return BregmanResult(
         theta=theta_opt,
         fun=final_obj,
         grad_norm=jnp.max(jnp.abs(g)),
         num_steps=n_iter,
         converged=_inversion_converged(g, theta_opt, bounds, tol),
+        kkt_residual=kkt,
+        reason=_stop_reason(kkt, near, tol),
     )
 
 
@@ -742,6 +826,12 @@ def _cpu_solve(
         No JAX dispatch — suitable when f itself uses scipy (e.g. CPU Bessel).
     Hybrid  (grad_fn=None): f is a JAX function; gradient via jax.grad.
         Inputs are converted to jnp arrays for tracing.
+
+    BFGS and trust-exact have no box constraints. Bounds use the same
+    diagonal φ map as the JAX solver. θ' and θ'' are closed form.
+    SciPy ``gtol`` stops on the φ-gradient. ``converged`` is the free
+    θ residual. Trust-exact keeps
+    :math:`\\sum_i (g_\\theta)_i \\theta_i''(\\phi)` in the Hessian.
     """
     from scipy.optimize import minimize
 
@@ -768,17 +858,46 @@ def _cpu_solve(
 
     scipy_method = {"lbfgs": "L-BFGS-B", "bfgs": "BFGS", "newton": "trust-exact"}[method]
 
-    scipy_bounds = None
-    if bounds is not None:
-        lo_np = np.asarray(bounds[0], dtype=np.float64)
-        hi_np = np.asarray(bounds[1], dtype=np.float64)
-        scipy_bounds = list(zip(lo_np, hi_np))
+    use_reparam = bounds is not None and method != "lbfgs"
+    map_coeffs = None
+    if use_reparam:
+        phi0, _, _ = _setup_reparam(jnp.asarray(theta0_np), bounds)
+        btype, lo_safe, span = _reparam_coeffs(bounds)
+        map_coeffs = (
+            np.asarray(btype),
+            np.asarray(lo_safe, dtype=np.float64),
+            np.asarray(span, dtype=np.float64),
+        )
+
+        def _at(phi_np):
+            return _theta_map_np(phi_np, *map_coeffs)
+
+        def fun_phi(phi_np):
+            theta, _d1, _d2 = _at(phi_np)
+            return fun_np(theta)
+
+        def jac_phi(phi_np):
+            theta, d1, _d2 = _at(phi_np)
+            return d1 * jac_np(theta)
+
+        x0 = np.asarray(phi0, dtype=np.float64)
+        objective = fun_phi
+        jac_used = jac_phi
+    else:
+        x0 = theta0_np
+        objective = fun_np
+        jac_used = jac_np
 
     kwargs: dict = {
-        "jac": jac_np,
+        "jac": jac_used,
         "options": {"maxiter": max_steps, "gtol": tol},
     }
     if method == "lbfgs":
+        scipy_bounds = None
+        if bounds is not None:
+            lo_np = np.asarray(bounds[0], dtype=np.float64)
+            hi_np = np.asarray(bounds[1], dtype=np.float64)
+            scipy_bounds = list(zip(lo_np, hi_np))
         kwargs["bounds"] = scipy_bounds
         kwargs["options"]["ftol"] = tol ** 2
     if method == "newton":
@@ -787,24 +906,45 @@ def _cpu_solve(
                 "method='newton' with backend='cpu' requires hess_fn. "
                 "Provide _hessian_log_partition_cpu or equivalent."
             )
+
         def hess_np(theta_np):
             return np.asarray(
                 hess_fn(np.asarray(theta_np, dtype=np.float64)), dtype=np.float64)
-        kwargs["hess"] = hess_np
 
-    result = minimize(fun_np, theta0_np, method=scipy_method, **kwargs)
-    theta_opt = jnp.asarray(result.x, dtype=jnp.float64)
-    jac_val = result.jac if result.jac is not None else jac_np(result.x)
+        if use_reparam:
+            def hess_phi(phi_np):
+                theta, d1, d2 = _at(phi_np)
+                g_theta = jac_np(theta)
+                hess = hess_np(theta)
+                sandwiched = d1[:, None] * hess * d1[None, :]
+                return sandwiched + np.diag(g_theta * d2)
+
+            kwargs["hess"] = hess_phi
+        else:
+            kwargs["hess"] = hess_np
+
+    result = minimize(objective, x0, method=scipy_method, **kwargs)
+    if use_reparam:
+        theta_np, _d1, _d2 = _at(result.x)
+        theta_opt = jnp.asarray(theta_np, dtype=jnp.float64)
+        jac_val = jac_np(theta_np)
+    else:
+        theta_opt = jnp.asarray(result.x, dtype=jnp.float64)
+        jac_val = result.jac if result.jac is not None else jac_np(result.x)
     g = jnp.asarray(jac_val, dtype=jnp.float64)
     # scipy success is not the natural residual: trust-exact status 2
     # stops just above gtol, and L-BFGS-B can report success with a
     # large bound multiplier. Gate on the free residual.
+    kkt = _kkt_residual(g, theta_opt, bounds)
+    near = _kkt_residual(g, theta_opt, bounds, gap=KKT_NEAR_GAP)
     return BregmanResult(
         theta=theta_opt,
         fun=float(result.fun),
         grad_norm=float(np.max(np.abs(jac_val))),
         num_steps=int(result.nit),
-        converged=bool(_inversion_converged(g, theta_opt, bounds, tol)),
+        converged=_inversion_converged(g, theta_opt, bounds, tol),
+        kkt_residual=kkt,
+        reason=_stop_reason(kkt, near, tol),
     )
 
 

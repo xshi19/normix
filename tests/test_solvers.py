@@ -13,10 +13,12 @@ import jax.numpy as jnp
 
 from normix.fitting.solvers import (
     BregmanResult,
+    SolverDidNotConverge,
+    _REASON_NAMES,
+    _setup_reparam,
     bregman_objective,
     solve_bregman,
     solve_bregman_multistart,
-    _setup_reparam,
 )
 from normix.utils.constants import THETA_FLOOR
 
@@ -200,6 +202,63 @@ class TestSolveBregmanQuadratic:
             hess_fn=lambda t: jnp.eye(3),  # ∇²f = I for quadratic
         )
         np.testing.assert_allclose(r.theta, eta, rtol=1e-5, atol=1e-7)
+
+    def test_jax_newton_reports_steps_until_stop(self):
+        """One Newton step that lands inside tol reports 1, not the budget."""
+        eta = jnp.array([1.0, -2.0])
+        r = solve_bregman(
+            quadratic_f, eta, jnp.zeros(2),
+            backend="jax", method="newton", max_steps=40, tol=1e-4,
+            grad_fn=lambda t: t,
+            hess_fn=lambda t: jnp.eye(2),
+        )
+        assert _REASON_NAMES[int(np.asarray(r.reason))] == "converged"
+        assert int(np.asarray(r.num_steps)) == 1
+        assert float(r.kkt_residual) < 1e-4
+        np.testing.assert_allclose(r.theta, eta, atol=1e-4)
+        assert bool(np.asarray(r.converged))
+
+    def test_jax_newton_max_steps_reason(self):
+        def cosh_sum(theta):
+            return jnp.sum(jnp.cosh(theta))
+
+        r = solve_bregman(
+            cosh_sum, jnp.array([0.0]), jnp.array([2.0]),
+            backend="jax", method="newton", max_steps=1, tol=1e-12,
+        )
+        assert _REASON_NAMES[int(np.asarray(r.reason))] == "max_steps"
+        assert int(np.asarray(r.num_steps)) == 1
+        assert not bool(np.asarray(r.converged))
+        assert float(r.kkt_residual) > 1e-3
+
+
+def _cpu_quad_grad(theta):
+    return np.asarray(theta, dtype=np.float64).copy()
+
+
+def _cpu_quad_hess(theta):
+    return np.eye(np.asarray(theta).shape[0])
+
+
+def test_cpu_bfgs_and_newton_honour_bounds():
+    """The unconstrained minimizer is θ=1. A θ≤0 constraint must hold it."""
+    eta = jnp.array([1.0])
+    theta0 = jnp.array([-0.5])
+    bounds = (jnp.array([-jnp.inf]), jnp.array([0.0]))
+
+    def objective(theta):
+        return 0.5 * jnp.dot(theta, theta)
+
+    for method, hess in (("bfgs", None), ("newton", _cpu_quad_hess), ("lbfgs", None)):
+        r = solve_bregman(
+            objective, eta, theta0,
+            backend="cpu", method=method, bounds=bounds,
+            max_steps=80, tol=1e-8,
+            grad_fn=_cpu_quad_grad, hess_fn=hess,
+        )
+        assert float(r.theta[0]) <= 1e-8, method
+        assert float(r.theta[0]) > -1e-3, method
+        assert bool(np.asarray(r.converged)), method
 
 
 def test_damped_hessian_scales_with_trace():
@@ -807,7 +866,7 @@ class TestJaxNewtonGaussAndResidual:
         from normix import GIG
         target = GIG(p=0.5, a=1.0, b=1.0)
         warm = GIG(p=0.0, a=10.0, b=10.0)
-        with pytest.raises(RuntimeError, match="did not converge"):
+        with pytest.raises(SolverDidNotConverge, match="did not converge"):
             GIG.from_expectation(
                 target.expectation_params(),
                 theta0=warm.natural_params(),

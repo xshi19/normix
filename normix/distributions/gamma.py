@@ -29,10 +29,11 @@ from __future__ import annotations
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from normix.utils.quadrature import DiscreteMeasure
 from normix.utils.constants import SCENARIO_QUAD_NODES
-from normix.exponential_family import ExponentialFamily
+from normix.exponential_family import ExponentialFamily, _check_backend
 from normix.utils.constants import LOG_EPS
 from normix.utils.gammainc import gammaincinv
 
@@ -304,8 +305,20 @@ class Gamma(ExponentialFamily):
             it restricts the estimator to a region where the VG marginal
             likelihood is bounded. ``None`` (default) leaves the estimate
             unconstrained. JIT-safe (no Python branch on traced values).
+
+        Raises
+        ------
+        ValueError
+            ``backend`` is not ``'jax'`` or ``'cpu'``, or a concrete
+            ``eta`` is not a finite Gamma moment. A finite Gamma needs
+            :math:`\\mathbb{E}[X] > 0` and
+            :math:`\\mathbb{E}[\\log X] < \\log\\mathbb{E}[X]`
+            (Jensen; equality is the infinite-shape limit). A traced
+            ``eta`` (``jit``, ``vmap``) skips the moment check.
         """
+        _check_backend(backend)
         eta_target = jnp.asarray(eta, dtype=jnp.float64)
+        _reject_inadmissible_gamma_eta(eta_target)
         eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2 = eta[0], eta[1]
         target = eta1 - jnp.log(eta2)
@@ -324,6 +337,25 @@ class Gamma(ExponentialFamily):
             alpha = jnp.maximum(alpha, alpha_min)
             beta = jnp.maximum(alpha / eta_target[1], LOG_EPS)
         return cls(alpha=alpha, beta=beta)
+
+
+def _reject_inadmissible_gamma_eta(eta: jax.Array) -> None:
+    """Host-side Jensen check. Traced ``eta`` is left to the Newton loop."""
+    if isinstance(eta, jax.core.Tracer):
+        return
+    arr = np.asarray(eta, dtype=np.float64)
+    admissible = (
+        arr.shape == (2,)
+        and np.isfinite(arr).all()
+        and arr[1] > 0.0
+        and arr[0] < np.log(arr[1])
+    )
+    if not admissible:
+        raise ValueError(
+            "Gamma.from_expectation: no finite Gamma has these moments. "
+            "Need a length-2 finite eta with E[X] > 0 and "
+            "E[log X] < log E[X]."
+        )
 
 
 @jax.jit

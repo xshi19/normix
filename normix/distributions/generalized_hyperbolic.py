@@ -25,6 +25,7 @@ b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 """
 from __future__ import annotations
 
+import math
 from typing import Tuple
 
 import jax
@@ -38,6 +39,40 @@ from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixi
 
 
 from normix.utils.constants import LOG_EPS, GIG_CLAMP_LO, GIG_CLAMP_HI, GIG_P_MAX
+
+
+def _gig_or_previous(gig_new, current):
+    """Keep ``current`` only when the solve is finite and outside the clamp.
+
+    A non-finite solve is returned as-is so EM can set ``solver_failed``
+    instead of silently continuing with the previous subordinator.
+    """
+    finite = jnp.isfinite(gig_new.p) & jnp.isfinite(gig_new.a) & jnp.isfinite(gig_new.b)
+    out_of_range = (
+        (jnp.abs(gig_new.p) > GIG_P_MAX)
+        | (gig_new.a < GIG_CLAMP_LO) | (gig_new.a > GIG_CLAMP_HI)
+        | (gig_new.b < GIG_CLAMP_LO) | (gig_new.b > GIG_CLAMP_HI)
+    )
+    return jax.tree.map(
+        lambda new, old: jnp.where(finite & out_of_range, old, new),
+        gig_new, current,
+    )
+
+
+def _cpu_gig_or_previous(gig_new, current):
+    """Host twin of :func:`_gig_or_previous`."""
+    p_new = float(gig_new.p)
+    a_new = float(gig_new.a)
+    b_new = float(gig_new.b)
+    finite = math.isfinite(p_new) and math.isfinite(a_new) and math.isfinite(b_new)
+    out_of_range = (
+        abs(p_new) > GIG_P_MAX
+        or a_new > GIG_CLAMP_HI or b_new > GIG_CLAMP_HI
+        or a_new < GIG_CLAMP_LO or b_new < GIG_CLAMP_LO
+    )
+    if finite and out_of_range:
+        return current
+    return gig_new
 
 
 # ============================================================================
@@ -373,6 +408,14 @@ class GeneralizedHyperbolic(NormalMixture):
         return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
     def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
+        """Warm-start the GIG solve from the current subordinator.
+
+        On CPU, a failed solve keeps this GIG and EM continues.
+        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        A finite solve outside the clamp does the same.
+        A non-finite JAX solve is left in place so EM can set
+        ``solver_failed``.
+        """
         from normix.distributions.generalized_inverse_gaussian import GIG
         j = self._joint
         backend = kwargs.get('backend', 'jax')
@@ -389,30 +432,17 @@ class GeneralizedHyperbolic(NormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-                p_new = float(gig_new.p)
-                a_new = float(gig_new.a)
-                b_new = float(gig_new.b)
-                if (abs(p_new) > GIG_P_MAX
-                        or a_new > GIG_CLAMP_HI or b_new > GIG_CLAMP_HI
-                        or a_new < GIG_CLAMP_LO or b_new < GIG_CLAMP_LO):
-                    gig_new = current_gig
             except Exception:
                 gig_new = current_gig
+            else:
+                gig_new = _cpu_gig_or_previous(gig_new, current_gig)
         else:
             gig_new = GIG.from_expectation(
                 gig_eta,
                 theta0=current_gig.natural_params(),
                 backend=backend, method=method, maxiter=maxiter,
             )
-            sane = (
-                (jnp.abs(gig_new.p) <= GIG_P_MAX)
-                & (gig_new.a >= GIG_CLAMP_LO) & (gig_new.a <= GIG_CLAMP_HI)
-                & (gig_new.b >= GIG_CLAMP_LO) & (gig_new.b <= GIG_CLAMP_HI)
-            )
-            gig_new = jax.tree.map(
-                lambda new, old: jnp.where(sane, new, old),
-                gig_new, current_gig,
-            )
+            gig_new = _gig_or_previous(gig_new, current_gig)
 
         joint_new = JointGeneralizedHyperbolic(
             mu=j.mu, gamma=j.gamma, L_Sigma=j.L_Sigma,
@@ -663,6 +693,14 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         return self.m_step_normal(eta).m_step_subordinator(eta, **kwargs)
 
     def m_step_subordinator(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
+        """Warm-start the GIG solve from the current subordinator.
+
+        On CPU, a failed solve keeps this GIG and EM continues.
+        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        A finite solve outside the clamp does the same.
+        A non-finite JAX solve is left in place so EM can set
+        ``solver_failed``.
+        """
         from normix.distributions.generalized_inverse_gaussian import GIG
         backend = kwargs.get('backend', 'jax')
         method = kwargs.get('method', 'newton')
@@ -678,30 +716,17 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-                p_new = float(gig_new.p)
-                a_new = float(gig_new.a)
-                b_new = float(gig_new.b)
-                if (abs(p_new) > GIG_P_MAX
-                        or a_new > GIG_CLAMP_HI or b_new > GIG_CLAMP_HI
-                        or a_new < GIG_CLAMP_LO or b_new < GIG_CLAMP_LO):
-                    gig_new = current_gig
             except Exception:
                 gig_new = current_gig
+            else:
+                gig_new = _cpu_gig_or_previous(gig_new, current_gig)
         else:
             gig_new = GIG.from_expectation(
                 gig_eta,
                 theta0=current_gig.natural_params(),
                 backend=backend, method=method, maxiter=maxiter,
             )
-            sane = (
-                (jnp.abs(gig_new.p) <= GIG_P_MAX)
-                & (gig_new.a >= GIG_CLAMP_LO) & (gig_new.a <= GIG_CLAMP_HI)
-                & (gig_new.b >= GIG_CLAMP_LO) & (gig_new.b <= GIG_CLAMP_HI)
-            )
-            gig_new = jax.tree.map(
-                lambda new, old: jnp.where(sane, new, old),
-                gig_new, current_gig,
-            )
+            gig_new = _gig_or_previous(gig_new, current_gig)
         return self._with_subordinator(gig_new)
 
     def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
