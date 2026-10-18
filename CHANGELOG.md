@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/xshi19/normix/compare/v0.4.0...v0.4.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* review 2026-09-05 follow-ups (validation, diagnostics, docs) ([#135](https://github.com/xshi19/normix/issues/135)) ([0bc11fc](https://github.com/xshi19/normix/commit/0bc11fcff4ee0d64a15d895b31a5a82d457c542b))
+* review 2026-09-05 numerics (Renyi domains, AD through from_expectation) ([#134](https://github.com/xshi19/normix/issues/134)) ([bc8b24e](https://github.com/xshi19/normix/commit/bc8b24e50ec8e6ba3c6736ba8e8f00e1a24282b3))
+
 ## [0.4.0](https://github.com/xshi19/normix/compare/v0.3.0...v0.4.0) (2026-10-17)
 
 
