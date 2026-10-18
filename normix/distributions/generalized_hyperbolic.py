@@ -119,6 +119,33 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         psi_gig = GIG._log_partition_from_theta(gig_theta)
         return psi_gig + 0.5 * j.log_det_sigma() + j._mu_Lambda_gamma()
 
+    def log_density_power(self, alpha: jax.Array) -> jax.Array:
+        r"""Log joint density-power integral, preserving exact GIG boundaries.
+
+        For :math:`q>0`, put :math:`p_q=q(p-1)+(1-q)d/2+1`.
+        The integral is finite for all orders if :math:`a,b>0`.
+        At :math:`b=0` it requires :math:`p_q>0`; at :math:`a=0`
+        it requires :math:`p_q<0`. Equality diverges. Returns
+        :math:`+\infty` outside the domain, including nonpositive orders.
+        Supports differentiation, ``jit``, and ``vmap``.
+        """
+        from normix.distributions.generalized_inverse_gaussian import GIG
+
+        q = jnp.asarray(alpha, dtype=jnp.float64)
+        p_q = q * (self.p - 1.0) + (1.0 - q) * self.d / 2.0 + 1.0
+        in_domain = ((q > 0.0) & ((self.b > 0.0) | (p_q > 0.0))
+                     & ((self.a > 0.0) | (p_q < 0.0)))
+        q_safe = jnp.where(in_domain, q, 1.0)
+        p_safe = jnp.where(in_domain, p_q, self.p)
+        theta = self.subordinator().natural_params()
+        powered = jnp.array([p_safe - 1.0, -q_safe * self.b / 2.0, -q_safe * self.a / 2.0])
+        normal = ((1.0 - q_safe) / 2.0
+                  * (self.d * jnp.log(2.0 * jnp.pi) + self.log_det_sigma())
+                  - self.d / 2.0 * jnp.log(q_safe))
+        value = (normal + GIG._log_partition_from_theta(powered)
+                 - q_safe * GIG._log_partition_from_theta(theta))
+        return jnp.where(in_domain, value, jnp.inf)
+
     @classmethod
     def from_classical(cls, *, mu, gamma, sigma, p, a, b):
         """Construct from classical parameters."""
