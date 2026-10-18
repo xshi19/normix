@@ -664,7 +664,8 @@ the cumulant generator of the information content
 <span class="math notranslate nohighlight">\(R(\alpha)/(1-\alpha)\)</span>.</p>
 <p>The identity equals <span class="math notranslate nohighlight">\(\log\int p^\alpha\)</span> only for
 <span class="math notranslate nohighlight">\(\alpha\theta \in \Theta\)</span>. Subclasses whose <span class="math notranslate nohighlight">\(\psi\)</span> admits an
-analytic continuation off <span class="math notranslate nohighlight">\(\Theta\)</span> (Gamma, InverseGamma) return
+analytic continuation off <span class="math notranslate nohighlight">\(\Theta\)</span> (including Gamma, InverseGamma,
+and their joints) return
 <span class="math notranslate nohighlight">\(+\infty\)</span> when the powered density is not integrable, so
 <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a> inherits the sign of <span class="math notranslate nohighlight">\(1-\alpha\)</span>.</p>
 <dl class="field-list simple">
@@ -711,13 +712,14 @@ deliberately: it flows through the accurate <code class="docutils literal notran
 <dd><p>Rényi entropy <span class="math notranslate nohighlight">\(H_\alpha = (1-\alpha)^{-1}\log\int p(x)^\alpha\,\mu(dx)\)</span>.</p>
 <p>Defined for order <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>. At <span class="math notranslate nohighlight">\(\alpha = 1\)</span> the value
 is the removable-singularity limit, the Shannon <a class="reference internal" href="#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>; the
-first-order expansion <span class="math notranslate nohighlight">\(H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
+first-order expansion within the integrability domain
+<span class="math notranslate nohighlight">\(H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)
 + \mathcal{O}((\alpha-1)^2)\)</span> links it to the varentropy.</p>
-<p>A <code class="xref py py-func docutils literal notranslate"><span class="pre">jax.custom_jvp()</span></code> supplies the limiting derivative
-<span class="math notranslate nohighlight">\(H_\alpha'(1) = -V_H/2\)</span>. The primal uses <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.cond.html#jax.lax.cond" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.cond()</span></code></a> so
-the varentropy is not evaluated for <span class="math notranslate nohighlight">\(\alpha\)</span> away from 1 (a bare
-<code class="xref py py-func docutils literal notranslate"><span class="pre">jnp.where()</span></code> singularity guard both zeroes the gradient at
-<span class="math notranslate nohighlight">\(\alpha = 1\)</span> and forces the expensive unused branch).</p>
+<p>The Taylor branch supplies the limiting order derivative
+<span class="math notranslate nohighlight">\(H_\alpha'(1)=-V_H/2\)</span>. Ordinary autodiff differentiates both
+distribution parameters and order, including mixed derivatives.
+A <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.cond.html#jax.lax.cond" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.cond()</span></code></a> evaluates varentropy only near one for scalar
+calls. The unused denominator is safe under <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
@@ -864,7 +866,13 @@ i.e. the natural parameters corresponding to expectation parameters <span class=
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lbfgs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/exponential_family.html#ExponentialFamily.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.exponential_family.ExponentialFamily.from_expectation" title="Link to this definition">#</a></dt>
 <dd><p>Construct from expectation parameters <span class="math notranslate nohighlight">\(\eta\)</span> by solving <span class="math notranslate nohighlight">\(\nabla\psi(\theta) = \eta\)</span>.</p>
 <p>Minimises the Bregman divergence <span class="math notranslate nohighlight">\(\psi(\theta) - \theta\cdot\eta\)</span>
-via <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code>. Subclasses can override for closed-form inverses.</p>
+via <code class="docutils literal notranslate"><span class="pre">solve_bregman</span></code>. Subclasses can override for closed-form inverses.
+The JAX path differentiates the solved stationarity condition:
+<span class="math notranslate nohighlight">\(d\theta=H(\theta)^{-1}d\eta\)</span>, in forward and reverse mode.
+Initial guesses and optimizer iterations are not differentiated.
+Singular, numerically rank-deficient, nonfinite, or bound-active
+solutions have NaN derivatives. The CPU backend is eager-only
+and does not support JAX transformations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

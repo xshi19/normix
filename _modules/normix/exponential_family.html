@@ -681,7 +681,8 @@
 
 <span class="sd">        The identity equals :math:`\log\int p^\alpha` only for</span>
 <span class="sd">        :math:`\alpha\theta \in \Theta`. Subclasses whose :math:`\psi` admits an</span>
-<span class="sd">        analytic continuation off :math:`\Theta` (Gamma, InverseGamma) return</span>
+<span class="sd">        analytic continuation off :math:`\Theta` (including Gamma, InverseGamma,</span>
+<span class="sd">        and their joints) return</span>
 <span class="sd">        :math:`+\infty` when the powered density is not integrable, so</span>
 <span class="sd">        :meth:`renyi` inherits the sign of :math:`1-\alpha`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -727,49 +728,28 @@
 
 <span class="sd">        Defined for order :math:`\alpha &gt; 0`. At :math:`\alpha = 1` the value</span>
 <span class="sd">        is the removable-singularity limit, the Shannon :meth:`entropy`; the</span>
-<span class="sd">        first-order expansion :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)</span>
+<span class="sd">        first-order expansion within the integrability domain</span>
+<span class="sd">        :math:`H_\alpha = H - \tfrac{1}{2}V_H(\alpha-1)</span>
 <span class="sd">        + \mathcal{O}((\alpha-1)^2)` links it to the varentropy.</span>
 
-<span class="sd">        A :func:`jax.custom_jvp` supplies the limiting derivative</span>
-<span class="sd">        :math:`H_\alpha&#39;(1) = -V_H/2`. The primal uses :func:`jax.lax.cond` so</span>
-<span class="sd">        the varentropy is not evaluated for :math:`\alpha` away from 1 (a bare</span>
-<span class="sd">        :func:`jnp.where` singularity guard both zeroes the gradient at</span>
-<span class="sd">        :math:`\alpha = 1` and forces the expensive unused branch).</span>
+<span class="sd">        The Taylor branch supplies the limiting order derivative</span>
+<span class="sd">        :math:`H_\alpha&#39;(1)=-V_H/2`. Ordinary autodiff differentiates both</span>
+<span class="sd">        distribution parameters and order, including mixed derivatives.</span>
+<span class="sd">        A :func:`jax.lax.cond` evaluates varentropy only near one for scalar</span>
+<span class="sd">        calls. The unused denominator is safe under ``vmap``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">alpha</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="n">near</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">RENYI_TAYLOR_EPS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
 
-        <span class="nd">@jax</span><span class="o">.</span><span class="n">custom_jvp</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">_renyi</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-            <span class="n">delta</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="mf">1.0</span>
-            <span class="n">near</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">RENYI_TAYLOR_EPS</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_taylor</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span> <span class="o">*</span> <span class="n">delta</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">_taylor</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span> <span class="o">*</span> <span class="n">delta</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_exact</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">power</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">delta</span><span class="p">)</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">_exact</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="n">_taylor</span><span class="p">,</span> <span class="n">_exact</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
-
-        <span class="nd">@_renyi</span><span class="o">.</span><span class="n">defjvp</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">_renyi_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
-            <span class="p">(</span><span class="n">a</span><span class="p">,),</span> <span class="p">(</span><span class="n">da</span><span class="p">,)</span> <span class="o">=</span> <span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span>
-            <span class="n">near</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">RENYI_TAYLOR_EPS</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="nf">_grad_near</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-                <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">varentropy</span><span class="p">()</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="nf">_grad_far</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-                <span class="c1"># Quotient rule for R(a)/(1-a); a is away from 1 here.</span>
-                <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-                <span class="n">Rp</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">)(</span><span class="n">a</span><span class="p">)</span>
-                <span class="n">denom</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">a</span>
-                <span class="k">return</span> <span class="p">(</span><span class="n">Rp</span> <span class="o">*</span> <span class="n">denom</span> <span class="o">+</span> <span class="n">R</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">denom</span> <span class="o">*</span> <span class="n">denom</span><span class="p">)</span>
-
-            <span class="n">g</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="n">_grad_near</span><span class="p">,</span> <span class="n">_grad_far</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">_renyi</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">g</span> <span class="o">*</span> <span class="n">da</span>
-
-        <span class="k">return</span> <span class="n">_renyi</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">near</span><span class="p">,</span> <span class="n">_taylor</span><span class="p">,</span> <span class="n">_exact</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ExponentialFamily.mean">
@@ -920,6 +900,43 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">eta</span><span class="p">)</span></div>
 
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_implicit_natural_params</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Attach the interior inverse derivative :math:`H(\theta)^{-1}d\eta`.</span>
+
+<span class="sd">        ``theta`` is the result of a solve on stopped inputs. Diagonal</span>
+<span class="sd">        equilibration removes units before the positive-definiteness check</span>
+<span class="sd">        and Cholesky solve. Unidentifiable, nonfinite, or bound-active</span>
+<span class="sd">        solutions have NaN derivatives; no damping changes the inverse.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nd">@jax</span><span class="o">.</span><span class="n">custom_jvp</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inverse</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">solved</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">solved</span>
+
+        <span class="nd">@inverse</span><span class="o">.</span><span class="n">defjvp</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inverse_jvp</span><span class="p">(</span><span class="n">primals</span><span class="p">,</span> <span class="n">tangents</span><span class="p">):</span>
+            <span class="n">target</span><span class="p">,</span> <span class="n">solved</span> <span class="o">=</span> <span class="n">primals</span>
+            <span class="n">d_eta</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tangents</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">inverse</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">solved</span><span class="p">)</span>
+            <span class="n">hessian</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_hessian_log_partition</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+            <span class="n">diagonal</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">hessian</span><span class="p">)</span>
+            <span class="n">valid</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">hessian</span><span class="p">))</span>
+                     <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">diagonal</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">))</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">valid</span> <span class="o">=</span> <span class="n">valid</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">((</span><span class="n">theta</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">theta</span> <span class="o">&lt;</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">diagonal</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">diagonal</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">hessian</span> <span class="o">/</span> <span class="n">scale</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">scale</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="p">(</span><span class="n">scaled</span> <span class="o">+</span> <span class="n">scaled</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+            <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+            <span class="n">cutoff</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">valid</span> <span class="o">=</span> <span class="n">valid</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">eigenvalues</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">)</span>
+            <span class="n">factor</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">scaled</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">size</span><span class="p">)))</span>
+            <span class="n">tangent</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cho_solve</span><span class="p">((</span><span class="n">factor</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span> <span class="n">d_eta</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span>
+            <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">tangent</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inverse</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+
 <div class="viewcode-block" id="ExponentialFamily.from_expectation">
 <a class="viewcode-back" href="../../api/index.html#normix.exponential_family.ExponentialFamily.from_expectation">[docs]</a>
     <span class="nd">@classmethod</span>
@@ -939,6 +956,12 @@
 
 <span class="sd">        Minimises the Bregman divergence :math:`\psi(\theta) - \theta\cdot\eta`</span>
 <span class="sd">        via ``solve_bregman``. Subclasses can override for closed-form inverses.</span>
+<span class="sd">        The JAX path differentiates the solved stationarity condition:</span>
+<span class="sd">        :math:`d\theta=H(\theta)^{-1}d\eta`, in forward and reverse mode.</span>
+<span class="sd">        Initial guesses and optimizer iterations are not differentiated.</span>
+<span class="sd">        Singular, numerically rank-deficient, nonfinite, or bound-active</span>
+<span class="sd">        solutions have NaN derivatives. The CPU backend is eager-only</span>
+<span class="sd">        and does not support JAX transformations.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -957,10 +980,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">_require_solved_theta</span>
 
-        <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">eta_target</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">eta_target</span><span class="p">)</span> <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="k">else</span> <span class="n">eta_target</span>
         <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
 
+        <span class="n">theta0</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">theta0</span><span class="p">)</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
@@ -981,7 +1006,10 @@
         <span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
             <span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span>
+            <span class="n">traced</span><span class="o">=</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_implicit_natural_params</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
 
 

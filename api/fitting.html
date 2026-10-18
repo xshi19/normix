@@ -838,8 +838,8 @@ At the minimum ∇f(θ*) = η.</p>
 <dl class="simple">
 <dt>solve_bregman</dt><dd><p>Single starting point.</p>
 </dd>
-<dt>solve_bregman_multistart</dt><dd><p>Multiple starting points (<code class="docutils literal notranslate"><span class="pre">vmap</span></code> for JAX Newton; a Python loop
-for quasi-Newton and CPU).</p>
+<dt>solve_bregman_multistart</dt><dd><p>Ordered starting points, stopping at the first finite converged
+JAX solve. CPU solves select the best result from a Python loop.</p>
 </dd>
 <dt>bregman_objective</dt><dd><p>Utility <span class="math notranslate nohighlight">\(f(\theta) - \theta\cdot\eta\)</span>.</p>
 </dd>
@@ -852,7 +852,7 @@ that <code class="docutils literal notranslate"><span class="pre">solve_bregman<
 </section>
 <section id="backends-methods">
 <h3>Backends × methods<a class="headerlink" href="#backends-methods" title="Link to this heading">#</a></h3>
-<p>backend=’jax’, method=’newton’  custom lax.scan Newton, autodiff or analytical Hessian
+<p>backend=’jax’, method=’newton’  custom lax.while_loop Newton, autodiff or analytical Hessian
 backend=’jax’, method=’lbfgs’   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
 backend=’jax’, method=’bfgs’    jaxopt BFGS with reparameterization for bounds
 backend=’cpu’, method=’lbfgs’   scipy L-BFGS-B
@@ -968,7 +968,8 @@ Required for method=’newton’.
 For backend=’cpu’: must accept numpy arrays and return numpy array.
 For backend=’jax’, method=’newton’: must be JAX-traceable.
 If None with method=’newton’: jax.hessian of the full objective is used.</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary after solve.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary after solve.
+Summaries are skipped while tracing.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -980,13 +981,16 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="normix.fitting.solvers.solve_bregman_multistart">
 <span class="sig-prename descclassname"><span class="pre">normix.fitting.solvers.</span></span><span class="sig-name descname"><span class="pre">solve_bregman_multistart</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0_batch</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lbfgs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hess_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/solvers.html#solve_bregman_multistart"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.solvers.solve_bregman_multistart" title="Link to this definition">#</a></dt>
-<dd><p>Run solve_bregman from multiple starting points; return the best result.</p>
+<dd><p>Solve from ordered starting points, preferring finite convergence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>theta0_batch</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – <code class="docutils literal notranslate"><span class="pre">(K,</span> <span class="pre">dim)</span></code> array for <code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code>, <code class="docutils literal notranslate"><span class="pre">method='newton'</span></code>
-(parallel via vmap); list of arrays otherwise (sequential for-loop).</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.</p></li>
+<li><p><strong>theta0_batch</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>) – Nonempty <code class="docutils literal notranslate"><span class="pre">(K,</span> <span class="pre">dim)</span></code> array or list of arrays. JAX tries starts in
+order and stops at the first finite converged result. If none
+converges, it returns the lowest finite objective. Put preferred
+starts first. CPU solves use a Python loop over all starts.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print summary.
+Summaries are skipped while tracing.</p></li>
 <li><p><strong>f</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><em>Callable</em></a><em>[</em><em>[</em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em>]</em>)</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
@@ -1010,7 +1014,7 @@ If None with method=’newton’: jax.hessian of the full objective is used.</p>
 <dd><p>Build a <code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code>-decorated Newton solver specialised to one problem.</p>
 <p>The returned callable has signature
 <code class="docutils literal notranslate"><span class="pre">solve(eta,</span> <span class="pre">theta0,</span> <span class="pre">max_steps=20,</span> <span class="pre">tol=1e-10)</span> <span class="pre">-&gt;</span> <span class="pre">(theta_opt,</span> <span class="pre">fun,</span> <span class="pre">grad_norm,</span> <span class="pre">converged)</span></code>
-where <code class="docutils literal notranslate"><span class="pre">max_steps</span></code> is a static argument (required by <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>).</p>
+where <code class="docutils literal notranslate"><span class="pre">max_steps</span></code> and <code class="docutils literal notranslate"><span class="pre">tol</span></code> are static arguments.</p>
 <p>All distribution-level inputs (<code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">grad_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">hess_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">bounds</span></code>)
 are baked into the closure at construction time. Repeated calls with the
 same array shapes and dtypes therefore reuse the compiled XLA executable.</p>

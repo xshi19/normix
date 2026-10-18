@@ -463,6 +463,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -1474,26 +1475,89 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :math:`\eta \to \theta` via :math:`\eta`-rescaling + optimization.</span>
 
-<span class="sd">        Rescaling makes the Fisher matrix symmetric (:math:`\tilde{a} = \tilde{b}`),</span>
-<span class="sd">        reducing condition number by up to :math:`10^{30}` for extreme :math:`a/b` ratios.</span>
+<span class="sd">        Rescaling balances the forward and inverse target moments before</span>
+<span class="sd">        optimization, reducing sensitivity to the units of :math:`X`.</span>
+
+<span class="sd">        The target layout is :math:`\eta=(\ell,m_-,m_+)`, with</span>
+<span class="sd">        :math:`\ell=E[\log X]`, :math:`m_-=E[1/X]`, and :math:`m_+=E[X]`.</span>
+<span class="sd">        Entries must be finite, :math:`m_-,m_+&gt;0`, :math:`m_-m_+&gt;1`, and</span>
+<span class="sd">        :math:`-\log m_-&lt;\ell&lt;\log m_+`. Equality is rejected as a</span>
+<span class="sd">        degenerate point-mass boundary. These necessary conditions do not</span>
+<span class="sd">        guarantee an interior GIG solution. Gamma/InverseGamma limits with</span>
+<span class="sd">        finite moments can satisfy all inequalities strictly.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        theta0 : jax.Array, optional</span>
-<span class="sd">            Warm-start point (required for JAX solvers; if ``None``, uses</span>
-<span class="sd">            multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</span>
+<span class="sd">            Warm-start point. If ``None``, uses the selected JAX method</span>
+<span class="sd">            with multiple starts, or multi-start L-BFGS-B on the CPU backend,</span>
+<span class="sd">            with InverseGaussian/Gamma/InverseGamma seeds. JAX stops at the</span>
+<span class="sd">            first finite converged solve, starting with the interior</span>
+<span class="sd">            inverse-Gaussian seed.</span>
 <span class="sd">        backend : str</span>
-<span class="sd">            ``&#39;jax&#39;`` (default, JIT-able) or ``&#39;cpu&#39;`` (scipy, more robust).</span>
+<span class="sd">            ``&#39;jax&#39;`` (default): supports ``jit``, forward and reverse</span>
+<span class="sd">            AD through :math:`d\theta=H(\theta)^{-1}d\eta`. Solves and</span>
+<span class="sd">            initial guesses are not differentiated. Singular, nonfinite,</span>
+<span class="sd">            or bound-active solutions have NaN derivatives.</span>
+<span class="sd">            ``&#39;cpu&#39;``: eager-only optimization, without JAX AD.</span>
 <span class="sd">        method : str</span>
 <span class="sd">            ``&#39;newton&#39;``, ``&#39;lbfgs&#39;``, or ``&#39;bfgs&#39;``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            An eager target violates a necessary moment condition, before</span>
+<span class="sd">            any solve. Under JAX tracing an invalid target returns a NaN</span>
+<span class="sd">            model with NaN derivatives; scalar ``jit`` skips the solve.</span>
 <span class="sd">        RuntimeError</span>
 <span class="sd">            The solve did not converge. Under ``jit`` / ``lax.scan`` the</span>
 <span class="sd">            returned natural parameters are NaN instead of a silent model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">ell</span><span class="p">,</span> <span class="n">m_minus</span><span class="p">,</span> <span class="n">m_plus</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">eta</span><span class="p">)),</span>
+            <span class="n">m_minus</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">m_plus</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">m_minus</span> <span class="o">*</span> <span class="n">m_plus</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">ell</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">m_minus</span><span class="p">),</span>
+            <span class="n">ell</span> <span class="o">&lt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">m_plus</span><span class="p">),</span>
+        <span class="p">])</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">theta0</span><span class="o">=</span><span class="n">theta0</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
+                      <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+            <span class="n">requirements</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;finite entries&quot;</span><span class="p">,</span> <span class="s2">&quot;E[1/X] &gt; 0&quot;</span><span class="p">,</span> <span class="s2">&quot;E[X] &gt; 0&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;E[X] * E[1/X] &gt; 1&quot;</span><span class="p">,</span> <span class="s2">&quot;-log(E[1/X]) &lt; E[log X]&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;E[log X] &lt; log(E[X])&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">satisfied</span><span class="p">,</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">conditions</span><span class="p">),</span> <span class="n">requirements</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">satisfied</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GIG.from_expectation requires </span><span class="si">{</span><span class="n">requirement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_expectation_unchecked</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">conditions</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_expectation_unchecked</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span><span class="p">),</span>
+            <span class="n">eta</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_expectation_unchecked</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">eta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">theta0</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;jax&quot;</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;newton&quot;</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Invert a target that passed the public moment-domain check.&quot;&quot;&quot;</span>
+        <span class="n">eta_target</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">eta_target</span><span class="p">)</span> <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="k">else</span> <span class="n">eta_target</span>
         <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
         <span class="n">s</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">)</span>
@@ -1515,7 +1579,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown backend: </span><span class="si">{</span><span class="n">backend</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">theta0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">theta0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">theta0</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
             <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                                        <span class="n">theta0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span>
                                        <span class="n">theta0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">])</span>
@@ -1554,17 +1618,22 @@
                 <span class="n">converged</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span>
             <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
                 <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">grad_norm</span><span class="p">,</span>
+                <span class="n">traced</span><span class="o">=</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
+            <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_jax_cold_start</span><span class="p">(</span>
+                <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grad_norm</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;converged&quot;</span> <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">converged</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;NOT converged&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GIG cold start [jax/</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">]: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">, |grad|=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">grad_norm</span><span class="p">)</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">theta_scaled</span> <span class="o">=</span> <span class="n">_require_solved_theta</span><span class="p">(</span>
+                <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="n">grad_norm</span><span class="o">=</span><span class="n">grad_norm</span><span class="p">,</span>
+                <span class="n">traced</span><span class="o">=</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">theta0_list</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">)</span>
-            <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">t0</span> <span class="ow">in</span> <span class="n">theta0_list</span><span class="p">:</span>
-                <span class="n">t0_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span>
-                <span class="n">t0_np</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">t0_np</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">)</span>
-                <span class="n">t0_np</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">t0_np</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">)</span>
-                <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t0_np</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman_multistart</span><span class="p">(</span>
-                <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">processed</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_cpu</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">),</span>
                 <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span>
                 <span class="n">bounds</span><span class="o">=</span><span class="n">_GIG_BOUNDS</span><span class="p">,</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
                 <span class="n">grad_fn</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition_cpu</span><span class="p">,</span>
@@ -1577,8 +1646,9 @@
         <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">theta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                            <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">s</span><span class="p">,</span>
                            <span class="n">s</span> <span class="o">*</span> <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
-
+        <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_implicit_natural_params</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_theta_bounds</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -1587,64 +1657,48 @@
         <span class="n">upper</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="nd">@partial</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">,</span> <span class="n">static_argnames</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;cls&quot;</span><span class="p">,</span> <span class="s2">&quot;maxiter&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_jax_cold_start</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compile seed generation and inversion with fixed GIG rate bounds.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">solve_bregman_multistart</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span> <span class="n">eta_scaled</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">(),</span> <span class="n">max_steps</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
+            <span class="n">grad_fn</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_grad_log_partition</span><span class="p">,</span> <span class="n">hess_fn</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_hessian_log_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">grad_norm</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">num_steps</span>
+
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initial_guesses</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Multi-start initial guesses for the scaled GIG problem.</span>
 
-<span class="sd">        Uses Gamma, InverseGamma, InverseGaussian special cases.</span>
+<span class="sd">        Tries the interior InverseGaussian seed before the Gamma and</span>
+<span class="sd">        InverseGamma boundary seeds and their perturbed copies.</span>
+<span class="sd">        Rate coordinates are clamped to ``THETA_FLOOR`` for both backends.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
 
-        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-                            <span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-                            <span class="nb">float</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
-        <span class="n">starting_points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta_scaled</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="n">GIG_THETA_PERTURB</span>
-
-        <span class="c1"># 1. Gamma limit (b→0): match η₁ = E[log X], η₃ = E[X]</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">g</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta3</span><span class="p">]))</span>
-            <span class="n">g_theta</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
-            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">g_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">g_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])]))</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="c1"># 2. InverseGamma limit (a→0): match η₁ = E[log X], η₂ = E[1/X]</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">ig</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta2</span><span class="p">,</span> <span class="n">eta1</span><span class="p">]))</span>
-            <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">ig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
-            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]))</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="c1"># 3. InverseGaussian limit (p=-1/2): match η₂ = E[1/X], η₃ = E[X]</span>
-        <span class="k">if</span> <span class="n">eta3</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">eta2</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">igauss</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta3</span><span class="p">,</span> <span class="n">eta2</span><span class="p">]))</span>
-                <span class="n">ig_theta</span> <span class="o">=</span> <span class="n">igauss</span><span class="o">.</span><span class="n">natural_params</span><span class="p">()</span>
-                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">ig_theta</span><span class="p">[</span><span class="mi">0</span><span class="p">])]))</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="k">pass</span>
-
-        <span class="c1"># 4. Perturbed copies</span>
-        <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">starting_points</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]:</span>
-                <span class="n">perturbed</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-                <span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">perturbed</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-                <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perturbed</span><span class="p">)</span>
-
-        <span class="c1"># 5. Fallback</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">starting_points</span><span class="p">:</span>
-            <span class="n">starting_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">]))</span>
-
-        <span class="k">return</span> <span class="n">starting_points</span></div>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta3</span><span class="p">]))</span>
+        <span class="n">invgamma</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta2</span><span class="p">,</span> <span class="n">eta1</span><span class="p">]))</span>
+        <span class="n">invgauss</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta3</span><span class="p">,</span> <span class="n">eta2</span><span class="p">]))</span>
+        <span class="n">starting_points</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="n">invgauss</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">invgauss</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">invgauss</span><span class="o">.</span><span class="n">mu</span><span class="o">**</span><span class="mi">2</span><span class="p">)],</span>
+            <span class="p">[</span><span class="n">gamma</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">gamma</span><span class="o">.</span><span class="n">beta</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">invgamma</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">invgamma</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">],</span>
+        <span class="p">])</span>
+        <span class="n">scales</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">])</span>
+        <span class="n">rates</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">starting_points</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">:],</span> <span class="o">-</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scales</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">orders</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">starting_points</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">perturbed</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">orders</span><span class="p">,</span> <span class="n">rates</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">starting_points</span><span class="p">,</span> <span class="n">perturbed</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">seeds</span><span class="o">.</span><span class="n">at</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">seeds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">THETA_FLOOR</span><span class="p">))</span></div>
 
 
 

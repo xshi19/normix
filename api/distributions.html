@@ -592,6 +592,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.beta"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.beta</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.subordinator"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.natural_params"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_classical"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_natural"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.from_natural()</span></code></a></li>
 </ul>
@@ -623,6 +624,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.beta"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.beta</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_classical"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_natural"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.from_natural()</span></code></a></li>
 </ul>
@@ -690,6 +692,7 @@
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.subordinator"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_generalized_hyperbolic()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_classical"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.from_natural()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_variance_gamma()</span></code></a></li>
@@ -1020,8 +1023,11 @@ downstream <code class="docutils literal notranslate"><span class="pre">expectat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
-<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (no XLA tracing).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): Newton with implicit forward/reverse derivatives
+(JIT-compatible). The derivative is the inverse Fisher matrix
+in the regular interior; singular or nonfinite solutions have
+NaN derivatives.
+<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (eager-only; no JAX AD).</p></li>
 <li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>optional</em>) – Lower bound on the fitted shape <span class="math notranslate nohighlight">\(\alpha\)</span>. When set, the
 digamma-inversion result is clamped to <code class="docutils literal notranslate"><span class="pre">jnp.maximum(alpha,</span>
 <span class="pre">alpha_min)</span></code> <em>before</em> <span class="math notranslate nohighlight">\(\beta = \alpha/\eta_2\)</span> is formed, so
@@ -1309,8 +1315,11 @@ small positive value to stay in the strict interior of GIG’s domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">lax.fori_loop</span></code> Newton (JIT-compatible).
-<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (no XLA tracing).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): Newton with implicit forward/reverse derivatives
+(JIT-compatible). The derivative is the inverse Fisher matrix
+in the regular interior; singular or nonfinite solutions have
+NaN derivatives.
+<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.special</span></code> digamma/polygamma (eager-only; no JAX AD).</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
 <li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>)</p></li>
@@ -2012,14 +2021,28 @@ degenerate inputs.</p>
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_expectation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'newton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.from_expectation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation" title="Link to this definition">#</a></dt>
 <dd><p><span class="math notranslate nohighlight">\(\eta \to \theta\)</span> via <span class="math notranslate nohighlight">\(\eta\)</span>-rescaling + optimization.</p>
-<p>Rescaling makes the Fisher matrix symmetric (<span class="math notranslate nohighlight">\(\tilde{a} = \tilde{b}\)</span>),
-reducing condition number by up to <span class="math notranslate nohighlight">\(10^{30}\)</span> for extreme <span class="math notranslate nohighlight">\(a/b\)</span> ratios.</p>
+<p>Rescaling balances the forward and inverse target moments before
+optimization, reducing sensitivity to the units of <span class="math notranslate nohighlight">\(X\)</span>.</p>
+<p>The target layout is <span class="math notranslate nohighlight">\(\eta=(\ell,m_-,m_+)\)</span>, with
+<span class="math notranslate nohighlight">\(\ell=E[\log X]\)</span>, <span class="math notranslate nohighlight">\(m_-=E[1/X]\)</span>, and <span class="math notranslate nohighlight">\(m_+=E[X]\)</span>.
+Entries must be finite, <span class="math notranslate nohighlight">\(m_-,m_+&gt;0\)</span>, <span class="math notranslate nohighlight">\(m_-m_+&gt;1\)</span>, and
+<span class="math notranslate nohighlight">\(-\log m_-&lt;\ell&lt;\log m_+\)</span>. Equality is rejected as a
+degenerate point-mass boundary. These necessary conditions do not
+guarantee an interior GIG solution. Gamma/InverseGamma limits with
+finite moments can satisfy all inequalities strictly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Warm-start point (required for JAX solvers; if <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses
-multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
+<li><p><strong>theta0</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Warm-start point. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses the selected JAX method
+with multiple starts, or multi-start L-BFGS-B on the CPU backend,
+with InverseGaussian/Gamma/InverseGamma seeds. JAX stops at the
+first finite converged solve, starting with the interior
+inverse-Gaussian seed.</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): supports <code class="docutils literal notranslate"><span class="pre">jit</span></code>, forward and reverse
+AD through <span class="math notranslate nohighlight">\(d\theta=H(\theta)^{-1}d\eta\)</span>. Solves and
+initial guesses are not differentiated. Singular, nonfinite,
+or bound-active solutions have NaN derivatives.
+<code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: eager-only optimization, without JAX AD.</p></li>
 <li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>maxiter</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
@@ -2028,8 +2051,13 @@ multi-start CPU solver with Gamma/InvGamma/InvGauss seeds).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><strong>RuntimeError</strong></a> – The solve did not converge. Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> / <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> the
-    returned natural parameters are NaN instead of a silent model.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.15)"><strong>ValueError</strong></a> – An eager target violates a necessary moment condition, before
+    any solve. Under JAX tracing an invalid target returns a NaN
+    model with NaN derivatives; scalar <code class="docutils literal notranslate"><span class="pre">jit</span></code> skips the solve.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.15)"><strong>RuntimeError</strong></a> – The solve did not converge. Under <code class="docutils literal notranslate"><span class="pre">jit</span></code> / <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> the
+    returned natural parameters are NaN instead of a silent model.</p></li>
+</ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian"><em>GeneralizedInverseGaussian</em></a></p>
@@ -2338,6 +2366,24 @@ i.e. GIG(<span class="math notranslate nohighlight">\(p = \alpha\)</span>, <span
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log joint density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p(x,y)^q\,dx\,dy\)</span>.</p>
+<p>Finite iff <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and <span class="math notranslate nohighlight">\(q(\alpha-1)+(1-q)d/2 &gt; -1\)</span>,
+where <span class="math notranslate nohighlight">\(d\)</span> is the dimension of <span class="math notranslate nohighlight">\(X\)</span>. Equality diverges.
+Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code> supplies
+the sign through <span class="math notranslate nohighlight">\(R(q)/(1-q)\)</span>. Supports <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.variance_gamma.JointVarianceGamma.from_classical">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_classical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/variance_gamma.html#JointVarianceGamma.from_classical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_classical" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -2571,6 +2617,24 @@ beyond the textbook Normal-inverse-gamma conjugate prior — see
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/normal_inverse_gamma.html#JointNormalInverseGamma.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log joint density-power integral <span class="math notranslate nohighlight">\(R(q) = \log\int p(x,y)^q\,dx\,dy\)</span>.</p>
+<p>Finite iff <span class="math notranslate nohighlight">\(q &gt; 0\)</span> and <span class="math notranslate nohighlight">\(q(\alpha+1)-(1-q)d/2 &gt; 1\)</span>,
+where <span class="math notranslate nohighlight">\(d\)</span> is the dimension of <span class="math notranslate nohighlight">\(X\)</span>. Equality diverges.
+Returns <span class="math notranslate nohighlight">\(+\infty\)</span> outside this domain; <code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code> supplies
+the sign through <span class="math notranslate nohighlight">\(R(q)/(1-q)\)</span>. Supports <code class="docutils literal notranslate"><span class="pre">jit</span></code> and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3106,6 +3170,26 @@ on <span class="math notranslate nohighlight">\(t_Y = [\log y,\,1/y,\,y]\)</span
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.log_density_power">
+<span class="sig-name descname"><span class="pre">log_density_power</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#JointGeneralizedHyperbolic.log_density_power"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.log_density_power" title="Link to this definition">#</a></dt>
+<dd><p>Log joint density-power integral, preserving exact GIG boundaries.</p>
+<p>For <span class="math notranslate nohighlight">\(q&gt;0\)</span>, put <span class="math notranslate nohighlight">\(p_q=q(p-1)+(1-q)d/2+1\)</span>.
+The integral is finite for all orders if <span class="math notranslate nohighlight">\(a,b&gt;0\)</span>.
+At <span class="math notranslate nohighlight">\(b=0\)</span> it requires <span class="math notranslate nohighlight">\(p_q&gt;0\)</span>; at <span class="math notranslate nohighlight">\(a=0\)</span>
+it requires <span class="math notranslate nohighlight">\(p_q&lt;0\)</span>. Equality diverges. Returns
+<span class="math notranslate nohighlight">\(+\infty\)</span> outside the domain, including nonpositive orders.
+Supports differentiation, <code class="docutils literal notranslate"><span class="pre">jit</span></code>, and <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -3664,6 +3748,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.beta"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.beta</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.subordinator"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.natural_params"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_classical"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.variance_gamma.JointVarianceGamma.from_natural"><code class="docutils literal notranslate"><span class="pre">JointVarianceGamma.from_natural()</span></code></a></li>
 </ul>
@@ -3695,6 +3780,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.beta"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.beta</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.subordinator"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.natural_params"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_classical"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.normal_inverse_gamma.JointNormalInverseGamma.from_natural"><code class="docutils literal notranslate"><span class="pre">JointNormalInverseGamma.from_natural()</span></code></a></li>
 </ul>
@@ -3762,6 +3848,7 @@ candidate.</p>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.subordinator"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.subordinator()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_generalized_hyperbolic"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_generalized_hyperbolic()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.natural_params"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.natural_params()</span></code></a></li>
+<li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.log_density_power"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.log_density_power()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_classical"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.from_classical()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.from_natural"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.from_natural()</span></code></a></li>
 <li class="toc-h5 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.distributions.generalized_hyperbolic.JointGeneralizedHyperbolic.to_joint_variance_gamma"><code class="docutils literal notranslate"><span class="pre">JointGeneralizedHyperbolic.to_joint_variance_gamma()</span></code></a></li>

@@ -496,6 +496,22 @@
                 <span class="o">-</span> <span class="n">j</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
                 <span class="o">+</span> <span class="n">j</span><span class="o">.</span><span class="n">_mu_Lambda_gamma</span><span class="p">())</span>
 
+<div class="viewcode-block" id="JointVarianceGamma.log_density_power">
+<a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.variance_gamma.JointVarianceGamma.log_density_power">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_density_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Log joint density-power integral :math:`R(q) = \log\int p(x,y)^q\,dx\,dy`.</span>
+
+<span class="sd">        Finite iff :math:`q &gt; 0` and :math:`q(\alpha-1)+(1-q)d/2 &gt; -1`,</span>
+<span class="sd">        where :math:`d` is the dimension of :math:`X`. Equality diverges.</span>
+<span class="sd">        Returns :math:`+\infty` outside this domain; :meth:`renyi` supplies</span>
+<span class="sd">        the sign through :math:`R(q)/(1-q)`. Supports ``jit`` and ``vmap``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">in_domain</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">q</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">q_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_domain</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">in_domain</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_density_power</span><span class="p">(</span><span class="n">q_safe</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="JointVarianceGamma.from_classical">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.variance_gamma.JointVarianceGamma.from_classical">[docs]</a>
     <span class="nd">@classmethod</span>
