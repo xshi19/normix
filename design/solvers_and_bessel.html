@@ -575,7 +575,7 @@ takes <span class="math notranslate nohighlight">\(\psi\)</span> as a generic <c
 <p><code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> passes <code class="docutils literal notranslate"><span class="pre">bounds</span></code> directly to
 <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html"><code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code></a>
 (native L-BFGS-B box constraints).
-<a class="reference external" href="https://jaxopt.github.io/stable/_api/jaxopt.html#jaxopt.LBFGSB"><code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code></a>
+<a class="reference external" href="https://jaxopt.github.io/stable/_autosummary/jaxopt.LBFGSB.html"><code class="docutils literal notranslate"><span class="pre">jaxopt.LBFGSB</span></code></a>
 also supports bounds natively. Other JAX backends reparameterise.</p>
 </section>
 <section id="newton-hand-rolled-jit-cached">
@@ -737,7 +737,7 @@ differences.</p>
 \[
 2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z&gt;0
 \]</div>
-<p>(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.32.E9">10.32.9</a>). Production
+<p>(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.32#E9">10.32.9</a>). Production
 <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> is this integral as a <strong>192-point Gauss–Legendre sum</strong> (96 nodes
 on each side of the peak). That is the kernel: a weighted sum, not a
 library Bessel call and not a finite-difference stencil.</p>
@@ -764,9 +764,9 @@ and stored argument jets from
 <span class="math notranslate nohighlight">\(w=2\sinh(u_0+x/2)\sinh(x/2)\)</span>. <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.kve.html"><code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code></a>
 (<a class="reference internal" href="../references.html#amos1986"><span class="std std-ref">Amos1986</span></a>) is a test oracle, not a runtime path.</p>
 <p>Hankel / Olver / small-<span class="math notranslate nohighlight">\(z\)</span> formulae ( <a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a>
-<a class="reference external" href="https://dlmf.nist.gov/10.40.E2">10.40.2</a>,
+<a class="reference external" href="https://dlmf.nist.gov/10.40#E2">10.40.2</a>,
 <a class="reference external" href="https://dlmf.nist.gov/10.41">10.41.3–4</a>,
-<a class="reference external" href="https://dlmf.nist.gov/10.30.E2">10.30.2</a> ) are identities in the
+<a class="reference external" href="https://dlmf.nist.gov/10.30#E2">10.30.2</a> ) are identities in the
 contract tests, not production branches. The old four-regime <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>
 plus FD <span class="math notranslate nohighlight">\(\partial_\nu\)</span> produced <span class="math notranslate nohighlight">\(L_{\nu\nu}&lt;0\)</span> at GIG<span class="math notranslate nohighlight">\((25,1,1)\)</span>.</p>
 </section>

@@ -134,7 +134,7 @@ power $\alpha$ keeps it proportional to a GIG density with parameters
 $(1 + \alpha(p-1),\, \alpha a,\, \alpha b)$ — the escort-closure property.
 Using the Bessel integral
 $\int_0^\infty y^{q-1} e^{-(uy + v/y)/2}\,dy = 2\,(v/u)^{q/2} K_q(\sqrt{uv})$
-({ref}`DLMF <dlmf>` [10.32.10](https://dlmf.nist.gov/10.32.E10))
+({ref}`DLMF <dlmf>` [10.32.10](https://dlmf.nist.gov/10.32#E10))
 gives, with $z = \sqrt{ab}$,
 
 ```{math}

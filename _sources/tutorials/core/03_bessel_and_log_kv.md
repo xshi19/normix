@@ -105,7 +105,7 @@ plt.show()
 ## How `log_kv` is computed
 
 $K_\nu(z)$ has the whole-line integral representation
-({ref}`DLMF <dlmf>` [10.32.9](https://dlmf.nist.gov/10.32.E9))
+({ref}`DLMF <dlmf>` [10.32.9](https://dlmf.nist.gov/10.32#E9))
 
 $$
 2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z>0.

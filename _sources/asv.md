@@ -1,6 +1,6 @@
 # Benchmark trends
 
-Per-commit timing for a small [ASV](https://asv.readthedocs.io/) suite: Bessel
+Per-commit timing for a small [ASV](https://asv.readthedocs.io/en/latest/) suite: Bessel
 `log_kv`, GIG `from_expectation`, the EM E-step, a short EM fit, compile time,
 and GIG sampling. CPU and CUDA are separate series.
 

@@ -45,7 +45,7 @@ solve_bregman(f, eta, theta0, *, backend, method, bounds,
 `backend='cpu'` passes `bounds` directly to
 [`scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html)
 (native L-BFGS-B box constraints).
-[`jaxopt.LBFGSB`](https://jaxopt.github.io/stable/_api/jaxopt.html#jaxopt.LBFGSB)
+[`jaxopt.LBFGSB`](https://jaxopt.github.io/stable/_autosummary/jaxopt.LBFGSB.html)
 also supports bounds natively. Other JAX backends reparameterise.
 
 ### 1.2 Newton: hand-rolled, JIT-cached
@@ -199,7 +199,7 @@ $$
 2K_\nu(z)=\int_{\mathbb R}e^{\nu u-z\cosh u}\,du, \qquad z>0
 $$
 
-({ref}`DLMF <dlmf>` [10.32.9](https://dlmf.nist.gov/10.32.E9)). Production
+({ref}`DLMF <dlmf>` [10.32.9](https://dlmf.nist.gov/10.32#E9)). Production
 `log_kv` is this integral as a **192-point Gauss–Legendre sum** (96 nodes
 on each side of the peak). That is the kernel: a weighted sum, not a
 library Bessel call and not a finite-difference stencil.
@@ -232,9 +232,9 @@ $w=2\sinh(u_0+x/2)\sinh(x/2)$. [`scipy.special.kve`](https://docs.scipy.org/doc/
 ({ref}`Amos1986 <amos1986>`) is a test oracle, not a runtime path.
 
 Hankel / Olver / small-$z$ formulae ( {ref}`DLMF <dlmf>`
-[10.40.2](https://dlmf.nist.gov/10.40.E2),
+[10.40.2](https://dlmf.nist.gov/10.40#E2),
 [10.41.3–4](https://dlmf.nist.gov/10.41),
-[10.30.2](https://dlmf.nist.gov/10.30.E2) ) are identities in the
+[10.30.2](https://dlmf.nist.gov/10.30#E2) ) are identities in the
 contract tests, not production branches. The old four-regime `lax.cond`
 plus FD $\partial_\nu$ produced $L_{\nu\nu}<0$ at GIG$(25,1,1)$.
 
