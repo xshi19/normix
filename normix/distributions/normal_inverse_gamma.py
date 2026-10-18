@@ -87,7 +87,7 @@ class JointNormalInverseGamma(JointNormalMixture):
 
         Finite iff :math:`q > 0` and :math:`q(\alpha+1)-(1-q)d/2 > 1`,
         where :math:`d` is the dimension of :math:`X`. Equality diverges.
-        Returns :math:`+\infty` outside this domain; :meth:`renyi` supplies
+        Returns :math:`+\infty` outside this domain; :meth:`~normix.exponential_family.ExponentialFamily.renyi` supplies
         the sign through :math:`R(q)/(1-q)`. Supports ``jit`` and ``vmap``.
         """
         q = jnp.asarray(alpha, dtype=jnp.float64)
