@@ -37,7 +37,7 @@ $\mathbb{E}[t(Y)\mid X]$, the M-step is the same `from_expectation` map.
 Complete-data likelihood is monotone; the normal M-step is closed form.
 
 That is the supported path. The rest of this page is why a
-[GPJax](https://github.com/thomaspinder/GPJax) /
+[GPJax](https://github.com/QuantClimate/GPJax) /
 [FlowJAX](https://github.com/danielward27/flowjax)-style loop — store
 unconstrained parameters, apply `softplus`, run Adam or L-BFGS on the
 marginal NLL — is not a second public fitter.
