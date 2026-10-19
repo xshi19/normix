@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/xshi19/normix/compare/v0.4.1...v0.4.2) (2026-10-19)
+
+
+### Documentation
+
+* fix broken external links ([#138](https://github.com/xshi19/normix/issues/138)) ([866ec9e](https://github.com/xshi19/normix/commit/866ec9e6876ee52529c16278d8a0f0d4c088b016))
+
 ## [0.4.1](https://github.com/xshi19/normix/compare/v0.4.0...v0.4.1) (2026-10-18)
 
 
