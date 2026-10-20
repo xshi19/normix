@@ -60,7 +60,10 @@ packages:
 
 ### Design Decision Made
 
-1. `dev-notes/design/design.md` — add row to the decision table
+1. Update the governing `design.md` row and its existing topical rationale.
+   Follow the decision-record fields in `.cursor/rules/maintain-design-docs.mdc`.
+   Record rejected or inconclusive alternatives even when no implementation lands.
+   Preserve accepted constraints while a replacement remains proposed.
 2. If architecturally significant → update `dev-notes/ARCHITECTURE.md`
 3. If user-facing rationale → also update the relevant file under `docs/design/`
 4. If it changes how code should be written → update relevant `.cursor/rules/` file
@@ -91,7 +94,9 @@ packages:
 
 1. Read all rules in `.cursor/rules/`
 2. Identify contradictions
-3. Resolve by keeping the more specific/recent intent
+3. Resolve against explicit user decisions and accepted design records.
+   Check dates and supersession links; recency alone does not establish authority.
+   Keep unresolved conflicts visible instead of selecting the convenient statement.
 4. Remove duplicated content — each fact lives in one place
 
 ### After a Long or Corrective Session (Reflect)
@@ -104,6 +109,7 @@ path. Skip for trivial sessions — one-offs are not lessons.
 1. Review the session for three kinds of signal: recurring corrections,
    the dead-end → working-path pattern, and rules/skills that were
    missing, stale, or failed to trigger when they should have.
+   Separate observed failures from inferred causes and reviews whose execution is unverified.
 2. Structural check first: if a lesson can be a test, a constant, a lint,
    or a glob fix, encode that instead of prose (principles skill § Encode
    lessons in structure). The instruction is often the symptom.

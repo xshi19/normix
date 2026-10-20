@@ -292,6 +292,16 @@ GIG solve on CPU) is unchanged. `_fit_defaults` is a separate decision.
 Default fitter settings reflect the hot path:
 `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`.
 
+### 4.1 Backend contract
+
+`backend='jax'` runs pure JAX on the device the caller selects
+(`jax.default_device`, `jax.device_put`); normix does not move it to a
+host callback. `backend='cpu'` selects the eager NumPy/SciPy path. Fitter
+defaults pick that explicit path; they do not change what
+`backend='jax'` means. Automatic GIG CPU offload
+([PR #141](https://github.com/xshi19/normix/pull/141)) was rejected for
+this reason.
+
 ---
 
 ## 5. Random Variate Generation

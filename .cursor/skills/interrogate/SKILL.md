@@ -11,10 +11,11 @@ description: >-
 
 # Interrogate
 
-Reviewers share one diff and one intent. On the Cursor default tier, every
-reviewer is Cursor Grok 4.7 (`grok-4.7-xhigh`). Diversity comes from
-distinct lens prompts. Agreement across lenses is the high-confidence
-signal. A finding from one lens is lower confidence.
+Reviewers share the diff, user goal, and governing constraints.
+On the Cursor default tier, every reviewer uses Cursor Grok 4.7 (`grok-4.7-xhigh`).
+Diversity comes from
+distinct lens prompts. Agreement helps prioritize checks; it does not settle correctness.
+Verify a cited contract violation even when only one lens reports it.
 
 That Cursor tier is not available in Codex.
 A sequential lens pass there is a preliminary check.
@@ -45,22 +46,27 @@ The state is "ready for external review".
    `dev-notes/tech_notes/` page. Without that page, every reviewer
    re-derives the math badly.
 
-   Completion criterion: reviewers receive the diff plus the class/base
-   and the theory or tech-note page the change depends on.
-2. **Intent.** One paragraph derived from the user's message, commits, and
-   the code: what is this change trying to accomplish? Reviewers challenge
-   the execution, never the intent. If the intent is unclear, ask before
-   you spawn or hand off.
+   Include governing decision rows from the base revision and their topical rationale.
+   Include related unchanged rows and relevant rejected alternatives.
+   Mark proposed decision edits separately from the constraints they would replace.
 
-   Completion criterion: one intent paragraph exists; reviewers will
-   challenge execution against it, not the goal.
+   Completion criterion: reviewers receive the code, numerical context, and the pre-change contract with citations.
+2. **Goal and constraints.** State the user's requested outcome and its source.
+   List the governing constraints with decision IDs.
+   Describe the author's mechanism separately.
+   Cite any user authorization to change a constraint; otherwise mark that change unresolved.
+   Reviewers must challenge the mechanism and any conflict with those constraints.
+
+   Completion criterion: the packet distinguishes the user goal, constraints, proposed mechanism, and authority for changes.
 3. **Review.**
    **Cursor only.** Spawn three readonly reviewers in one message.
    This spawn is a Cursor `Task` call.
    Use `subagent_type: generalPurpose`, `readonly: true`, and model `grok-4.7-xhigh`.
    That `subagent_type`, `readonly`, and model recipe is Cursor-only.
-   Fill `references/reviewer-prompt.md` with the intent and the diff.
-   Give each reviewer a different lens from that file.
+   Fill `references/reviewer-prompt.md` with the diff and context.
+   Replace its entire Intent section with step 2's goal, constraints, mechanism, and authority.
+   Include this instruction: "Challenge the mechanism and any conflict with the constraints."
+   Give every reviewer that contract check, then assign a distinct lens from the template.
    **Codex.** Use the tools this host has.
    You may apply the lenses in sequence with the host model.
    Label that pass preliminary.
@@ -92,14 +98,19 @@ The state is "ready for external review".
    a reviewer claims a formula error, check against the theory page or the
    cited reference before ruling.
 
-   Completion criterion: every finding is in Act on / Consider / Noted /
-   Dismissed; dismissals that a `design.md` row settles cite the row.
+   Check the proposal against related decisions, including rows outside the diff.
+   A rewritten decision row cannot authorize itself.
+
+   Completion criterion: classify every finding; cite decision evidence for contract findings and their dismissals.
 
 ## Output
 
+Report the reviewed revision and review state under `dev-notes/design/agent_instructions_design.md` § Host support.
+Separate test results from preliminary checks and returned external review.
+
 **Cursor.** The bullets below are the three-reviewer tier.
 
-- **Intent** — the paragraph from step 2
+- **Goal and constraints** — the packet from step 2
 - **Reviewers** — one line each: lens, model, and finding count
 - **Act on** — real correctness or maintainability issues. Name the
   reviewers who raised each one. Say why it matters. More than five items
@@ -116,7 +127,7 @@ One host model checked the lenses.
 Do not name independent reviewers.
 Do not write an agreement map.
 
-- **Intent** — the paragraph from step 2
+- **Goal and constraints** — the packet from step 2
 - **Lenses checked** — one line each: the lens, and whether it raised a finding
 - **Act on** — correctness or maintainability issues from those lenses
 - **Consider** — legitimate, but the cost is unclear

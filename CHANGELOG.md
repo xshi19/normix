@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/xshi19/normix/compare/v0.4.2...v0.4.3) (2026-10-20)
+
+
+### Documentation
+
+* refresh backend and Bessel design notes ([#142](https://github.com/xshi19/normix/issues/142)) ([55dd185](https://github.com/xshi19/normix/commit/55dd185b4a0cf4e202cfe2eb000ca0bc8f93b227))
+
 ## [0.4.2](https://github.com/xshi19/normix/compare/v0.4.1...v0.4.2) (2026-10-19)
 
 

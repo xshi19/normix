@@ -40,6 +40,12 @@ Design docs record **why** decisions were made, not just **what** was decided.
   topical file. Promote user-facing rationale to `docs/design/` when appropriate.
 - Decision reversed or superseded → mark old decision in `design.md` and
   add the new one.
+- Record alternatives in the existing topical rationale; link them from the governing row.
+- Record status, scope, reason, dated evidence, decision authority, and a reopening condition.
+- Distinguish owner rejection, supersession, and inconclusive experiments.
+- Label session-reported decisions when no durable review or issue records them.
+- Keep proposed changes separate from accepted constraints until the decision is authorized.
+- Do not infer approval from an open PR, passing checks, or a newly edited decision row.
 
 **dev-notes/archive/design/** — read-only history. Don't edit archived
 proposals except to mark them as archived or to fix dangling cross-refs.

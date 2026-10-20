@@ -35,3 +35,13 @@ alwaysApply: false
 - Use `np.testing.assert_allclose` with explicit tolerances
 - Edge cases: near-degenerate limits, large parameters, boundary of support
 - Avoid exact boundaries (shape=1, x=0) that cause numerical issues
+
+## Backend contracts
+
+- Derive backend tests from S9/S11 in `dev-notes/design/design.md` and their topical rationale.
+- Test execution placement separately from values, `jit`, `vmap`, and derivative agreement.
+- For S9, inspect nested traced branches for host callbacks that execute the GIG primal.
+- Cover warm starts, cold starts, and batching through the public JAX constructor.
+- Do not infer execution placement from the returned array's device.
+- Keep CPU-pinned mathematical checks distinct from accelerator execution checks.
+- Report unavailable accelerator evidence as missing coverage.
