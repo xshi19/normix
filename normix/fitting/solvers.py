@@ -512,10 +512,13 @@ def _jax_newton_raw(
     :math:`g_\theta` is still :math:`O(1)`. At a bound optimum the
     multiplier stays in ``grad_norm`` and does not by itself fail the solve.
 
-    A full Gauss–Newton step is taken when it meets the Armijo test at
-    step length 1. Otherwise an adaptive Levenberg–Marquardt shift
+    A full Gauss–Newton step is taken when it meets the rounding-tolerant
+    Armijo test in :func:`_backtrack` at step length 1.
+    Otherwise an adaptive Levenberg–Marquardt shift
     :math:`\mu = \lVert g_\phi\rVert_\infty` (multiplied by ten until the
-    full step is accepted) is added to :math:`H_\phi`. A permanent ridge
+    full step is accepted, for at most eight trials) is added to :math:`H_\phi`.
+    If all full steps fail, only the final LM direction is backtracked.
+    A permanent ridge
     would swamp the :math:`p`-direction of a concentrated GIG, whose
     :math:`\phi`-gradient is :math:`O(|\theta|)`. :math:`\mu` is unused
     once the undamped step is valid, so the local rate stays quadratic.
@@ -527,7 +530,8 @@ def _jax_newton_raw(
 
     Returns ``(theta_opt, fun, grad_norm, converged, num_steps, kkt, reason)``
     as JAX arrays. The loop stops when the pre-step residual is inside
-    ``tol`` or the budget is spent. ``num_steps`` counts steps taken.
+    ``tol`` or the budget is spent. A converged iterate skips the linear
+    solve and line search. ``num_steps`` counts steps taken.
     The check that finds an interior start, and the check after the last
     step, do not increment it. A start already inside ``tol`` reports 0.
     ``converged`` is :func:`_inversion_converged` at the returned point.
@@ -563,27 +567,29 @@ def _jax_newton_raw(
     eye = jnp.eye(phi0.shape[-1], dtype=phi0.dtype)
 
     def _lm_step(phi, g, H, delta, f0):
-        """Grow :math:`\\mu I` until a full :math:`\\phi`-step passes Armijo."""
+        """Try eight full LM steps, then backtrack only the last direction."""
         mu0 = jnp.maximum(jnp.max(jnp.abs(g)), LOG_EPS)
 
         def cond(state):
-            i, _mu, _alpha, _delta, done = state
+            i, _mu, _delta, done = state
             return (~done) & (i < 8)
 
         def body(state):
-            i, mu, alpha_lm, delta_lm, done = state
+            i, mu, delta_lm, done = state
             delta_lm = jnp.linalg.solve(H + mu * eye, g)
             slope_lm = jnp.dot(g, delta_lm)
-            alpha_lm = _backtrack(obj, phi, delta_lm, f0, slope_lm)
-            done = (alpha_lm >= 1.0) & (slope_lm > 0.0)
-            return i + 1, mu * 10.0, alpha_lm, delta_lm, done
+            done = _armijo_accept(obj(phi - delta_lm), f0, slope_lm) & (slope_lm > 0.0)
+            return i + 1, mu * 10.0, delta_lm, done
 
-        _i, _mu, alpha_lm, delta_lm, _done = jax.lax.while_loop(
+        _i, _mu, delta_lm, done = jax.lax.while_loop(
             cond, body,
-            (
-                jnp.int32(0), mu0, jnp.array(0.0, dtype=phi.dtype),
-                delta, jnp.bool_(False),
-            ),
+            (jnp.int32(0), mu0, delta, jnp.bool_(False)),
+        )
+        alpha_lm = jax.lax.cond(
+            done,
+            lambda _: jnp.array(1.0, dtype=phi.dtype),
+            lambda _: _backtrack(obj, phi, delta_lm, f0, jnp.dot(g, delta_lm)),
+            operand=None,
         )
         return phi - alpha_lm * delta_lm
 
@@ -594,28 +600,35 @@ def _jax_newton_raw(
     def newton_body(carry):
         step, phi, _converged = carry
         g, H, g_theta = get_g_H(phi)
-        H_safe = _damped_hessian(H) if damp_phi else H
-        delta = jnp.linalg.solve(H_safe, g)
-        f0 = obj(phi)
-        slope = jnp.dot(g, delta)
-        alpha = _backtrack(obj, phi, delta, f0, slope)
-        if damp_phi:
-            phi_new = phi - alpha * delta
-        else:
-            # Full step only. Backtracking this direction still follows
-            # the huge flat component and walks into the bound.
-            full = (alpha >= 1.0) & (slope > 0.0)
-            phi_new = jax.lax.cond(
-                full,
-                lambda _: phi - delta,
-                lambda _: _lm_step(phi, g, H_safe, delta, f0),
-                operand=None,
-            )
         theta = to_theta(phi)
         pre_ok = _kkt_residual(g_theta, theta, bounds) < tol
-        phi_out = jnp.where(pre_ok, phi, phi_new)
-        step_out = step + jnp.where(pre_ok, jnp.int32(0), jnp.int32(1))
-        return step_out, phi_out, pre_ok
+
+        def take_step(_):
+            H_safe = _damped_hessian(H) if damp_phi else H
+            delta = jnp.linalg.solve(H_safe, g)
+            f0 = obj(phi)
+            slope = jnp.dot(g, delta)
+            alpha = _backtrack(obj, phi, delta, f0, slope)
+            if damp_phi:
+                phi_new = phi - alpha * delta
+            else:
+                # Full step only. Backtracking this direction still follows
+                # the huge flat component and walks into the bound.
+                full = (alpha >= 1.0) & (slope > 0.0)
+                phi_new = jax.lax.cond(
+                    full,
+                    lambda _: phi - delta,
+                    lambda _: _lm_step(phi, g, H_safe, delta, f0),
+                    operand=None,
+                )
+            return step + jnp.int32(1), phi_new, jnp.bool_(False)
+
+        return jax.lax.cond(
+            pre_ok,
+            lambda _: (step, phi, jnp.bool_(True)),
+            take_step,
+            operand=None,
+        )
 
     num_steps, phi_opt, _stopped = jax.lax.while_loop(
         newton_cond, newton_body, (jnp.int32(0), phi0, jnp.bool_(False)),
@@ -999,14 +1012,25 @@ def _multistart_loop(
 # Shared backtracking line search
 # ---------------------------------------------------------------------------
 
+def _armijo_accept(trial, f0, decrease, c: float = 1e-4):
+    r"""Accept finite trials within :math:`8\varepsilon\max(|f_0|,1)` of Armijo.
+
+    Several ulps allow for rounding in objective evaluation. The unit
+    scale floor also covers cancellation when the objective is near zero.
+    """
+    tol_f = 8.0 * jnp.finfo(jnp.asarray(f0).dtype).eps * jnp.maximum(jnp.abs(f0), 1.0)
+    return jnp.isfinite(trial) & (trial <= f0 - c * decrease + tol_f)
+
+
 def _backtrack(obj, phi, delta, f0, slope, beta: float = 0.5, c: float = 1e-4):
-    """Armijo backtracking via lax.while_loop."""
+    """Rounding-tolerant Armijo backtracking via ``lax.while_loop``.
+
+    Accept finite trials according to :func:`_armijo_accept`.
+    """
     def cond(state):
         alpha, _ = state
         trial = obj(phi - alpha * delta)
-        # NaN is not greater than the threshold, so a non-finite trial
-        # would otherwise be accepted (exp overflow on a long φ step).
-        insufficient = (~jnp.isfinite(trial)) | (trial > f0 - c * alpha * slope)
+        insufficient = ~_armijo_accept(trial, f0, alpha * slope, c)
         return insufficient & (alpha > 1e-10)
 
     def body(state):

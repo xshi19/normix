@@ -91,13 +91,18 @@ is Newton on the convex $\theta$-problem, pulled back by $J^{-1}$.
 On an exp bound, $J=\mathrm{diag}(\theta)\to 0$ makes
 $H_\phi=O(\theta^2)$ and the undamped step $O(1/\theta)$, which overflows
 $\exp$. The same long step, taken at a tiny Armijo length, walks that
-GIG warm start into the bound. If the unit step fails Armijo, $H_\phi$
-gains an adaptive shift $\mu=\lVert g_\phi\rVert_\infty$, multiplied
-by ten until the unit step is accepted. A fixed $\lambda I$ on
-$H_\phi$, or this shift on every iteration, swamps the $p$-direction
-once $|\theta|$ is large — the concentrated-GIG failure the θ-space
-ridge was introduced to avoid. Once the undamped step is valid, $\mu$
-is unused and the local rate is the Gauss–Newton rate.
+GIG warm start into the bound.
+
+Armijo accepts a finite trial within $8\varepsilon\max(|f_0|,1)$ of
+the sufficient decrease. If the unit step fails, the solver multiplies $\mu=\lVert
+g_\phi\rVert_\infty$ by ten for at most eight full-step trials.
+If every full step fails, the solver backtracks only the last
+direction. A fixed $\lambda I$ on $H_\phi$, or this shift on every
+iteration, swamps the $p$-direction once $|\theta|$ is large — the
+concentrated-GIG failure the θ-space ridge was introduced to avoid.
+Once the undamped step is valid, $\mu$ is unused and the local rate
+is the Gauss–Newton rate. A pre-step residual inside `tol` skips the
+step and the line search.
 
 `BregmanResult.grad_norm` is the natural residual
 $\lVert g_\theta\rVert_\infty$. Convergence uses that residual after
