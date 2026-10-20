@@ -1088,16 +1088,23 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         )
 
         def offload(target, start):
-            def callback(host_target, host_start, host_tol):
-                solve = _gig_cpu_primal(cls, maxiter, float(host_tol), method)
-                return np.asarray(solve(host_target, host_start))
+            def callback(host_target, host_start):
+                shape = host_target.shape
+                batched = host_target.ndim > 1
+                solve = _gig_cpu_primal(cls, maxiter, float(tol), method, batched=batched)
+                if batched:
+                    host_target = np.asarray(host_target).reshape(-1, shape[-1])
+                    host_start = jax.tree.map(
+                        lambda value: np.asarray(value).reshape(-1, shape[-1]),
+                        host_start,
+                    )
+                return np.asarray(solve(host_target, host_start)).reshape(shape)
 
             theta = jax.pure_callback(
                 callback, jax.ShapeDtypeStruct(target.shape, target.dtype),
                 jax.lax.stop_gradient(target),
                 jax.tree.map(jax.lax.stop_gradient, start),
-                jax.lax.stop_gradient(jnp.asarray(tol, dtype=target.dtype)),
-                vmap_method="sequential",
+                vmap_method="broadcast_all",
             )
             return _require_solved_theta(
                 theta, jnp.all(jnp.isfinite(theta)),
@@ -1274,15 +1281,15 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 # ---------------------------------------------------------------------------
 
 @lru_cache(maxsize=None)
-def _gig_cpu_primal(cls, maxiter: int, tol: float, method: str):
+def _gig_cpu_primal(cls, maxiter: int, tol: float, method: str, *, batched: bool = False):
     """Cache the native primal with explicit CPU placement for callbacks."""
-    return jax.jit(
-        partial(
-            cls._solve_expectation, maxiter=maxiter, tol=tol,
-            backend="jax", method=method,
-        ),
-        device=jax.devices("cpu")[0],
+    primal = partial(
+        cls._solve_expectation, maxiter=maxiter, tol=tol,
+        backend="jax", method=method,
     )
+    if batched:
+        primal = jax.vmap(primal)
+    return jax.jit(primal, device=jax.devices("cpu")[0])
 
 # Hoisted so ``GIG.log_partition`` / EM conjugacy does not re-run eager
 # ``log_kv`` quadrature on every E-step. Same pattern as the Newton kernel
