@@ -78,5 +78,7 @@ single observations already mean something for multivariate distributions.
 - On WSL2 with a CUDA-capable GPU but CPU-only jaxlib, chaining heavy JAX
   test modules in one process (notably `test_gig_properties` →
   `test_varentropy` → `test_cpu_bessel_backend`) can SIGSEGV in MLIR
-  lowering under accumulated compilation. Verified unrelated to the
-  `log_kv` custom JVP (E4). Run the CPU-backend file alone when bisecting.
+  lowering under accumulated compilation. The earlier check against the
+  `log_kv` custom JVP (E4) is outdated: that JVP was removed in S10
+  (PR #113); the cause is not established. Run the CPU-backend file alone
+  when bisecting.

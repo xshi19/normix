@@ -109,9 +109,10 @@ $$
 
 ### 2.2 Solver choice in EM
 
-Default: `backend='cpu', method='lbfgs'` — `scipy.optimize.minimize`
-with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
-3-D scalar problem.
+`GeneralizedInverseGaussian.from_expectation` defaults to
+`backend='jax', method='newton'`. The EM M-step default stays
+`m_step_backend='cpu'`: `scipy.optimize.minimize` with the NumPy Bessel
+kernel, which avoids GPU kernel dispatch overhead on a 3-D scalar problem.
 
 For the warm-started Newton path (`backend='jax', method='newton'`),
 the cached `_gig_jax_newton_jit` keeps a single XLA executable across
@@ -171,7 +172,9 @@ InverseGaussian) inherit the default wrappers. They pay nothing.
 
 ## 4. CPU/GPU Hybrid Backend
 
-EM timing on 468 stocks, 2552 observations (GH; pre-S10, `kve` on CPU):
+EM timing on 468 stocks, 2552 observations (GH). These figures were
+measured pre-S10, with `scipy.special.kve` on CPU; they have not been
+re-measured on the S10 kernel:
 
 | Phase | JAX (GPU) | CPU hybrid | Speedup |
 |---|---|---|---|

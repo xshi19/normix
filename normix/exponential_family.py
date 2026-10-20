@@ -511,7 +511,8 @@ class ExponentialFamily(eqx.Module):
         Parameters
         ----------
         backend : str
-            ``'jax'`` (default, JIT-able) or ``'cpu'`` (scipy, more robust).
+            ``'jax'`` (default, JIT-able) or ``'cpu'`` (eager NumPy/SciPy
+            optimizer; same Bessel quadrature as ``'jax'``; not traceable).
         method : str
             ``'lbfgs'`` (default), ``'bfgs'``, or ``'newton'``.
         verbose : int
