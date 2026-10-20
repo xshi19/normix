@@ -53,7 +53,7 @@ Solve :math:`\\tilde{\\eta} \\to \\tilde{\\theta}` with symmetric GIG
 """
 from __future__ import annotations
 
-from functools import partial
+from functools import lru_cache, partial
 from typing import Optional, Tuple
 
 import jax
@@ -1082,6 +1082,55 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         verbose: int = 0,
     ) -> "GeneralizedInverseGaussian":
         """Invert a target that passed the public moment-domain check."""
+        native = partial(
+            cls._solve_expectation, maxiter=maxiter, tol=tol,
+            backend=backend, method=method, verbose=verbose,
+        )
+
+        def offload(target, start):
+            def callback(host_target, host_start, host_tol):
+                solve = _gig_cpu_primal(cls, maxiter, float(host_tol), method)
+                return np.asarray(solve(host_target, host_start))
+
+            theta = jax.pure_callback(
+                callback, jax.ShapeDtypeStruct(target.shape, target.dtype),
+                jax.lax.stop_gradient(target),
+                jax.tree.map(jax.lax.stop_gradient, start),
+                jax.lax.stop_gradient(jnp.asarray(tol, dtype=target.dtype)),
+                vmap_method="sequential",
+            )
+            return _require_solved_theta(
+                theta, jnp.all(jnp.isfinite(theta)),
+                traced=isinstance(target, jax.core.Tracer),
+            )
+
+        if backend != "jax":
+            theta = native(eta, theta0)
+        elif isinstance(eta, jax.core.Tracer):
+            theta = jax.lax.platform_dependent(
+                eta, theta0, cpu=native, default=offload,
+            )
+        elif all(device.platform == "cpu" for device in eta.devices()):
+            theta = native(eta, theta0)
+        else:
+            theta = offload(eta, theta0)
+        if backend == "jax":
+            theta = cls._implicit_natural_params(eta, theta)
+        return cls.from_natural(theta)
+
+    @classmethod
+    def _solve_expectation(
+        cls,
+        eta: jax.Array,
+        theta0: Optional[jax.Array] = None,
+        *,
+        maxiter: int = 500,
+        tol: float = 1e-10,
+        backend: str = "jax",
+        method: str = "newton",
+        verbose: int = 0,
+    ) -> jax.Array:
+        """Return the stopped primal solve in natural coordinates."""
         eta_target = jnp.asarray(eta, dtype=jnp.float64)
         eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
         eta1, eta2, eta3 = eta[0], eta[1], eta[2]
@@ -1167,9 +1216,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         theta = jnp.array([theta_scaled[0],
                            theta_scaled[1] / s,
                            s * theta_scaled[2]])
-        if backend == "jax":
-            theta = cls._implicit_natural_params(eta_target, theta)
-        return cls.from_natural(theta)
+        return theta
 
     @classmethod
     def _theta_bounds(cls):
@@ -1225,7 +1272,18 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 # ---------------------------------------------------------------------------
 # Stable jitted GIG Newton solver
 # ---------------------------------------------------------------------------
-#
+
+@lru_cache(maxsize=None)
+def _gig_cpu_primal(cls, maxiter: int, tol: float, method: str):
+    """Cache the native primal with explicit CPU placement for callbacks."""
+    return jax.jit(
+        partial(
+            cls._solve_expectation, maxiter=maxiter, tol=tol,
+            backend="jax", method=method,
+        ),
+        device=jax.devices("cpu")[0],
+    )
+
 # Hoisted so ``GIG.log_partition`` / EM conjugacy does not re-run eager
 # ``log_kv`` quadrature on every E-step. Same pattern as the Newton kernel
 # below: a module-level jit, not a fresh closure per call.
