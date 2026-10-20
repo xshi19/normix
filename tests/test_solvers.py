@@ -11,6 +11,7 @@ import pytest
 import jax
 import jax.numpy as jnp
 
+from normix.fitting import solvers
 from normix.fitting.solvers import (
     BregmanResult,
     SolverDidNotConverge,
@@ -271,6 +272,155 @@ def test_damped_hessian_scales_with_trace():
     ridge = HESSIAN_DAMPING * 1e-8
     np.testing.assert_allclose(np.diag(Hs), 1e-8 + ridge)
     assert ridge < 1e-12
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("f0", [-10.0, -1.0, 0.0, 1.0, 10.0])
+def test_backtrack_accepts_rounding_noise(f0):
+    """A few ulps of trial noise must not shrink a near-optimal step."""
+    phi = jnp.array([1e-9])
+    delta = phi
+
+    def objective(x):
+        noise = jnp.where(x[0] != phi[0], 4e-16 * max(abs(f0), 1.0), 0.0)
+        return f0 + 0.5 * x[0] ** 2 + noise
+
+    alpha = jax.jit(lambda: solvers._backtrack(
+        objective, phi, delta, objective(phi), jnp.dot(phi, delta),
+    ))()
+    assert float(alpha) == 1.0
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("bad_trial", [jnp.nan, jnp.inf, -jnp.inf, 1.01])
+def test_backtrack_rejects_nonfinite_or_increasing_trials(bad_trial):
+    def objective(x):
+        return jnp.where(x[0] < 0.0, bad_trial, x[0] ** 2)
+
+    alpha = jax.jit(lambda: solvers._backtrack(
+        objective, jnp.array([1.0]), jnp.array([2.0]), jnp.array(1.0),
+        jnp.array(4.0),
+    ))()
+    assert float(alpha) == 0.5
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("analytical", [False, True])
+def test_newton_skips_line_search_at_converged_start(monkeypatch, analytical):
+    def unexpected_backtrack(*args, **kwargs):
+        pytest.fail("An already converged start entered the line search")
+
+    monkeypatch.setattr(solvers, "_backtrack", unexpected_backtrack)
+    eta = jnp.array([1.0, -2.0])
+    with jax.disable_jit():
+        result = solve_bregman(
+            quadratic_f, eta, eta, method="newton",
+            grad_fn=(lambda t: t) if analytical else None,
+            hess_fn=(lambda t: jnp.eye(t.size)) if analytical else None,
+        )
+    assert result.converged
+    assert int(result.num_steps) == 0
+    np.testing.assert_array_equal(result.theta, eta)
+
+
+@pytest.mark.contract
+def test_newton_lm_bounds_backtracking_work(monkeypatch):
+    """Rejected full LM steps must not each run a complete line search."""
+    backtrack = solvers._backtrack
+    halvings = []
+
+    def counted_backtrack(*args, **kwargs):
+        alpha = backtrack(*args, **kwargs)
+        halvings.append(round(-np.log2(float(alpha))))
+        return alpha
+
+    monkeypatch.setattr(solvers, "_backtrack", counted_backtrack)
+    with jax.disable_jit():
+        result = solve_bregman(
+            lambda t: jnp.where(t[0] == 1.0, 1.0, 2.0),
+            jnp.zeros(1), jnp.ones(1), method="newton", max_steps=1,
+            grad_fn=lambda t: jnp.ones_like(t),
+            hess_fn=lambda t: jnp.eye(t.size),
+        )
+    assert int(result.num_steps) == 1
+    assert len(halvings) <= 2
+    assert sum(halvings) <= 68
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("noisy", [False, True])
+def test_gig_rounding_backtracking_budget(monkeypatch, noisy):
+    """Count actual halvings with eager JAX loops; no host callbacks."""
+    from normix import GIG
+
+    target = GIG(-1.0, 0.1, 10.0)
+    warm = GIG(-0.75, 0.15, 5.0)
+    backtrack = solvers._backtrack
+    newton = solvers._jax_newton_raw
+    halvings = []
+    results = []
+
+    def counted_backtrack(obj, phi, delta, f0, slope, **kwargs):
+        def objective(x):
+            value = obj(x)
+            noise = 4e-16 * jnp.maximum(jnp.abs(f0), 1.0) if noisy else 0.0
+            return value + noise
+
+        alpha = backtrack(objective, phi, delta, f0, slope, **kwargs)
+        halvings.append(round(-np.log2(float(alpha))))
+        assert sum(halvings) <= 20, halvings
+        return alpha
+
+    def counted_newton(*args, **kwargs):
+        result = newton(*args, **kwargs)
+        results.append(result)
+        return result
+
+    monkeypatch.setattr(solvers, "_backtrack", counted_backtrack)
+    monkeypatch.setattr(solvers, "_jax_newton_raw", counted_newton)
+    with jax.disable_jit():
+        fitted = GIG.from_expectation(
+            target.expectation_params(), theta0=warm.natural_params(),
+            maxiter=15, tol=1e-10,
+        )
+    assert len(results) == 1
+    _, _, _, converged, num_steps, kkt, _ = results[0]
+    assert converged
+    assert float(kkt) < 1e-10
+    assert int(num_steps) <= 10
+    np.testing.assert_allclose(
+        fitted.natural_params(), target.natural_params(), rtol=1e-7, atol=1e-9,
+    )
+
+
+@pytest.mark.contract
+def test_gig_rounding_jit_vmap_grad():
+    from normix import GIG
+
+    warm = GIG(-0.75, 0.15, 5.0).natural_params()
+    targets = [GIG(-1.0, 0.1, 10.0), GIG(-0.75, 0.15, 5.0)]
+    eta = jnp.stack([target.expectation_params() for target in targets])
+
+    def invert(target):
+        return GIG.from_expectation(
+            target, theta0=warm, maxiter=15, tol=1e-10,
+        ).natural_params()
+
+    def value_and_grad(target):
+        return invert(target), jax.grad(lambda e: jnp.sum(invert(e)))(target)
+
+    batched = jax.jit(jax.vmap(value_and_grad))
+    theta, derivative = batched(eta)
+    np.testing.assert_allclose(
+        theta, jnp.stack([target.natural_params() for target in targets]),
+        rtol=1e-7, atol=1e-9,
+    )
+    reference = np.stack([
+        np.linalg.solve(np.asarray(target.fisher_information()), np.ones(3))
+        for target in targets
+    ])
+    np.testing.assert_allclose(derivative, reference, rtol=1e-7, atol=1e-8)
+    assert "callback" not in str(jax.make_jaxpr(batched)(eta))
 
 
 # ---------------------------------------------------------------------------
