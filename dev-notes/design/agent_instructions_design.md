@@ -167,9 +167,9 @@ by the workflows that own those moments.
   Use it for Bessel, the GIG/GH solvers, the EM fitter, or `@jax.custom_jvp`.
   Use it when the user asks for a cross-family review.
   Do not copy a model list into another skill.
-- Checkpoint policy: reversible work proceeds without asking; one-way
-  doors get a human checkpoint (architect Phase C). Human attention is
-  spent exactly where reversal is expensive.
+- Checkpoint policy: routine reversible work proceeds within the established contract.
+  Structural or execution-contract changes follow architect Phase C.
+  Existing user authorization applies; a new contract change needs agreement on that change.
 
 ### Visual artifacts (show-me, 2026-08)
 
@@ -338,13 +338,17 @@ Do not write "the code is correct".
 
 **Interrogate escalation.** Include the diff, the touched class, and its base.
 Include the theory or tech-note page.
-Include one intent paragraph.
+Include the goal, constraints, proposed mechanism, and authority packet from interrogate step 2.
+Identify the base and head revisions.
+Include pre-change decision rows, related unchanged rows, and relevant rejected alternatives.
 
 The user relays the package to Normix Engineer. Do not invent a transport.
 
 Normix Engineer returns one written synthesis.
 For a design bake-off, that note names the base, the grafts, and the rejections.
-For a review, it names the reviewers and the findings.
+For a review, it names the reviewers, reviewed revision, constraints checked, and findings.
+A draft PR, CI success, or a prepared package does not supply that return.
+If the diff changes afterward, identify which findings still apply and what needs renewed review.
 
 Paste that return into the session before you call the work reviewed.
 With no return, the state is "ready for external review".

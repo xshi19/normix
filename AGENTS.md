@@ -78,7 +78,7 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 | Add a distribution, module, constant, or design decision | `.cursor/skills/agent-maintenance/SKILL.md` |
 | Fix a reproducible bug | `.cursor/skills/tdd/SKILL.md` |
 | Change Bessel, GIG/GH solvers, EM, or custom JVPs | `.cursor/skills/interrogate/SKILL.md` |
-| Change class boundaries or introduce a new abstraction | `.cursor/skills/architect/SKILL.md` |
+| Change class boundaries, abstractions, backend selection, device placement, or transformation guarantees | `.cursor/skills/architect/SKILL.md` |
 | Explain behavior or trace design history | `.cursor/skills/how/SKILL.md` or `.cursor/skills/why/SKILL.md` |
 | Make design, verification, or refactoring decisions | `.cursor/skills/principles/SKILL.md` |
 | Edit prose, docstrings, rules, skills, or PR descriptions | `.cursor/skills/unslop/SKILL.md` |

@@ -4,17 +4,17 @@ description: >-
   Design before implementing: sketch eqx.Module fields, classmethod
   signatures, and module boundaries before code, hand the sketch to
   Normix Engineer, and land the decision as a dev-notes/design/design.md row.
-  Use for one-way-door structural changes — a new ABC layer, a new mixture
-  family shape, an η-update abstraction — or when the user asks to
-  design/architect something non-trivial. Not for routine work (a new
-  analytical Hessian, a pdf bug fix, a doc edit).
+  Use for structural changes or changes to backend selection, device
+  placement, or transformation guarantees. Also use for an explicit
+  design request. Skip routine implementations that preserve those contracts.
 ---
 
 # Architect
 
-Design first for one-way-door structural changes. The trigger test: **would
-this change add or amend a row in `dev-notes/design/design.md`?** If not,
-skip this skill and just implement.
+Design before structural changes or changes to established execution contracts.
+Check whether the change revises a decision in `dev-notes/design/design.md`.
+A stable signature does not imply stable backend or device semantics.
+Skip routine implementation work that preserves the decisions.
 
 Open a todo per phase: Ground, Sketch, Agree, Implement, Scrap.
 
@@ -32,12 +32,14 @@ Read before designing — the constraints live in the docs, not in guesses:
   beats fan-out — reach for the how skill only for a subsystem you
   genuinely don't know)
 
-If the design redefines ownership or layering, run the why skill on the
-existing shape first: superseded rationale in `dev-notes/archive/design/`
-is a constraint, not trivia.
+For ownership, layering, or execution-contract changes, run the why skill before selecting a candidate.
+Record the user goal, governing decision IDs, and rejected alternatives with their evidence.
+Check related decisions even when the diff edits only one row.
+Separate performance targets from requirements that every candidate must preserve.
+If a candidate needs a contract change, identify the user instruction authorizing that change.
+Keep that candidate a proposal when the authority is missing.
 
-Completion criterion: you can name the `design.md` rows, topical docs,
-and code that constrain the sketch.
+Completion criterion: each candidate preserves the cited constraints or names an unresolved contract change.
 
 ## Phase B: Sketch (hand-off)
 
@@ -54,17 +56,15 @@ Completion criterion: the package is ready, this session spawned no candidate, a
 ## Phase C: Agree (checkpoint by default)
 
 Start this phase only after the synthesized package is back.
-Present the synthesized package and a draft `design.md` row to the user
-before implementing. Architect only fires on one-way doors, which is
-exactly where human attention belongs — reversible work never reaches this
-skill (principles skill § Never block on the human covers the rest). Skip
-the checkpoint only when the user asked for design-and-implement in one go.
+Present the synthesized package and proposed decision changes before implementing.
+Use existing user authorization when it covers those changes.
+Otherwise, request agreement on the specific unresolved contract change.
+Do not ask again for an already authorized change.
 
 For extra adversarial pressure on a high-stakes sketch, run the interrogate
 skill on the design package before implementing.
 
-Completion criterion: the user approved the package and draft `design.md`
-row, or the user asked for design-and-implement in one go.
+Completion criterion: user authorization covers the package and its proposed contract changes.
 
 ## Phase D: Implement against the sketch
 
@@ -112,9 +112,9 @@ rationale in the topical doc (or a plan file for subsystem-scale work).
 
 ## Gotchas
 
-- Do not settle a numerical choice inside a design by bake-off. Solver,
-  backend, and tolerance choices belong to benchmarks. Leave them as open
-  questions in the package. Attach a benchmark plan.
+- Benchmark numerical choices only after the candidates satisfy the governing constraints.
+  Backend semantics are design decisions; faster timings do not authorize changing them.
+  Attach a benchmark plan for choices that remain open.
 - Don't let the sketch drift into implementation: bodies stay
   `NotImplementedError` until Phase D, or the "design" is just code review
   of premature code.

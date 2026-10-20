@@ -4,7 +4,8 @@ description: >-
   Design history and rationale: "why does X work this way", "why did we
   pick Y", what alternatives were rejected, where a threshold came from.
   Searches normix's design docs, archived proposals, tech notes, and git
-  history — no MCP fan-out. Use the how skill for current behavior.
+  history — no MCP fan-out. Also use before reviving removed mechanisms
+  or changing backend behavior. Use the how skill for current behavior.
 ---
 
 # Why
@@ -15,7 +16,9 @@ exists — don't infer intent from code shape.
 
 ## Source order
 
-Work down; stop when answered, and note which sources you didn't reach.
+Work down; stop when the question is answered.
+For a proposed reversal, also complete the history check below.
+Name the sources you did not reach.
 
 1. `dev-notes/design/design.md` — the decision table. Most "why X"
    questions are a row here; follow its Why/Detail link.
@@ -31,6 +34,16 @@ Work down; stop when answered, and note which sources you didn't reach.
    <file>`, commit bodies; `gh pr view <n> --json title,body,comments,
    reviews` when authenticated
 6. `docs/design/` — the published, user-facing voice of the same decisions
+
+### Before proposing a reversal
+
+Follow the removed mechanism through its removal commit and later replacements.
+Separate owner rejection, supersession, and an unsuccessful experiment.
+Report the original reason, its scope, and any recorded reopening condition.
+Identify the changed assumption before recommending reconsideration.
+Do not treat an old implementation or an unmerged proposal as current authority.
+
+Completion criterion: cite the decision and evidence; label missing history or authority as unknown.
 
 This is a reading task. Do it inline by default.
 
