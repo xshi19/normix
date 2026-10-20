@@ -475,7 +475,10 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.3 CPU triad for Bessel-dependent distributions</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-contract">4.1 Backend contract</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-variate-generation">5. Random Variate Generation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-functions-cdf-ppf">Quantile Functions (<code class="docutils literal notranslate"><span class="pre">cdf</span></code>, <code class="docutils literal notranslate"><span class="pre">ppf</span></code>)</a></li>
 </ul>
@@ -837,6 +840,16 @@ GPU-friendly).</p></li>
 </ul>
 <p>Default fitter settings reflect the hot path:
 <code class="docutils literal notranslate"><span class="pre">e_step_backend='jax'</span></code>, <code class="docutils literal notranslate"><span class="pre">m_step_backend='cpu'</span></code>, <code class="docutils literal notranslate"><span class="pre">m_step_method='newton'</span></code>.</p>
+<section id="backend-contract">
+<h3>4.1 Backend contract<a class="headerlink" href="#backend-contract" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> runs pure JAX on the device the caller selects
+(<code class="docutils literal notranslate"><span class="pre">jax.default_device</span></code>, <code class="docutils literal notranslate"><span class="pre">jax.device_put</span></code>); normix does not move it to a
+host callback. <code class="docutils literal notranslate"><span class="pre">backend='cpu'</span></code> selects the eager NumPy/SciPy path. Fitter
+defaults pick that explicit path; they do not change what
+<code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> means. Automatic GIG CPU offload
+(<a class="reference external" href="https://github.com/xshi19/normix/pull/141">PR #141</a>) was rejected for
+this reason.</p>
+</section>
 </section>
 <hr class="docutils" />
 <section id="random-variate-generation">
@@ -959,7 +972,10 @@ with <code class="docutils literal notranslate"><span class="pre">log_kernel(w)<
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-triad-for-bessel-dependent-distributions">3.3 CPU triad for Bessel-dependent distributions</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cpu-gpu-hybrid-backend">4. CPU/GPU Hybrid Backend</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#backend-contract">4.1 Backend contract</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#random-variate-generation">5. Random Variate Generation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#quantile-functions-cdf-ppf">Quantile Functions (<code class="docutils literal notranslate"><span class="pre">cdf</span></code>, <code class="docutils literal notranslate"><span class="pre">ppf</span></code>)</a></li>
 </ul>
