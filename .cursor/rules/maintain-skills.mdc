@@ -51,7 +51,7 @@ and reference data. They encode multi-step workflows — recipes, not preference
 | Skill | When |
 |---|---|
 | `agent-maintenance` | New module, distribution, constant, design decision, or a docs audit |
-| `architect` | One-way-door structure; Phase B hands off |
+| `architect` | Structure or execution contracts; Phase B hands off |
 | `arena` | Hand-off reference; runner retired |
 | `docs-publish` | Build or publish the docs site |
 | `figure-it-out` | Explicit custom playbook; not implicit |

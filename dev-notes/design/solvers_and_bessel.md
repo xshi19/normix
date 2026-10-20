@@ -203,7 +203,46 @@ GIG solve on CPU) is unchanged. `_fit_defaults` is a separate decision.
 Default fitter settings reflect the hot path:
 `e_step_backend='jax'`, `m_step_backend='cpu'`, `m_step_method='newton'`.
 
-See `../tech_notes/em_gpu_profiling.md`.
+See `../tech_notes/em_gpu_profiling.md` for historical profiling.
+Its `scipy.kve` timings and configuration advice predate S10.
+
+<a id="s9-backend-decisions"></a>
+
+### 4.1 Backend contract and rejected alternatives (S9/S11)
+
+`backend='jax'` retains JAX execution on the caller-selected device, including CPU.
+`backend='cpu'` selects the eager NumPy/SciPy path.
+Fitter defaults select that explicit path; they do not authorize hidden offload inside `backend='jax'`.
+Transformation support, derivative correctness, and execution placement are separate guarantees.
+S11's implicit derivative does not authorize moving its stopped primal to a host callback.
+
+[PR #16](https://github.com/xshi19/normix/pull/16) introduced explicit backend selection.
+Its Python-level string selects the path before tracing; see § 3.2.
+The current constructor and fitter defaults are described in § 2.2 and § 4.
+
+**Earlier Bessel callbacks — superseded.**
+[PR #12](https://github.com/xshi19/normix/pull/12) retained `pure_callback` plus `scipy.kve` after TFP crashes.
+The March 15 migration removed that callback boundary because of GPU/CPU synchronization.
+Commit `ca70328` retained a fallback; `5fc7a27` reduced its use; `3fd1385` removed it.
+See the [historical motivation](../tech_notes/jax_native_bessel_feasibility.md#motivation).
+S10 later replaced the four-regime implementation with one kernel for JAX and NumPy; `kve` remains a test oracle.
+
+**Automatic GIG CPU offload — owner rejection reported on 2026-10-20.**
+[PR #141](https://github.com/xshi19/normix/pull/141) proposed one host callback for the JAX primal per scalar or batched call.
+It kept the implicit derivative on the caller device; it did not restore `kve`.
+Xiang rejected automatic offload because it overrides the caller's execution choice.
+This rejection comes from the session report, not a posted PR review.
+
+The PR reported 1.5–4 ms cached scalar solves versus 0.12–7 s on the baseline GPU.
+Those timings support a performance comparison, not a change to the backend contract.
+Reconsider only if Xiang explicitly reopens that contract; numerical parity alone is insufficient.
+
+**Masked-loop candidate — inconclusive experiment.**
+The same PR reported a 30-minute timeout before the first GPU solve completed.
+That observation does not establish the cause or rule out other JAX-native implementations.
+Revisit with evidence separating compilation, dispatch, and solver progress.
+[Issue #136](https://github.com/xshi19/normix/issues/136) remains the investigation record.
+[PR #140](https://github.com/xshi19/normix/pull/140) pins mathematical tests to CPU; it does not change runtime backend semantics.
 
 ---
 

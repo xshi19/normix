@@ -29,8 +29,8 @@ early one is a one-line diff.
 
 **Exhaust the design space.** When a structural decision has no precedent,
 sketch 2–3 competing shapes before committing — the architect skill
-makes this concrete. Not for mechanical work, bug fixes, or
-numerical-method choices; benchmarks decide those (rows S5, S8, S9).
+makes this concrete. Skip alternative structural sketches for routine fixes.
+Benchmark numerical choices within the governing contracts (rows S5, S8, S9).
 
 **Redesign from first principles.** Integrating a new requirement means
 redesigning as if it had been known on day one, not bolting on. AGENTS.md
@@ -51,6 +51,12 @@ seconds? `eqx` immutability answers the second for free — keep it that
 way.
 
 ## Verification
+
+**Benchmark within the contract.** List the user goal and governing decision IDs before comparing candidates.
+Reject candidates that violate those constraints unless explicit user authorization covers the specific change.
+Value agreement, transformation support, and device placement are separate claims.
+Require evidence for each claim affected by the change.
+A timeout rejects the measured run, not every implementation of that approach.
 
 **Prove it works.** Hand back an inspectable artifact, not a claim. The
 normix convention: any EM/solver/benchmark change ships with the relevant
@@ -77,16 +83,18 @@ apply it.
 
 ## Execution
 
-**Never block on the human.** normix changes are reversible (PR + tests +
-release-please): proceed and present, don't ask permission. Reserve
-checkpoints for genuine one-way doors (architect Phase C) and irreversible
-actions.
+**Never block on the human.** Proceed with routine reversible work inside the established contract.
+Reuse existing user authorization.
+Route structural or execution-contract changes through architect.
+Request agreement only for unresolved contract changes or irreversible actions outside that authorization.
 
 **Fix root causes.** Reproduce, then ask why until you hit bottom: a NaN
 from `log_kv` at large $z$ is a regime-boundary bug, not a missing output
 clamp. Distinguish structural clamps (row F6: constructors clamp inputs —
 by design) from band-aid clamps that hide a wrong formula. Grep for the
 pattern, not just the instance.
+For a stall, distinguish compilation, dispatch, and solver progress before claiming a cause.
+Keep the failure open when a workaround only avoids its execution path.
 
 **Outcome-oriented execution.** In planned migrations, converge on the
 target architecture rather than preserving every intermediate state — but
