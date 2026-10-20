@@ -1,5 +1,9 @@
 # Feasibility: JAX-Native Modified Bessel Function $K_v(z)$
 
+> **Superseded.** The four-regime `custom_jvp` implementation described
+> here was replaced by the frozen whole-line quadrature kernel (design
+> row S10, PR #113). See `bessel_moment_kernel.md`.
+
 **Date**: March 2026  
 **Status**: Implementation complete — zero scipy callbacks, all phases done  
 **Related files**: `normix/_bessel.py`, `scripts/compare_bessel_implementations.py`, `../tech_notes/tfp_bessel_crash_investigation.md`
