@@ -884,7 +884,8 @@ and does not support JAX transformations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (scipy, more robust).</p></li>
+<li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default, JIT-able) or <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code> (eager NumPy/SciPy
+optimizer; same Bessel quadrature as <code class="docutils literal notranslate"><span class="pre">'jax'</span></code>; not traceable).</p></li>
 <li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code> (default), <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>) – 0 = silent, &gt;= 1 = print solver summary.</p></li>
 <li><p><strong>eta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>

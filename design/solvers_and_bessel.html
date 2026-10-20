@@ -697,9 +697,10 @@ symmetric Fisher matrix. After solving for <span class="math notranslate nohighl
 </section>
 <section id="solver-choice-in-em">
 <h3>2.2 Solver choice in EM<a class="headerlink" href="#solver-choice-in-em" title="Link to this heading">#</a></h3>
-<p>Default: <code class="docutils literal notranslate"><span class="pre">backend='cpu',</span> <span class="pre">method='lbfgs'</span></code> — <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code>
-with the numpy Bessel kernel. This avoids GPU kernel dispatch overhead on a
-3-D scalar problem.</p>
+<p><code class="docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian.from_expectation</span></code> defaults to
+<code class="docutils literal notranslate"><span class="pre">backend='jax',</span> <span class="pre">method='newton'</span></code>. The EM M-step default stays
+<code class="docutils literal notranslate"><span class="pre">m_step_backend='cpu'</span></code>: <code class="docutils literal notranslate"><span class="pre">scipy.optimize.minimize</span></code> with the NumPy Bessel
+kernel, which avoids GPU kernel dispatch overhead on a 3-D scalar problem.</p>
 <p>For the warm-started Newton path (<code class="docutils literal notranslate"><span class="pre">backend='jax',</span> <span class="pre">method='newton'</span></code>),
 the cached <code class="docutils literal notranslate"><span class="pre">_gig_jax_newton_jit</span></code> keeps a single XLA executable across
 all warm-started solves.</p>
@@ -790,7 +791,9 @@ InverseGaussian) inherit the default wrappers. They pay nothing.</p>
 <hr class="docutils" />
 <section id="cpu-gpu-hybrid-backend">
 <h2>4. CPU/GPU Hybrid Backend<a class="headerlink" href="#cpu-gpu-hybrid-backend" title="Link to this heading">#</a></h2>
-<p>EM timing on 468 stocks, 2552 observations (GH; pre-S10, <code class="docutils literal notranslate"><span class="pre">kve</span></code> on CPU):</p>
+<p>EM timing on 468 stocks, 2552 observations (GH). These figures were
+measured pre-S10, with <code class="docutils literal notranslate"><span class="pre">scipy.special.kve</span></code> on CPU; they have not been
+re-measured on the S10 kernel:</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Phase</p></th>
