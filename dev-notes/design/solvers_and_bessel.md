@@ -125,6 +125,14 @@ from the Gamma / InverseGamma / InverseGaussian special cases.
 See `../tech_notes/gig_eta_to_theta.md` for the derivation and
 `../tech_notes/bessel_moment_kernel.md` for the S10 Hessian.
 
+**`cpu_legacy` — superseded.**
+
+Commit `cd32363` sent the CPU GIG solve through `normix_numpy`.
+[PR #16](https://github.com/xshi19/normix/pull/16) replaced it with self-contained SciPy L-BFGS-B (`solver='cpu'`).
+Commit `6e650ae` deleted that legacy solver.
+Both commits are on the closed [PR #23](https://github.com/xshi19/normix/pull/23) list and on master.
+[PR #22](https://github.com/xshi19/normix/pull/22) removed `normix_numpy`.
+
 ---
 
 ## 3. Bessel Functions
@@ -150,6 +158,16 @@ selects JAX vs NumPy, not a different approximation. `scipy.kve` is a
 test oracle. Hankel / Olver / small-$z$ identities live in
 `tests/test_bessel_contract.py`. Detail:
 `../tech_notes/bessel_moment_kernel.md`.
+
+**TFP `log_bessel_kve` — rejected.**
+
+[PR #12](https://github.com/xshi19/normix/pull/12) reverted `_bessel.py` to `scipy.kve` via `pure_callback`.
+TFP segfaults on extreme $(v,z)$ that GIG optimisation probes.
+TFP 0.25.0 is incompatible with JAX ≥ 0.9.1.
+Commit `9ebfe3b` is the crash note:
+[`tfp_bessel_crash_investigation.md`](../tech_notes/tfp_bessel_crash_investigation.md).
+
+TFP stays out of the production kernel (S10).
 
 ### 3.2 Why `backend` is a Python-level string
 
@@ -221,28 +239,38 @@ Its Python-level string selects the path before tracing; see § 3.2.
 The current constructor and fitter defaults are described in § 2.2 and § 4.
 
 **Earlier Bessel callbacks — superseded.**
-[PR #12](https://github.com/xshi19/normix/pull/12) retained `pure_callback` plus `scipy.kve` after TFP crashes.
-The March 15 migration removed that callback boundary because of GPU/CPU synchronization.
-Commit `ca70328` retained a fallback; `5fc7a27` reduced its use; `3fd1385` removed it.
+
+[PR #12](https://github.com/xshi19/normix/pull/12) kept `pure_callback` plus `scipy.kve` after the TFP crashes in § 3.1.
+A vmapped E-step then paid about five host callbacks per observation.
+Commit `ca70328` kept a fallback, `5fc7a27` cut that use, and `3fd1385` removed the callback.
 See the [historical motivation](../tech_notes/jax_native_bessel_feasibility.md#motivation).
-S10 later replaced the four-regime implementation with one kernel for JAX and NumPy; `kve` remains a test oracle.
+S10 later replaced the four-regime kernel; `kve` stays a test oracle.
 
-**Automatic GIG CPU offload — owner rejection reported on 2026-10-20.**
-[PR #141](https://github.com/xshi19/normix/pull/141) proposed one host callback for the JAX primal per scalar or batched call.
-It kept the implicit derivative on the caller device; it did not restore `kve`.
-Xiang rejected automatic offload because it overrides the caller's execution choice.
-This rejection comes from the session report, not a posted PR review.
+**Automatic GIG CPU offload — rejected (2026-10-20).**
 
-The PR reported 1.5–4 ms cached scalar solves versus 0.12–7 s on the baseline GPU.
-Those timings support a performance comparison, not a change to the backend contract.
-Reconsider only if Xiang explicitly reopens that contract; numerical parity alone is insufficient.
+[PR #141](https://github.com/xshi19/normix/pull/141) proposed one `pure_callback` for the stopped JAX primal on non-CPU backends.
+The implicit derivative stayed on the caller device.
+Xiang rejected the offload in the [closing comment](https://github.com/xshi19/normix/pull/141#issuecomment-6297078498).
+A `backend='jax'` call must stay pure JAX on the caller device.
+A host callback contradicts S9, S11, and the callback removal in `3fd1385`.
 
-**Masked-loop candidate — inconclusive experiment.**
-The same PR reported a 30-minute timeout before the first GPU solve completed.
-That observation does not establish the cause or rule out other JAX-native implementations.
-Revisit with evidence separating compilation, dispatch, and solver progress.
-[Issue #136](https://github.com/xshi19/normix/issues/136) remains the investigation record.
-[PR #140](https://github.com/xshi19/normix/pull/140) pins mathematical tests to CPU; it does not change runtime backend semantics.
+The same comment names the GPU stall.
+The line search rejected steps under float64 rounding.
+[PR #145](https://github.com/xshi19/normix/pull/145) changed the Armijo test in the JAX solver.
+[Issue #136](https://github.com/xshi19/normix/issues/136) remains open.
+The 1.5–4 ms figures in the PR compare speed only.
+Reopen this offload only if Xiang says so.
+
+**Fixed-length masked loops — inconclusive experiment.**
+
+A masked `fori_loop` with parallel multistart did not finish its first GPU solve within 30 min ([PR #141](https://github.com/xshi19/normix/pull/141) body).
+That branch is `perf/gig-gpu-latency-b`, and it is not on origin.
+The closing comment rejects only the `pure_callback` offload.
+Current multistart is `lax.while_loop` in `normix/fitting/solvers.py`.
+
+Revisit this loop only with evidence that it compiles and finishes.
+[PR #140](https://github.com/xshi19/normix/pull/140) pins mathematical tests to CPU.
+It does not change runtime backend semantics.
 
 ---
 

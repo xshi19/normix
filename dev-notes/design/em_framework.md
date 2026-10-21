@@ -148,6 +148,10 @@ init $\alpha=\beta=2$) stopped at $\alpha\approx 1.59$; continuation
 recovered the generating shape $0.7$. The additive $1$ in the RMS
 denominator also stopped $X\mapsto 0.001\,X$ after one iteration.
 
+Parameter change became the stop in `e516372`.
+[PR #75](https://github.com/xshi19/normix/pull/75) made hybrid-RMS the stop and left the log-likelihood as a diagnostic.
+[PR #117](https://github.com/xshi19/normix/pull/117) superseded both with the Aitken gap above.
+
 Public twin: `../../docs/design/em_framework.md` § 2.1.
 
 ### 2.2 Hybrid-RMS diagnostic

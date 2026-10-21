@@ -108,6 +108,10 @@ init $\alpha=\beta=2$) stopped at $\alpha\approx 1.59$; continuation
 recovered the generating shape $0.7$. The additive $1$ in the RMS
 denominator also stopped $X\mapsto 0.001\,X$ after one iteration.
 
+Parameter change became the stop in [`e516372`](https://github.com/xshi19/normix/commit/e516372ff1a342e1d569cbf0a8ab2aebe7bc9fcd).
+[PR #75](https://github.com/xshi19/normix/pull/75) made hybrid-RMS the stop.
+[PR #117](https://github.com/xshi19/normix/pull/117) replaced that stop with the Aitken gap.
+
 ### 2.2 Hybrid-RMS diagnostic
 
 `em_convergence_params()` still returns a pytree whose leaf-wise
