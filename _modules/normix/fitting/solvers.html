@@ -939,10 +939,13 @@
 <span class="sd">    :math:`g_\theta` is still :math:`O(1)`. At a bound optimum the</span>
 <span class="sd">    multiplier stays in ``grad_norm`` and does not by itself fail the solve.</span>
 
-<span class="sd">    A full Gauss–Newton step is taken when it meets the Armijo test at</span>
-<span class="sd">    step length 1. Otherwise an adaptive Levenberg–Marquardt shift</span>
+<span class="sd">    A full Gauss–Newton step is taken when it meets the rounding-tolerant</span>
+<span class="sd">    Armijo test in :func:`_backtrack` at step length 1.</span>
+<span class="sd">    Otherwise an adaptive Levenberg–Marquardt shift</span>
 <span class="sd">    :math:`\mu = \lVert g_\phi\rVert_\infty` (multiplied by ten until the</span>
-<span class="sd">    full step is accepted) is added to :math:`H_\phi`. A permanent ridge</span>
+<span class="sd">    full step is accepted, for at most eight trials) is added to :math:`H_\phi`.</span>
+<span class="sd">    If all full steps fail, only the final LM direction is backtracked.</span>
+<span class="sd">    A permanent ridge</span>
 <span class="sd">    would swamp the :math:`p`-direction of a concentrated GIG, whose</span>
 <span class="sd">    :math:`\phi`-gradient is :math:`O(|\theta|)`. :math:`\mu` is unused</span>
 <span class="sd">    once the undamped step is valid, so the local rate stays quadratic.</span>
@@ -954,7 +957,8 @@
 
 <span class="sd">    Returns ``(theta_opt, fun, grad_norm, converged, num_steps, kkt, reason)``</span>
 <span class="sd">    as JAX arrays. The loop stops when the pre-step residual is inside</span>
-<span class="sd">    ``tol`` or the budget is spent. ``num_steps`` counts steps taken.</span>
+<span class="sd">    ``tol`` or the budget is spent. A converged iterate skips the linear</span>
+<span class="sd">    solve and line search. ``num_steps`` counts steps taken.</span>
 <span class="sd">    The check that finds an interior start, and the check after the last</span>
 <span class="sd">    step, do not increment it. A start already inside ``tol`` reports 0.</span>
 <span class="sd">    ``converged`` is :func:`_inversion_converged` at the returned point.</span>
@@ -990,27 +994,29 @@
     <span class="n">eye</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">phi0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">phi0</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_lm_step</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Grow :math:`\\mu I` until a full :math:`\\phi`-step passes Armijo.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Try eight full LM steps, then backtrack only the last direction.&quot;&quot;&quot;</span>
         <span class="n">mu0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">g</span><span class="p">)),</span> <span class="n">LOG_EPS</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-            <span class="n">i</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">_alpha</span><span class="p">,</span> <span class="n">_delta</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">_delta</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">state</span>
             <span class="k">return</span> <span class="p">(</span><span class="o">~</span><span class="n">done</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-            <span class="n">i</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">alpha_lm</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">state</span>
             <span class="n">delta_lm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H</span> <span class="o">+</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">eye</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
             <span class="n">slope_lm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">)</span>
-            <span class="n">alpha_lm</span> <span class="o">=</span> <span class="n">_backtrack</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">slope_lm</span><span class="p">)</span>
-            <span class="n">done</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha_lm</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">slope_lm</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mu</span> <span class="o">*</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">alpha_lm</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">done</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="n">_armijo_accept</span><span class="p">(</span><span class="n">obj</span><span class="p">(</span><span class="n">phi</span> <span class="o">-</span> <span class="n">delta_lm</span><span class="p">),</span> <span class="n">f0</span><span class="p">,</span> <span class="n">slope_lm</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">slope_lm</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">mu</span> <span class="o">*</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">done</span>
 
-        <span class="n">_i</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">alpha_lm</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">_done</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+        <span class="n">_i</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
             <span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span>
-            <span class="p">(</span>
-                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">mu0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">phi</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
-                <span class="n">delta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
-            <span class="p">),</span>
+            <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">mu0</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="n">alpha_lm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">done</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">phi</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_backtrack</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta_lm</span><span class="p">)),</span>
+            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">alpha_lm</span> <span class="o">*</span> <span class="n">delta_lm</span>
 
@@ -1021,28 +1027,35 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">newton_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
         <span class="n">step</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">_converged</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="n">g</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">g_theta</span> <span class="o">=</span> <span class="n">get_g_H</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-        <span class="n">H_safe</span> <span class="o">=</span> <span class="n">_damped_hessian</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="k">if</span> <span class="n">damp_phi</span> <span class="k">else</span> <span class="n">H</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H_safe</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
-        <span class="n">f0</span> <span class="o">=</span> <span class="n">obj</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
-        <span class="n">slope</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
-        <span class="n">alpha</span> <span class="o">=</span> <span class="n">_backtrack</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">slope</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">damp_phi</span><span class="p">:</span>
-            <span class="n">phi_new</span> <span class="o">=</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">delta</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Full step only. Backtracking this direction still follows</span>
-            <span class="c1"># the huge flat component and walks into the bound.</span>
-            <span class="n">full</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">slope</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
-            <span class="n">phi_new</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-                <span class="n">full</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">delta</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_lm_step</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">H_safe</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">),</span>
-                <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">to_theta</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
         <span class="n">pre_ok</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g_theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
-        <span class="n">phi_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pre_ok</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">phi_new</span><span class="p">)</span>
-        <span class="n">step_out</span> <span class="o">=</span> <span class="n">step</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pre_ok</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">step_out</span><span class="p">,</span> <span class="n">phi_out</span><span class="p">,</span> <span class="n">pre_ok</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">take_step</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+            <span class="n">H_safe</span> <span class="o">=</span> <span class="n">_damped_hessian</span><span class="p">(</span><span class="n">H</span><span class="p">)</span> <span class="k">if</span> <span class="n">damp_phi</span> <span class="k">else</span> <span class="n">H</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">H_safe</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+            <span class="n">f0</span> <span class="o">=</span> <span class="n">obj</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">_backtrack</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">slope</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">damp_phi</span><span class="p">:</span>
+                <span class="n">phi_new</span> <span class="o">=</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">delta</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Full step only. Backtracking this direction still follows</span>
+                <span class="c1"># the huge flat component and walks into the bound.</span>
+                <span class="n">full</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">slope</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">phi_new</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">full</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">phi</span> <span class="o">-</span> <span class="n">delta</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_lm_step</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">H_safe</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">),</span>
+                    <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">step</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">phi_new</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">pre_ok</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">True</span><span class="p">)),</span>
+            <span class="n">take_step</span><span class="p">,</span>
+            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="n">num_steps</span><span class="p">,</span> <span class="n">phi_opt</span><span class="p">,</span> <span class="n">_stopped</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
         <span class="n">newton_cond</span><span class="p">,</span> <span class="n">newton_body</span><span class="p">,</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">phi0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">False</span><span class="p">)),</span>
@@ -1429,14 +1442,25 @@
 <span class="c1"># Shared backtracking line search</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_armijo_accept</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">decrease</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Accept finite trials within :math:`8\varepsilon\max(|f_0|,1)` of Armijo.</span>
+
+<span class="sd">    Several ulps allow for rounding in objective evaluation. The unit</span>
+<span class="sd">    scale floor also covers cancellation when the objective is near zero.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tol_f</span> <span class="o">=</span> <span class="mf">8.0</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f0</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">f0</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">trial</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">trial</span> <span class="o">&lt;=</span> <span class="n">f0</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">decrease</span> <span class="o">+</span> <span class="n">tol_f</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_backtrack</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">slope</span><span class="p">,</span> <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Armijo backtracking via lax.while_loop.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rounding-tolerant Armijo backtracking via ``lax.while_loop``.</span>
+
+<span class="sd">    Accept finite trials according to :func:`_armijo_accept`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
         <span class="n">alpha</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
         <span class="n">trial</span> <span class="o">=</span> <span class="n">obj</span><span class="p">(</span><span class="n">phi</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span>
-        <span class="c1"># NaN is not greater than the threshold, so a non-finite trial</span>
-        <span class="c1"># would otherwise be accepted (exp overflow on a long φ step).</span>
-        <span class="n">insufficient</span> <span class="o">=</span> <span class="p">(</span><span class="o">~</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">trial</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">trial</span> <span class="o">&gt;</span> <span class="n">f0</span> <span class="o">-</span> <span class="n">c</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">slope</span><span class="p">)</span>
+        <span class="n">insufficient</span> <span class="o">=</span> <span class="o">~</span><span class="n">_armijo_accept</span><span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">slope</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">insufficient</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
