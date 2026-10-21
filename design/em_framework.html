@@ -621,6 +621,9 @@ review VG experiment (2000 draws, <span class="math notranslate nohighlight">\(Y
 init <span class="math notranslate nohighlight">\(\alpha=\beta=2\)</span>) stopped at <span class="math notranslate nohighlight">\(\alpha\approx 1.59\)</span>; continuation
 recovered the generating shape <span class="math notranslate nohighlight">\(0.7\)</span>. The additive <span class="math notranslate nohighlight">\(1\)</span> in the RMS
 denominator also stopped <span class="math notranslate nohighlight">\(X\mapsto 0.001\,X\)</span> after one iteration.</p>
+<p>Parameter change became the stop in <a class="reference external" href="https://github.com/xshi19/normix/commit/e516372ff1a342e1d569cbf0a8ab2aebe7bc9fcd"><code class="docutils literal notranslate"><span class="pre">e516372</span></code></a>.
+<a class="reference external" href="https://github.com/xshi19/normix/pull/75">PR #75</a> made hybrid-RMS the stop.
+<a class="reference external" href="https://github.com/xshi19/normix/pull/117">PR #117</a> replaced that stop with the Aitken gap.</p>
 </section>
 <section id="hybrid-rms-diagnostic">
 <h3>2.2 Hybrid-RMS diagnostic<a class="headerlink" href="#hybrid-rms-diagnostic" title="Link to this heading">#</a></h3>

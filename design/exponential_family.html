@@ -576,6 +576,9 @@ The triad remains three θ-space classmethods; the solver still applies the
 φ↔θ chain rule (S2). A combined <code class="docutils literal notranslate"><span class="pre">_grad_hess</span></code> on the distribution would
 re-introduce a φ-space chain rule the distribution must understand, and is
 not used.</p>
+<p>An earlier GIG gradient used Bessel ratios and a finite-difference <span class="math notranslate nohighlight">\(\partial_p\)</span> (<code class="docutils literal notranslate"><span class="pre">ee8cf8b</span></code>).
+<a class="reference external" href="https://github.com/xshi19/normix/pull/113">PR #113</a> replaced that stencil with this bundle.
+<code class="docutils literal notranslate"><span class="pre">jax.grad</span></code> through the degenerate <code class="docutils literal notranslate"><span class="pre">jnp.where</span></code> still fails for this gradient.</p>
 </section>
 <section id="ambient-moments-on-the-curved-joints">
 <h3>2.4 Ambient moments on the curved joints<a class="headerlink" href="#ambient-moments-on-the-curved-joints" title="Link to this heading">#</a></h3>
@@ -800,6 +803,8 @@ in the constrained space, not log-space).</p></li>
 <p><code class="docutils literal notranslate"><span class="pre">jnp.where</span></code> is preferred over <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> whenever possible: it is
 <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible without changing the trace, and the clamping prevents
 NaN gradients without branch divergence.</p>
+<p>Commit <code class="docutils literal notranslate"><span class="pre">9346ad6</span></code> selected one Bessel regime with <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>.
+<a class="reference external" href="https://github.com/xshi19/normix/pull/113">PR #113</a> removed that dispatch and the rest of the four-regime kernel.</p>
 </section>
 <section id="module-level-functions-are-forbidden">
 <h3>4.4 Module-level functions are forbidden<a class="headerlink" href="#module-level-functions-are-forbidden" title="Link to this heading">#</a></h3>

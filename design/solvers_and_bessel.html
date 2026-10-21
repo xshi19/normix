@@ -777,6 +777,9 @@ and stored argument jets from
 <a class="reference external" href="https://dlmf.nist.gov/10.30#E2">10.30.2</a> ) are identities in the
 contract tests, not production branches. The old four-regime <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>
 plus FD <span class="math notranslate nohighlight">\(\partial_\nu\)</span> produced <span class="math notranslate nohighlight">\(L_{\nu\nu}&lt;0\)</span> at GIG<span class="math notranslate nohighlight">\((25,1,1)\)</span>.</p>
+<p><a class="reference external" href="https://github.com/xshi19/normix/pull/12">PR #12</a> rejected TFP <code class="docutils literal notranslate"><span class="pre">log_bessel_kve</span></code> as the Bessel backend.
+It segfaults on extreme <span class="math notranslate nohighlight">\((v,z)\)</span> that GIG optimisation probes.
+TFP 0.25.0 is incompatible with JAX ≥ 0.9.1.</p>
 </section>
 <section id="why-backend-is-a-python-level-string">
 <h3>3.2 Why <code class="docutils literal notranslate"><span class="pre">backend</span></code> is a Python-level string<a class="headerlink" href="#why-backend-is-a-python-level-string" title="Link to this heading">#</a></h3>
@@ -852,7 +855,9 @@ host callback. <code class="docutils literal notranslate"><span class="pre">back
 defaults pick that explicit path; they do not change what
 <code class="docutils literal notranslate"><span class="pre">backend='jax'</span></code> means. Automatic GIG CPU offload
 (<a class="reference external" href="https://github.com/xshi19/normix/pull/141">PR #141</a>) was rejected for
-this reason.</p>
+this reason.
+The record is the <a class="reference external" href="https://github.com/xshi19/normix/pull/141#issuecomment-6297078498">closing comment</a>.
+A masked <code class="docutils literal notranslate"><span class="pre">fori_loop</span></code> with parallel multistart did not finish its first GPU solve within 30 min (same PR).</p>
 </section>
 </section>
 <hr class="docutils" />

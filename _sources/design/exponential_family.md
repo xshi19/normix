@@ -78,6 +78,10 @@ The triad remains three θ-space classmethods; the solver still applies the
 re-introduce a φ-space chain rule the distribution must understand, and is
 not used.
 
+An earlier GIG gradient used Bessel ratios and a finite-difference $\partial_p$ (`ee8cf8b`).
+[PR #113](https://github.com/xshi19/normix/pull/113) replaced that stencil with this bundle.
+`jax.grad` through the degenerate `jnp.where` still fails for this gradient.
+
 ### 2.4 Ambient moments on the curved joints
 
 Joint variance-gamma, normal-inverse-gamma, and normal-inverse-Gaussian
@@ -238,6 +242,9 @@ recipe (when JAXopt breaks): wrap `optax.scale_by_lbfgs` in
 `jnp.where` is preferred over `lax.cond` whenever possible: it is
 `vmap`-compatible without changing the trace, and the clamping prevents
 NaN gradients without branch divergence.
+
+Commit `9346ad6` selected one Bessel regime with `lax.cond`.
+[PR #113](https://github.com/xshi19/normix/pull/113) removed that dispatch and the rest of the four-regime kernel.
 
 ### 4.4 Module-level functions are forbidden
 

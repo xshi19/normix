@@ -244,6 +244,10 @@ Hankel / Olver / small-$z$ formulae ( {ref}`DLMF <dlmf>`
 contract tests, not production branches. The old four-regime `lax.cond`
 plus FD $\partial_\nu$ produced $L_{\nu\nu}<0$ at GIG$(25,1,1)$.
 
+[PR #12](https://github.com/xshi19/normix/pull/12) rejected TFP `log_bessel_kve` as the Bessel backend.
+It segfaults on extreme $(v,z)$ that GIG optimisation probes.
+TFP 0.25.0 is incompatible with JAX ≥ 0.9.1.
+
 ### 3.2 Why `backend` is a Python-level string
 
 Resolved before JAX tracing begins. `backend='jax'` keeps the code
@@ -306,6 +310,8 @@ defaults pick that explicit path; they do not change what
 `backend='jax'` means. Automatic GIG CPU offload
 ([PR #141](https://github.com/xshi19/normix/pull/141)) was rejected for
 this reason.
+The record is the [closing comment](https://github.com/xshi19/normix/pull/141#issuecomment-6297078498).
+A masked `fori_loop` with parallel multistart did not finish its first GPU solve within 30 min (same PR).
 
 ---
 
