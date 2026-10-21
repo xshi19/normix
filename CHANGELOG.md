@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.5](https://github.com/xshi19/normix/compare/v0.4.4...v0.4.5) (2026-10-21)
+
+
+### Documentation
+
+* **bessel:** enable float64 in the log_kv symmetry example ([#151](https://github.com/xshi19/normix/issues/151)) ([8bfcaa1](https://github.com/xshi19/normix/commit/8bfcaa1fec620e424a3e50f2f4df6da0ee8cee6b))
+* **design:** record rejected and superseded alternatives ([#148](https://github.com/xshi19/normix/issues/148)) ([5a08343](https://github.com/xshi19/normix/commit/5a08343055b93e523c9d5341e4abfe91a4a5ec84))
+
 ## [0.4.4](https://github.com/xshi19/normix/compare/v0.4.3...v0.4.4) (2026-10-20)
 
 
