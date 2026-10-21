@@ -31,6 +31,7 @@
 | Why is `Shrinkage` a combinator, not subclasses? | `em_framework.md` § 4.3 |
 | Why hand-rolled Newton instead of `optimistix`? | `solvers_and_bessel.md` § 1.2 |
 | Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 3–4 |
+| Why not marimo for research notebooks? | `design.md` row C8; `../plans/docs_refactor.md` Phase 4 |
 | Is `jax.grad(log_kv)` the same as `log_kv_moments.d_arg`? | `solvers_and_bessel.md` § 3.1; `../../docs/tutorials/core/03_bessel_and_log_kv.md` |
 | Why not Adam / L-BFGS on the observed NLL? | `../../docs/design/why_not_gradient_descent.md`; row E15 |
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |

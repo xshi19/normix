@@ -59,12 +59,15 @@ implementation. `@staticmethod` cannot — it would always call the parent.
 
 ### 2.2 Why the CPU tier exists
 
-`scipy.special.kve` is **fast** for vectorised Bessel evaluation in the
-EM hot path; a `vmap` over JAX's `lax.cond`-dispatched `log_kv` triggers
-separate kernel launches per regime check and is much slower. Distributions
-that don't call `log_kv` (Gamma, InverseGamma, InverseGaussian) inherit
-the default `np.asarray(jax_version(...))` wrappers — they pay nothing for
-the CPU tier.
+The CPU tier keeps `solve_bregman(backend='cpu')` off the JAX dispatcher.
+GIG's CPU triad is the same moment-quadrature kernel in NumPy
+(`solvers_and_bessel.md` § 3).
+
+The old speed argument was `vmap` over `lax.cond` regime checks.
+That dispatch is the superseded path in § 4.3.
+
+Gamma, InverseGamma, and InverseGaussian do not call `log_kv`.
+They inherit the default wrappers and pay nothing for the CPU tier.
 
 ### 2.3 Why we don't share Bessel calls between gradient and Hessian
 
@@ -73,6 +76,18 @@ A combined `_grad_hess` could share Bessel evaluations (≈ 7 calls vs
 and combining them re-introduces a phi-space chain rule the *distribution*
 must understand. Keeping `_grad_log_partition` and `_hessian_log_partition`
 as θ-space-only lets the solver (§3) own the chain rule generically.
+
+**Bessel-ratio gradient — superseded.**
+
+Commit `ee8cf8b` overrode GIG `_grad_log_partition` with five `log_kv` calls.
+Orders $p$ and $p\pm 1$ gave the ratios.
+A finite difference gave $\partial_p$.
+The aim was to dodge a `jnp.where` NaN as $a \to 0$.
+
+That commit is on the closed [PR #23](https://github.com/xshi19/normix/pull/23) list and on master.
+[PR #113](https://github.com/xshi19/normix/pull/113) replaced the stencil with one `log_kv_moments` image (F3, S10).
+`jax.grad` of the GIG log-partition still fails as $a \to 0$.
+The override remains, and it is the moment bundle.
 
 ---
 
@@ -157,6 +172,12 @@ recipe (when JAXopt breaks): wrap `optax.scale_by_lbfgs` in
 `jnp.where` is preferred over `lax.cond` whenever possible: it is
 `vmap`-compatible without changing the trace, and the clamping prevents
 NaN gradients without branch divergence.
+
+**Single-branch `lax.cond` — superseded.**
+
+Commit `9346ad6` dispatched one Bessel regime per scalar with `lax.cond`.
+[PR #113](https://github.com/xshi19/normix/pull/113) removed that dispatch with the rest of the four-regime kernel (S10).
+`jnp.where` stays the log-partition choice under `vmap` (F7).
 
 ### 4.4 Module-level functions are forbidden
 
