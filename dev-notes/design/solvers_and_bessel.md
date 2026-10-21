@@ -254,7 +254,7 @@ S10 later replaced the four-regime kernel; `kve` stays a test oracle.
 The implicit derivative stayed on the caller device.
 Xiang rejected the offload in the [closing comment](https://github.com/xshi19/normix/pull/141#issuecomment-6297078498).
 A `backend='jax'` call must stay pure JAX on the caller device.
-A host callback contradicts S9, S11, and the callback removal in [PR #16](https://github.com/xshi19/normix/pull/16).
+A host callback contradicts S9, S11, and the callback removal in `3fd1385`.
 
 The same comment names the GPU stall.
 The line search rejected steps under float64 rounding.
@@ -263,16 +263,13 @@ The line search rejected steps under float64 rounding.
 The 1.5–4 ms figures in the PR compare speed only.
 Reopen this offload only if Xiang says so.
 
-**Fixed-length masked loops — rejected.**
+**Fixed-length masked loops — inconclusive experiment.**
 
-The [PR #141](https://github.com/xshi19/normix/pull/141) body compares branch `perf/gig-gpu-latency-b` with the offload.
-That branch used masked `fori_loop` loops and parallel multistart.
-The first single GIG solve on an RTX 4090 did not finish within 30 min.
-CPU times stayed within run-to-run noise of master.
-The branch is not on origin.
-The PR body is the record.
+A masked `fori_loop` with parallel multistart did not finish its first GPU solve within 30 min ([PR #141](https://github.com/xshi19/normix/pull/141) body).
+That branch is `perf/gig-gpu-latency-b`, and it is not on origin.
+The closing comment rejects only the `pure_callback` offload.
+Current multistart is `lax.while_loop` in `normix/fitting/solvers.py`.
 
-Other JAX-native solver changes stay open.
 Revisit this loop only with evidence that it compiles and finishes.
 [PR #140](https://github.com/xshi19/normix/pull/140) pins mathematical tests to CPU.
 It does not change runtime backend semantics.

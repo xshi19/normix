@@ -69,13 +69,16 @@ That dispatch is the superseded path in § 4.3.
 Gamma, InverseGamma, and InverseGaussian do not call `log_kv`.
 They inherit the default wrappers and pay nothing for the CPU tier.
 
-### 2.3 Why we don't share Bessel calls between gradient and Hessian
+### 2.3 Fusion vs coordinate separation
 
-A combined `_grad_hess` could share Bessel evaluations (≈ 7 calls vs
-12 for separate). We keep them separate anyway: the saving is small,
-and combining them re-introduces a phi-space chain rule the *distribution*
-must understand. Keeping `_grad_log_partition` and `_hessian_log_partition`
-as θ-space-only lets the solver (§3) own the chain rule generically.
+Sharing Bessel work between $\nabla\psi$ and $\nabla^2\psi$ happens
+inside `log_kv_moments`, below the triad.
+GIG's `_grad_log_partition` and `_hessian_log_partition` are affine images
+of one `BesselMoments` bundle ($\eta$ = scaled mean, $H = D\,\mathrm{cov}\,D$).
+The triad remains three θ-space classmethods; the solver still applies the
+φ↔θ chain rule (S2). A combined `_grad_hess` on the distribution would
+re-introduce a φ-space chain rule the distribution must understand, and is
+not used.
 
 **Bessel-ratio gradient — superseded.**
 
