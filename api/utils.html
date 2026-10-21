@@ -717,8 +717,11 @@ uses this bundle so <span class="math notranslate nohighlight">\(\eta\)</span> a
 <a class="reference internal" href="#normix.utils.bessel.log_kv_moments" title="normix.utils.bessel.log_kv_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">log_kv_moments()</span></code></a> <code class="docutils literal notranslate"><span class="pre">d_arg</span></code>; with respect to <code class="docutils literal notranslate"><span class="pre">v</span></code> it equals
 <code class="docutils literal notranslate"><span class="pre">d_order</span></code>. Neither is a finite difference.</p>
 <p class="rubric">Examples</p>
-<p>Evaluate at a single point (JAX backend, JIT-able):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<p>Evaluate at a single point (JAX backend, JIT-able).
+Enable float64 before importing normix:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">float</span><span class="p">(</span><span class="n">log_kv</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
 <span class="go">-0.774...</span>

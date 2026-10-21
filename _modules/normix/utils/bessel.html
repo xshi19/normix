@@ -837,8 +837,11 @@
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    Evaluate at a single point (JAX backend, JIT-able):</span>
+<span class="sd">    Evaluate at a single point (JAX backend, JIT-able).</span>
+<span class="sd">    Enable float64 before importing normix:</span>
 
+<span class="sd">    &gt;&gt;&gt; import jax</span>
+<span class="sd">    &gt;&gt;&gt; jax.config.update(&quot;jax_enable_x64&quot;, True)</span>
 <span class="sd">    &gt;&gt;&gt; import jax.numpy as jnp</span>
 <span class="sd">    &gt;&gt;&gt; from normix import log_kv</span>
 <span class="sd">    &gt;&gt;&gt; float(log_kv(v=0.5, z=1.0))        # doctest: +ELLIPSIS</span>
