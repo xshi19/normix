@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.4](https://github.com/xshi19/normix/compare/v0.4.3...v0.4.4) (2026-10-20)
+
+
+### Bug Fixes
+
+* **solvers:** rounding-tolerant Armijo for GIG Newton ([#145](https://github.com/xshi19/normix/issues/145)) ([37914d0](https://github.com/xshi19/normix/commit/37914d0c8d69924396d76b25ef5199ee1d14b062))
+
+
+### Documentation
+
+* record backend contract and decision-consistency checks ([#144](https://github.com/xshi19/normix/issues/144)) ([fb49bdf](https://github.com/xshi19/normix/commit/fb49bdffe48845716400c1bd2c28c2e4ef02df74))
+
 ## [0.4.3](https://github.com/xshi19/normix/compare/v0.4.2...v0.4.3) (2026-10-20)
 
 
