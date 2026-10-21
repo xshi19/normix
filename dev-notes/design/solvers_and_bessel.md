@@ -168,8 +168,6 @@ Commit `9ebfe3b` is the crash note:
 [`tfp_bessel_crash_investigation.md`](../tech_notes/tfp_bessel_crash_investigation.md).
 
 TFP stays out of the production kernel (S10).
-An extra test oracle is in scope only if TFP passes
-`tests/data/bessel_reference.json`.
 
 ### 3.2 Why `backend` is a Python-level string
 
