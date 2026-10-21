@@ -417,8 +417,11 @@ def log_kv(v, z, backend: str = 'jax') -> jax.Array:
 
     Examples
     --------
-    Evaluate at a single point (JAX backend, JIT-able):
+    Evaluate at a single point (JAX backend, JIT-able).
+    Enable float64 before importing normix:
 
+    >>> import jax
+    >>> jax.config.update("jax_enable_x64", True)
     >>> import jax.numpy as jnp
     >>> from normix import log_kv
     >>> float(log_kv(v=0.5, z=1.0))        # doctest: +ELLIPSIS
