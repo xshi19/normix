@@ -1,5 +1,12 @@
 # Investigating why GH EM can be slower on JAX GPU than CPU
 
+> **Open — 2026-10-23.** The host NumPy/SciPy path below is historical.
+> The default GIG solve is `jax/newton` ([design.md](../design/design.md) S5).
+> [#141](https://github.com/xshi19/normix/pull/141) (CPU offload) was rejected and closed without a merge.
+> The backend contract is [#144](https://github.com/xshi19/normix/pull/144).
+> The callback ban is [#149](https://github.com/xshi19/normix/pull/149) (`b90c2c5`).
+> The open GPU cost is [#136](https://github.com/xshi19/normix/issues/136).
+
 ## Scope
 
 This note investigates the current `normix` implementation of the

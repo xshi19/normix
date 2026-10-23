@@ -1,5 +1,7 @@
 # Numerics follow-up
 
+> **ARCHIVED — 2026-10-23.** This note landed in [#134](https://github.com/xshi19/normix/pull/134) (`bc8b24e`). Later follow-ups are [#135](https://github.com/xshi19/normix/pull/135) (`0bc11fc`) and [#145](https://github.com/xshi19/normix/pull/145) (`37914d0`).
+
 Scope: review items 6.4, 6.5, 9.4, and 9.2. Reproduction:
 `.venv/bin/python /workspace/reports/scratch/repro_numerics.py`.
 Targeted pytest files run serially on the shared 15 GB host.

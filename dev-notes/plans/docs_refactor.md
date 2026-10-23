@@ -1,6 +1,7 @@
 # Docs & Notebooks: remaining work
 
-> **ACTIVE — refreshed 2026-07-08.**
+> **ACTIVE — refreshed 2026-10-23.** Phases 4–7 and 8a are done. Only the optional Phase 8 remainder remains.
+>
 > **Done (archived):** Phases 1–3 — MyST + `myst-nb` infrastructure, Kami visual
 > theme, internal/external split (`docs/` vs `dev-notes/`), and the full tutorial
 > tree (21 tutorials + getting_started + user_guide + design pages) are **built

@@ -653,7 +653,7 @@ block merge.
   E[1/Y] = β/(α−1) diverges; the covariance M-step's posterior 1/Y weights then
   blow up to `nan` (~iteration 19). Independent of regularization / M-step
   backend. Full repro + root cause:
-  `dev-notes/investigations/variance_gamma_em_nan.{py,md}` (marimo). Suggested
+  `dev-notes/archive/investigations/variance_gamma_em_nan.{py,md}` (marimo). Suggested
   library fix (floor α > 1 or clamp the posterior 1/Y weights in the VG Σ update)
   is noted there, not yet implemented.
 - **Cross-family divergences.** NIG, VG, NInvG *are* GH special cases, and

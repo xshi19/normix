@@ -2,11 +2,11 @@
 
 Run with:
 
-    uv run marimo edit dev-notes/investigations/variance_gamma_em_nan.py
+    uv run marimo edit dev-notes/archive/investigations/variance_gamma_em_nan.py
 
 or, headless:
 
-    uv run marimo run dev-notes/investigations/variance_gamma_em_nan.py
+    uv run marimo run dev-notes/archive/investigations/variance_gamma_em_nan.py
 
 Summary of the finding is in ``variance_gamma_em_nan.md``.
 """

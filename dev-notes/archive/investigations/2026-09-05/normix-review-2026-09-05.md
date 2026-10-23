@@ -1,5 +1,7 @@
 # Normix review — 5 September 2026
 
+> **ARCHIVED — 2026-10-23.** Follow-ups landed in [#135](https://github.com/xshi19/normix/pull/135) (`0bc11fc`) and [#145](https://github.com/xshi19/normix/pull/145) (`37914d0`).
+
 Reviewed `xshi19/normix`, `master` commit `7b6c4dfc784567c9f5f6b67a152a49eca6ed8488` (31 August 2026), package version 0.3.0. This is a source audit with independent numerical reproductions, not a proof of correctness for the entire package. Package source was not changed.
 
 **Overall assessment: keep the architecture, strengthen its mathematical and numerical contracts before optimizing it.** The combination of exponential-family mathematics, immutable Equinox models, conditional GIG posteriors, and separate fitting orchestration is a good foundation. CPU and JAX paths are useful complementary implementations. The reviewed revision nevertheless returns materially wrong answers for some valid inputs, including misleading convergence statuses. I would prioritize those defects over new features or a broad C++/Rust rewrite.

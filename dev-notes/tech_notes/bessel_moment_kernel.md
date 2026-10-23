@@ -12,7 +12,7 @@ No regimes, no `lax.cond`, no `custom_jvp`, no finite differences.
   `log_kv_moments(...).d_arg` / `d_order` / `d2_*` (not finite differences).
 
 User-facing walkthrough: `docs/tutorials/core/03_bessel_and_log_kv.md`.
-Investigation that forced the rewrite: `dev-notes/investigations/2026-09-05/`.
+Investigation that forced the rewrite: `dev-notes/archive/investigations/2026-09-05/`.
 
 ## Representation
 

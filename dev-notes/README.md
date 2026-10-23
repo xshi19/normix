@@ -17,10 +17,10 @@ https://xshi19.github.io/normix/ — nothing in this tree is built by Sphinx.
 | [`plans/`](plans/) | Migration and roadmap plans |
 | [`tech_notes/`](tech_notes/) | Deep dives (Bessel, GIG solvers, EM profiling, conversions) |
 | [`research/`](research/) | Working notes for research (subordinator tracking). Published MyST: `docs/research/` |
-| [`investigations/`](investigations/) | One-off performance / test-suite investigations |
+| [`investigations/`](investigations/) | Open performance notes. Closed notes: [`archive/investigations/`](archive/investigations/) |
 | [`reviews/`](reviews/) | Package review notes |
 | [`references/`](references/) | External library surveys |
-| [`archive/`](archive/) | Implemented proposals, completed plans, and acted-on surveys (historical) |
+| [`archive/`](archive/) | Implemented proposals, completed plans, closed investigations, and acted-on surveys (historical) |
 
 ## See also
 
