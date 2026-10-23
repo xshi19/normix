@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/xshi19/normix/compare/v0.4.5...v0.4.6) (2026-10-23)
+
+
+### Documentation
+
+* **dev-notes:** archive finished plans and refresh stale notes ([#153](https://github.com/xshi19/normix/issues/153)) ([51e053c](https://github.com/xshi19/normix/commit/51e053c57237a29c71b56d3a2a86988277477bd9))
+
 ## [0.4.5](https://github.com/xshi19/normix/compare/v0.4.4...v0.4.5) (2026-10-21)
 
 
