@@ -1,0 +1,235 @@
+name: Design guard
+
+# Advisory only. A failure here must not fail the build.
+
+on:
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: design-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  advise:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          fetch-depth: 0
+
+      - name: Label and comment when the diff is design-relevant
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - << 'PY' || true
+          import json
+          import os
+          import re
+          import subprocess
+
+          MARKER = "<!-- design-guard -->"
+          ROW = re.compile(r"^\|\s*[A-Z]{1,3}(?:-\d+|\d+)\b")
+          CODE = re.compile(
+              r"pure_callback|io_callback|debug_callback|host_callback"
+              r"|device_put|default_device|to_device|\bjax\.devices\b"
+              r"|e_step_backend|m_step_backend|_check_backend"
+              r"|backend[^\n]{0,80}['\"](?:jax|cpu)['\"]"
+              r"|['\"](?:jax|cpu)['\"][^\n]{0,40}backend"
+              r"|['\"]backend['\"]"
+          )
+          LIMIT = 40
+
+          def design_row_file(path):
+              return path == "dev-notes/design/design.md" or path.startswith("docs/design/")
+
+          def load_diff(base, head):
+              spec = f"{base}...{head}"
+              cmd = ["git", "diff", "--unified=0", spec]
+              try:
+                  return subprocess.check_output(cmd, text=True, errors="replace")
+              except subprocess.CalledProcessError:
+                  subprocess.run(["git", "fetch", "--no-tags", "origin", base, head], check=False)
+                  return subprocess.check_output(cmd, text=True, errors="replace")
+
+          def changed_lines(diff):
+              path = None
+              old = new = None
+              for line in diff.splitlines():
+                  if line.startswith("diff --git "):
+                      path = line.split(" b/", 1)[-1]
+                      old = new = None
+                      continue
+                  if line.startswith("@@"):
+                      match = re.match(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+                      if match:
+                          old = int(match.group(1))
+                          new = int(match.group(2))
+                      continue
+                  if path in (None, "/dev/null") or old is None:
+                      continue
+                  if line.startswith("+"):
+                      yield path, "+", new, line[1:]
+                      new += 1
+                  elif line.startswith("-"):
+                      yield path, "-", old, line[1:]
+                      old += 1
+                  elif line.startswith("\\"):
+                      continue
+
+          def collect(diff):
+              rows = []
+              code = []
+              for path, mark, lineno, text in changed_lines(diff):
+                  stripped = text.strip()
+                  if design_row_file(path) and ROW.match(stripped):
+                      parts = [part.strip() for part in stripped.strip("|").split("|")]
+                      ident = parts[0]
+                      title = parts[1] if len(parts) > 1 else ""
+                      label = f"{ident}: {title}" if title else ident
+                      rows.append((path, mark, lineno, label))
+                  elif (
+                      path.startswith("normix/")
+                      and path.endswith(".py")
+                      and CODE.search(text)
+                  ):
+                      snippet = " ".join(stripped.split())
+                      if len(snippet) > 120:
+                          snippet = snippet[:117] + "..."
+                      code.append((path, mark, lineno, snippet))
+              return rows, code
+
+          def bullet(path, mark, lineno, text):
+              verb = "added" if mark == "+" else "removed"
+              return f"- `{path}:{lineno}` {verb} `{text}`"
+
+          def section(title, items):
+              shown = items[:LIMIT]
+              lines = [title]
+              lines.extend(bullet(*item) for item in shown)
+              extra = len(items) - len(shown)
+              if extra:
+                  lines.append(f"- {extra} more")
+              return lines
+
+          def render(rows, code):
+              lines = [
+                  MARKER,
+                  "",
+                  "This diff touches a design row or backend dispatch. Advisory only.",
+                  "",
+              ]
+              if rows:
+                  lines.extend(section("Design rows:", rows))
+                  lines.append("")
+              if code:
+                  lines.extend(section("Backend dispatch, callbacks, or device selection:", code))
+                  lines.append("")
+              lines.append(
+                  "Link the rationale in the design doc. "
+                  "Note rejected alternatives next to that link."
+              )
+              body = "\n".join(lines)
+              if len(body) > 60000:
+                  body = body[:60000] + "\n"
+              return body
+
+          def cleared():
+              return (
+                  f"{MARKER}\n\n"
+                  "The latest diff does not touch a design row or backend dispatch."
+              )
+
+          def gh(*args, input_text=None):
+              return subprocess.run(
+                  ["gh", *args],
+                  input=input_text,
+                  text=True,
+                  capture_output=True,
+                  check=False,
+              )
+
+          def comment_id(repo, number):
+              for page in range(1, 6):
+                  result = gh(
+                      "api",
+                      f"repos/{repo}/issues/{number}/comments?per_page=100&page={page}",
+                  )
+                  if result.returncode != 0:
+                      raise RuntimeError(result.stderr.strip() or "comment list failed")
+                  comments = json.loads(result.stdout or "[]")
+                  if not comments:
+                      return None
+                  for comment in comments:
+                      if MARKER in comment.get("body", ""):
+                          return comment["id"]
+              return None
+
+          def write_comment(repo, number, body):
+              cid = comment_id(repo, number)
+              payload = json.dumps({"body": body})
+              if cid is None:
+                  result = gh(
+                      "api", "--method", "POST",
+                      f"repos/{repo}/issues/{number}/comments",
+                      "--input", "-",
+                      input_text=payload,
+                  )
+              else:
+                  result = gh(
+                      "api", "--method", "PATCH",
+                      f"repos/{repo}/issues/comments/{cid}",
+                      "--input", "-",
+                      input_text=payload,
+                  )
+              if result.returncode != 0:
+                  raise RuntimeError(result.stderr.strip() or "comment write failed")
+
+          def set_label(repo, number, present):
+              gh(
+                  "label", "create", "design-change",
+                  "--repo", repo,
+                  "--color", "FBCA04",
+                  "--description", "Touches a design row or backend dispatch.",
+              )
+              flag = "--add-label" if present else "--remove-label"
+              gh("pr", "edit", str(number), "--repo", repo, flag, "design-change")
+
+          def main():
+              number = os.environ.get("PR_NUMBER", "")
+              repo = os.environ.get("REPO", "")
+              base = os.environ.get("BASE_SHA", "")
+              head = os.environ.get("HEAD_SHA", "")
+              if not (number and repo and base and head):
+                  print("design-guard: missing pull request context")
+                  return
+              diff = load_diff(base, head)
+              rows, code = collect(diff)
+              print(f"design-guard: {len(rows)} design-row lines, {len(code)} code lines")
+              if rows or code:
+                  write_comment(repo, number, render(rows, code))
+                  set_label(repo, number, True)
+                  return
+              if comment_id(repo, number) is not None:
+                  write_comment(repo, number, cleared())
+                  set_label(repo, number, False)
+
+          try:
+              main()
+          except Exception as exc:
+              print(f"design-guard: skipped ({exc})")
+          PY
