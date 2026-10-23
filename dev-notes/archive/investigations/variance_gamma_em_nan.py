@@ -62,7 +62,7 @@ def _():
     )
 
     # Equal-weight index proxy from the checked-in S&P 500 return panel.
-    data_path = Path(__file__).resolve().parents[2] / "data" / "sp500_returns.csv"
+    data_path = Path(__file__).resolve().parents[3] / "data" / "sp500_returns.csv"
     panel = pd.read_csv(data_path, index_col="Date", parse_dates=True).dropna(
         axis=1, how="any"
     )
