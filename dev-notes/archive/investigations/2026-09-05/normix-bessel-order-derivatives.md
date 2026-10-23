@@ -1,5 +1,7 @@
 # Normix: Bessel order derivatives, evidence and repair options
 
+> **ARCHIVED — 2026-10-23.** The order-derivative repair is the moment kernel in [#113](https://github.com/xshi19/normix/pull/113) (`acdad61`). Review follow-ups landed in [#135](https://github.com/xshi19/normix/pull/135) (`0bc11fc`) and [#145](https://github.com/xshi19/normix/pull/145) (`37914d0`).
+
 Verification of these numbers and prototypes of the recommended oracles: `bessel-derivative-verification.md`.
 
 Review date: 2026-09-05. Source reviewed: Normix commit `7b6c4dfc784567c9f5f6b67a152a49eca6ed8488`. This is a numerical review and implementation proposal; no package code was changed.

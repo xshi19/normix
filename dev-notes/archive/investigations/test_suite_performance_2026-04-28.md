@@ -1,5 +1,7 @@
 # Test Suite Performance Investigation
 
+> **ARCHIVED — 2026-10-23.** Implemented, except partial stress markers in Phase 2.
+
 Date: 2026-04-28
 
 ## Scope

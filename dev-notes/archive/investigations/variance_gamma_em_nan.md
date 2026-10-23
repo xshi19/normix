@@ -1,11 +1,13 @@
 # VarianceGamma EM diverges to NaN on heavy-tailed data
 
+> **ARCHIVED — 2026-10-23.** Fixed by the posterior `b_post` floor (`B_POST_FLOOR`) in [#45](https://github.com/xshi19/normix/pull/45) (`5a0ecfb`).
+
 **Date:** 2026-05-31
 **Repro:** `variance_gamma_em_nan.py` (marimo) — run with
-`uv run marimo edit dev-notes/investigations/variance_gamma_em_nan.py`.
+`uv run marimo edit dev-notes/archive/investigations/variance_gamma_em_nan.py`.
 **Full analysis & fix:** the math (VG vs GH E-step/M-step, exact thresholds, the
 `b_post` floor) is in
-[`../tech_notes/vg_em_inverse_moment_singularity.md`](../tech_notes/vg_em_inverse_moment_singularity.md).
+[`../../tech_notes/vg_em_inverse_moment_singularity.md`](../../tech_notes/vg_em_inverse_moment_singularity.md).
 **Status: fixed** — the E-step now floors `b_post` at `B_POST_FLOOR` (see Mitigations).
 
 ## Problem statement

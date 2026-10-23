@@ -1,6 +1,6 @@
 # The Inverse-Moment Singularity in the VG EM (and the `b_post` floor)
 
-> Companion to the bug report [`investigations/variance_gamma_em_nan.md`](../investigations/variance_gamma_em_nan.md).
+> Companion to the bug report [`archive/investigations/variance_gamma_em_nan.md`](../archive/investigations/variance_gamma_em_nan.md).
 > Theory: [`docs/theory/gh.md`](../../docs/theory/gh.md), [`docs/theory/em_algorithm.md`](../../docs/theory/em_algorithm.md).
 > Code: `normix/mixtures/{joint,marginal,factor}.py`,
 > `normix/distributions/{variance_gamma,generalized_hyperbolic,generalized_inverse_gaussian,gamma}.py`,
@@ -198,7 +198,7 @@ shrinks, the likelihood diverges — the same degeneracy as the unbounded
 likelihood of Gaussian *mixtures* (Day 1969). The EM is correctly climbing toward
 an unbounded spike; the remedy must *regularize*, not "fix arithmetic".
 
-**Match to the observed failure** (`investigations/variance_gamma_em_nan.md`):
+**Match to the observed failure** (`archive/investigations/variance_gamma_em_nan.md`):
 the run blew up at $\alpha\approx 0.69$ ($d=1$), which is $<1.5$ (deep in the
 $E[Y^{-1}\mid x]$-unbounded regime, so $\Sigma$ overflows) yet $>0.5$ (so the
 density and log-likelihood are still finite and improving). Numerically, with

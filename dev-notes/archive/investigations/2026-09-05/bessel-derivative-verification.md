@@ -1,5 +1,7 @@
 # Bessel order derivatives — verification of the 2026-09-05 audit
 
+> **ARCHIVED — 2026-10-23.** The order-derivative repair is the moment kernel in [#113](https://github.com/xshi19/normix/pull/113) (`acdad61`). Review follow-ups landed in [#135](https://github.com/xshi19/normix/pull/135) (`0bc11fc`) and [#145](https://github.com/xshi19/normix/pull/145) (`37914d0`).
+
 Source still matches the reviewed tree for `normix/utils/bessel.py` and GIG (current HEAD is a later docs-only commit). Package code was not changed. Prototype: `prototype_bessel_derivatives.py`. Numbers: `prototype-bessel-results.json`.
 
 ## Verdict
@@ -116,4 +118,4 @@ Native C++/Rust is not needed to fix correctness. Takekawa’s `log_abs_deriv_be
 - `figures/method_errors_audit_points.png` — method errors at the seven points
 - `figures/seam_v25_z1.png` — $L_\nu$ and $L_{\nu\nu}$ vs $\nu$ at $z=1$. Current nested AD spikes through the Olver threshold; kernel AD and moments stay on the mpmath anchors.
 
-Rerun: `uv run --with mpmath python dev-notes/investigations/2026-09-05/prototype_bessel_derivatives.py`
+Rerun: `uv run --with mpmath python dev-notes/archive/investigations/2026-09-05/prototype_bessel_derivatives.py`

@@ -1,5 +1,15 @@
 # Investigating why GH EM can be slower on JAX GPU than CPU
 
+> **Open — 2026-10-23.** The tour below is stale: `scipy.kve`, `np.asarray`, and L-BFGS-B as the only GIG solve.
+> CPU `log_kv` is the NumPy moment kernel ([S8](../design/design.md), [S10](../design/design.md)).
+> The `from_expectation` default is `jax/newton` ([S5](../design/design.md)).
+> The EM M-step default is `m_step_backend='cpu'` and `method='newton'` ([§ 2.2](../design/solvers_and_bessel.md)).
+> The GH `fit` default is `e_step_backend='cpu'` ([DEC-3](../design/design.md)).
+>
+> A `backend='jax'` call stays pure JAX on the caller device ([S9](../design/design.md), [§ 4.1](../design/solvers_and_bessel.md#s9-backend-decisions)).
+> The [#141](https://github.com/xshi19/normix/pull/141) host-callback offload stays rejected ([#149](https://github.com/xshi19/normix/pull/149), `b90c2c5`).
+> The open GPU cost is [#136](https://github.com/xshi19/normix/issues/136).
+
 ## Scope
 
 This note investigates the current `normix` implementation of the

@@ -2,11 +2,11 @@
 
 Run with:
 
-    uv run marimo edit dev-notes/investigations/variance_gamma_em_nan.py
+    uv run marimo edit dev-notes/archive/investigations/variance_gamma_em_nan.py
 
 or, headless:
 
-    uv run marimo run dev-notes/investigations/variance_gamma_em_nan.py
+    uv run marimo run dev-notes/archive/investigations/variance_gamma_em_nan.py
 
 Summary of the finding is in ``variance_gamma_em_nan.md``.
 """
@@ -62,7 +62,7 @@ def _():
     )
 
     # Equal-weight index proxy from the checked-in S&P 500 return panel.
-    data_path = Path(__file__).resolve().parents[2] / "data" / "sp500_returns.csv"
+    data_path = Path(__file__).resolve().parents[3] / "data" / "sp500_returns.csv"
     panel = pd.read_csv(data_path, index_col="Date", parse_dates=True).dropna(
         axis=1, how="any"
     )
