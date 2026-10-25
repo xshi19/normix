@@ -33,9 +33,12 @@ cancels in the left tail when $\kappa\approx\nu$ and is not used.
 
 Two GL panels share the mode: $[x_\mathrm{lo},0]\cup[0,x_\mathrm{hi}]$. The
 window is the smallest interval that drops $g_c(x)+kx$ by `BESSEL_QUAD_LOG_DROP`
-for every tilt $|k|\le$ `BESSEL_WINDOW_TILT`. Nodes, weights, and window are
-frozen under `lax.stop_gradient`. The log-sum-exp identity is then exact for
-that geometry, so
+for every tilt $|k|\le$ `BESSEL_WINDOW_TILT`. The exponent increases with $k$
+for $x>0$ and decreases with $k$ for $x<0$, so only the extreme tilts need
+searches: positive on the right, negative on the left. Both sides share one
+eight-step doubling loop and one 40-step bisection loop on a leading axis of
+size two. Nodes, weights, and window are frozen under `lax.stop_gradient`.
+The log-sum-exp identity is then exact for that geometry, so
 
 $$
 \partial_\nu\log K=E[u],\qquad
