@@ -144,7 +144,7 @@ times a kernel launch (about 0.17 ms per step on an RTX 4090). Applied:
 - XLA command buffers with `WHILE`/`CONDITIONAL` are documented as an opt-in
   flag (`docs/user_guide/gpu_performance.md`), not set by normix.
 
-Rejected (2026-10-25), with data in the issue #136 discussion:
+Rejected (2026-10-25), from offline sweeps against 50-digit mpmath references (about 800 grid points plus corner and small-$z$ sets):
 
 - Fewer bisection steps, with 8 doublings reduced to 2 and bisection on
   $\log s$ to keep narrow windows ($z\ge10^{8}$) resolved. 12 steps cut GPU
