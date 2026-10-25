@@ -173,7 +173,7 @@ def _ab_coeffs(v, z, xp):
 
 
 def _g_k(x, v, a, b, k, xp):
-    r""":math:`g_c(x) + k x` for a Python integer tilt ``k``."""
+    r""":math:`g_c(x) + k x` for a scalar or broadcast array tilt ``k``."""
     # Clip so window-search doubling cannot overflow expm1; at |x|=700 the
     # exponent is already far below −P.
     x = xp.clip(x, -700.0, 700.0)
@@ -181,13 +181,17 @@ def _g_k(x, v, a, b, k, xp):
     return (v + k) * x - combo
 
 
-def _edge(v, a, b, side: float, k: int, P: float, xp, n_iters: int):
-    r"""Outer :math:`s>0` such that :math:`g_k(\mathrm{side}\cdot s) \le -P`."""
+def _edge(v, a, b, side, k, P: float, xp, n_iters: int):
+    r"""Outer :math:`s>0` such that :math:`g_k(\mathrm{side}\cdot s) \le -P`.
+
+    Since :math:`g_k(x)=g_c(x)+kx`, the edge grows with :math:`k` on the
+    right and with :math:`-k` on the left; ``side`` and ``k`` may broadcast.
+    """
     hi_max = xp.asarray(BESSEL_WINDOW_HI_MAX, dtype=xp.float64)
     drop = xp.asarray(-P, dtype=xp.float64)
     tiny = xp.asarray(np.finfo(np.float64).tiny, dtype=xp.float64)
     # Right tail ~ a e^{x}, left ~ b e^{-x}.
-    coeff = a if side > 0.0 else b
+    coeff = xp.where(side > 0.0, a, b)
     hi = xp.minimum(
         xp.maximum(xp.log1p(P / xp.maximum(coeff, tiny)), 1.0),
         hi_max,
@@ -212,18 +216,21 @@ def _edge(v, a, b, side: float, k: int, P: float, xp, n_iters: int):
 
 
 def _geometry(v, z, xp, *, log_drop: float, tilt: int, n_iters: int):
-    r"""Mode, :math:`\kappa`, and the tilt-covering window in :math:`x`."""
+    r"""Mode, :math:`\kappa`, and the tilt-covering window in :math:`x`.
+
+    Monotonicity in :math:`k` puts the widest right/left edges at
+    :math:`k=+\mathrm{tilt}` and :math:`k=-\mathrm{tilt}`, respectively.
+    Both searches share one leading axis.
+    """
     kappa, a, b = _ab_coeffs(v, z, xp)
     u0 = xp.arcsinh(v / z)
-    P = float(log_drop)
-    x_hi = xp.zeros_like(v)
-    x_lo = xp.zeros_like(v)
-    for k in range(-int(tilt), int(tilt) + 1):
-        x_hi = xp.maximum(x_hi, _edge(v, a, b, 1.0, k, P, xp, n_iters))
-        x_lo = xp.minimum(x_lo, -_edge(v, a, b, -1.0, k, P, xp, n_iters))
+    side = xp.asarray([1.0, -1.0], dtype=xp.float64).reshape(
+        (2,) + (1,) * kappa.ndim,
+    )
+    edges = _edge(v, a, b, side, side * int(tilt), float(log_drop), xp, n_iters)
     floor = xp.asarray(BESSEL_PANEL_FLOOR, dtype=xp.float64)
-    x_lo = xp.minimum(x_lo, -floor)
-    x_hi = xp.maximum(x_hi, floor)
+    x_lo = xp.minimum(-edges[1], -floor)
+    x_hi = xp.maximum(edges[0], floor)
     return u0, kappa, a, b, x_lo, x_hi
 
 

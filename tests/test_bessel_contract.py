@@ -12,9 +12,12 @@ import pytest
 from scipy.special import digamma, exp1, polygamma
 
 from normix.utils.bessel import (
-    _BACKENDS, _ab_coeffs, _log_kv_quad_jax, log_kv, log_kv_moments,
+    _BACKENDS, _ab_coeffs, _geometry, _log_kv_quad_jax, log_kv, log_kv_moments,
 )
-from normix.utils.constants import LOG_EPS
+from normix.utils.constants import (
+    BESSEL_PANEL_FLOOR, BESSEL_QUAD_LOG_DROP, BESSEL_WINDOW_HI_MAX,
+    BESSEL_WINDOW_ITERS, BESSEL_WINDOW_TILT, LOG_EPS,
+)
 
 _REF_PATH = Path(__file__).resolve().parent / "data" / "bessel_reference.json"
 
@@ -156,6 +159,78 @@ def test_invariants(backend, v, z):
     em = math.exp(-u0) * (1.0 + mean[1])
     ep = math.exp(u0) * (1.0 + mean[2])
     assert em * ep >= 1.0 - 1e-12
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("tilt", [0, BESSEL_WINDOW_TILT])
+@pytest.mark.parametrize("v,z", [
+    (0.0, 1e-4),
+    (np.array([-200.0, -25.0, -0.5, 0.0, 0.5, 25.0, 200.0]),
+     np.logspace(-4, 4, 7)),
+    (np.array([-200.0, -25.0, -2.0, -0.5, 0.0, 0.5, 2.0, 25.0, 200.0])
+     .reshape(9, 1, 1), np.logspace(-4, 4, 9).reshape(1, 3, 3)),
+], ids=["scalar", "vector", "broadcast"])
+def test_geometry_matches_all_tilt_edges(v, z, tilt):
+    """Extreme tilts recover the full per-tilt window on both backends.
+
+    The absolute tolerance is twice the maximum final bisection width.
+    """
+    v, z = np.asarray(v, dtype=np.float64), np.asarray(z, dtype=np.float64)
+    vr, zr = np.broadcast_arrays(v, z)
+    kappa = np.hypot(vr, zr)
+    large = 0.5 * (kappa + np.abs(vr))
+    small = 0.5 * (zr * (zr / (kappa + np.abs(vr))))
+    a = np.where(vr >= 0.0, large, small)
+    b = np.where(vr >= 0.0, small, large)
+
+    def reference_edge(side, k):
+        def g(s):
+            x = np.clip(side * s, -700.0, 700.0)
+            return (vr + k) * x - (a * np.expm1(x) + b * np.expm1(-x))
+
+        coeff = a if side > 0.0 else b
+        hi = np.minimum(
+            np.maximum(
+                np.log1p(BESSEL_QUAD_LOG_DROP / np.maximum(
+                    coeff, np.finfo(np.float64).tiny,
+                )), 1.0,
+            ), BESSEL_WINDOW_HI_MAX,
+        )
+        for _ in range(8):
+            hi = np.minimum(
+                np.where(g(hi) > -BESSEL_QUAD_LOG_DROP, 2.0 * hi, hi),
+                BESSEL_WINDOW_HI_MAX,
+            )
+        lo = np.zeros_like(hi)
+        for _ in range(BESSEL_WINDOW_ITERS):
+            mid = 0.5 * (lo + hi)
+            wider = g(mid) > -BESSEL_QUAD_LOG_DROP
+            lo, hi = np.where(wider, mid, lo), np.where(wider, hi, mid)
+        return hi
+
+    ref_lo, ref_hi = np.zeros_like(vr), np.zeros_like(vr)
+    for k in range(-tilt, tilt + 1):
+        ref_hi = np.maximum(ref_hi, reference_edge(1.0, k))
+        ref_lo = np.minimum(ref_lo, -reference_edge(-1.0, k))
+    ref_lo = np.minimum(ref_lo, -BESSEL_PANEL_FLOOR)
+    ref_hi = np.maximum(ref_hi, BESSEL_PANEL_FLOOR)
+
+    cfg = dict(log_drop=BESSEL_QUAD_LOG_DROP, tilt=tilt,
+               n_iters=BESSEL_WINDOW_ITERS)
+    cpu_window = _geometry(v, z, np, **cfg)[-2:]
+    jax_window = jax.jit(lambda v, z: _geometry(v, z, jnp, **cfg)[-2:])(
+        jnp.asarray(v), jnp.asarray(z),
+    )
+    atol = 2.0 * BESSEL_WINDOW_HI_MAX * 2.0 ** (-BESSEL_WINDOW_ITERS)
+    for window in (cpu_window, jax_window):
+        x_lo, x_hi = (np.asarray(edge) for edge in window)
+        assert x_lo.shape == x_hi.shape == vr.shape
+        np.testing.assert_allclose(x_lo, ref_lo, rtol=0.0, atol=atol)
+        np.testing.assert_allclose(x_hi, ref_hi, rtol=0.0, atol=atol)
+        assert np.all(x_lo <= ref_lo + atol)
+        assert np.all(x_hi >= ref_hi - atol)
+    for cpu_edge, jax_edge in zip(cpu_window, jax_window):
+        np.testing.assert_allclose(cpu_edge, jax_edge, rtol=0.0, atol=atol)
 
 
 @pytest.mark.contract
