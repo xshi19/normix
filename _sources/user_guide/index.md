@@ -15,4 +15,5 @@ cdf_ppf
 em_fitting
 divergences
 finance
+gpu_performance
 ```
