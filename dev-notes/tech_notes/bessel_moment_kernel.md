@@ -133,3 +133,31 @@ former-seam Taylor consistency (not a global Lipschitz bound).
 `tests/test_gig_properties.py::TestGIGMomentHessian` — $H$ PSD, $H_{11}>0$,
 CPU ≡ JAX, sample $\mathrm{Cov}[t(X)]$, concentrated $q^\top H q=4L_{zz}$;
 vs `jax.hessian(ψ)` is `slow`.
+
+## Window search cost on GPU (issue #136)
+
+The window search is serial, so on GPU its time is the number of loop steps
+times a kernel launch (about 0.17 ms per step on an RTX 4090). Applied:
+
+- Only the two extreme tilts $k=\pm T$ are searched, in one batched loop
+  (PR #156; GPU steady state 0.17 s to 0.013 s, output bit-identical).
+- XLA command buffers with `WHILE`/`CONDITIONAL` are documented as an opt-in
+  flag (`docs/user_guide/gpu_performance.md`), not set by normix.
+
+Rejected (2026-10-25), with data in the issue #136 discussion:
+
+- Fewer bisection steps, with 8 doublings reduced to 2 and bisection on
+  $\log s$ to keep narrow windows ($z\ge10^{8}$) resolved. 12 steps cut GPU
+  time 0.013 s to about 0.0065 s, but the worst error ratio against the
+  40-step code was 12$\times$ for $\partial_{zz}$ and cov at
+  $z\in[10^{-10},10^{-8}]$, $\nu\approx0$; 8 and 10 steps are worse, 16 steps
+  is within about 1.3$\times$ for a 40% gain. Not adopted: accuracy takes
+  priority over this speedup. Absolute-width bisection with 12 steps also fails
+  `test_half_order_arg_curvature` at $z=10^{12}$.
+- Dropping the tilt (tilt 1 or 0): the covariance error grows to $4\times10^{-10}$
+  (tilt 1) and $4\times10^{-4}$ (tilt 0) on the main grid, because the tail
+  weights $e^{\pm2x}$ enter the covariance.
+- Zero doubling steps: the initial guess is then not a bracket on 40k of 100k
+  edges, so the window is not conservative.
+- Newton fallback for the edge: withdrawn, since a fixed-step conservative edge
+  only widens the window and never truncates the integral.
