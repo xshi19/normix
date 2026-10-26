@@ -116,15 +116,16 @@ def test_log_prob_pdf_cdf_off_support_and_at_zero():
         (GIG(2.0, 1.0, 1.0), -math.inf, lambda t: GIG(t, 1.0, 1.0), 2.0),
     ]
     for dist, log_at_zero, build, t0 in cases:
+        # One compiled gradient per case, reused for both x values.
+        grad_x = jax.jit(jax.grad(lambda z, dist=dist: dist.log_prob(z)))
+        grad_t = jax.jit(jax.grad(lambda t, x, build=build: build(t).log_prob(x)))
         for x in (-1.0, -1e-300):
             lp = float(dist.log_prob(x))
             assert lp == -math.inf
             assert float(dist.pdf(x)) == 0.0
             assert float(dist.cdf(x)) == 0.0
-            gx = float(jax.grad(lambda z, dist=dist: dist.log_prob(z))(jnp.float64(x)))
-            gt = float(jax.grad(
-                lambda t, build=build, x=x: build(t).log_prob(jnp.float64(x)),
-            )(jnp.float64(t0)))
+            gx = float(grad_x(jnp.float64(x)))
+            gt = float(grad_t(jnp.float64(t0), jnp.float64(x)))
             assert not math.isnan(gx)
             assert not math.isnan(gt)
         lp0 = float(dist.log_prob(0.0))
