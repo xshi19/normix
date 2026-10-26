@@ -12,10 +12,6 @@ from normix import GIG, Gamma, InverseGamma, InverseGaussian, VarianceGamma, Nor
 from normix.exponential_family import ExponentialFamily
 
 
-# #136: CUDA-under-WSL can stall a cached GIG solve in these math checks.
-_CPU = jax.devices('cpu')[0]
-
-
 _GIG_REF_PATH = Path(__file__).resolve().parent / "data" / "gig_hessian_reference.json"
 _GIG_HESSIANS = {
     (row["p"], row["a"], row["b"]): np.array(row["hessian"])
@@ -32,22 +28,20 @@ def _reference_hessian(dist):
     return _GIG_HESSIANS[key]
 
 
-with jax.default_device(_CPU):
-    _INVERSE_JACOBIAN_DISTS = [
-        Gamma(3.0, 2.0), Gamma(0.7, 0.8), Gamma(20.0, 5.0),
-        InverseGamma(3.0, 2.0), InverseGamma(0.7, 0.8), InverseGamma(20.0, 5.0),
-        GIG(0.5, 1.0, 1.0), GIG(-1.5, 2.0, 0.7), GIG(2.5, 0.5, 3.0),
-        GIG(0.5, 1e-4, 1e4),
-    ]
-    _GIG_COLD_START_DISTS = [
-        GIG(0.5, 1.0, 1.0), GIG(-1.5, 2.0, 0.7), GIG(2.5, 0.5, 3.0),
-    ]
+_INVERSE_JACOBIAN_DISTS = [
+    Gamma(3.0, 2.0), Gamma(0.7, 0.8), Gamma(20.0, 5.0),
+    InverseGamma(3.0, 2.0), InverseGamma(0.7, 0.8), InverseGamma(20.0, 5.0),
+    GIG(0.5, 1.0, 1.0), GIG(-1.5, 2.0, 0.7), GIG(2.5, 0.5, 3.0),
+    GIG(0.5, 1e-4, 1e4),
+]
+_GIG_COLD_START_DISTS = [
+    GIG(0.5, 1.0, 1.0), GIG(-1.5, 2.0, 0.7), GIG(2.5, 0.5, 3.0),
+]
 
 
 @pytest.mark.contract
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize('dist', _INVERSE_JACOBIAN_DISTS)
-@jax.default_device(_CPU)
 def test_expectation_inverse_jacobians(dist):
     eta = dist.expectation_params()
     theta0 = dist.natural_params() * 0.95
@@ -75,7 +69,6 @@ def test_expectation_inverse_jacobians(dist):
 @pytest.mark.contract
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize('dist', _GIG_COLD_START_DISTS)
-@jax.default_device(_CPU)
 def test_gig_cold_start_grad_and_jit(dist):
     def invert(eta):
         return GIG.from_expectation(eta, tol=1e-12).natural_params()
