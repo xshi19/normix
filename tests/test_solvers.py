@@ -864,7 +864,7 @@ class TestLogPartitionTriad:
         H_analytical = np.asarray(GIG._hessian_log_partition(theta))
         H_cpu = np.asarray(GIG._hessian_log_partition_cpu(np.asarray(theta)))
         try:
-            H_ad = np.asarray(jax.hessian(GIG._log_partition_from_theta)(theta))
+            H_ad = np.asarray(jax.jit(jax.hessian(GIG._log_partition_from_theta))(theta))
             np.testing.assert_allclose(H_analytical, H_cpu, rtol=1e-10)
             np.testing.assert_allclose(H_analytical, H_ad, rtol=1e-9)
         finally:
@@ -898,7 +898,7 @@ class TestLogPartitionTriad:
         FI_cpu = np.asarray(gig.fisher_information(backend='cpu'))
         try:
             H_ad = np.asarray(
-                jax.hessian(GIG._log_partition_from_theta)(gig.natural_params()))
+                jax.jit(jax.hessian(GIG._log_partition_from_theta))(gig.natural_params()))
             np.testing.assert_allclose(FI_jax, FI_cpu, rtol=1e-10)
             np.testing.assert_allclose(FI_jax, H_ad, rtol=1e-9)
         finally:

@@ -56,19 +56,18 @@ def test_expectation_inverse_jacobians(dist):
         return type(dist).from_expectation(target, theta0=theta0, tol=1e-12).natural_params()
 
     reference = np.linalg.inv(_reference_hessian(dist))
-    forward = jax.jacfwd(invert)(eta)
-    reverse = jax.jacrev(invert)(eta)
-    compiled = jax.jit(jax.jacrev(invert))(eta)
+    forward = jax.jit(jax.jacfwd(invert))(eta)
+    reverse = jax.jit(jax.jacrev(invert))(eta)
     invert_jit = jax.jit(invert)
     differences = []
     for i in range(len(eta)):
         step = 1e-5 * (abs(float(eta[i])) if i > 0 else 1.0)
         delta = jnp.eye(len(eta))[i] * step
         differences.append((invert_jit(eta + delta) - invert_jit(eta - delta)) / (2 * step))
-    for actual in (forward, reverse, compiled):
+    for actual in (forward, reverse):
         np.testing.assert_allclose(actual, reference, rtol=2e-6, atol=2e-7)
         np.testing.assert_allclose(actual, np.array(differences).T, rtol=3e-5, atol=2e-6)
-    np.testing.assert_allclose(jax.grad(lambda target: jnp.sum(invert(target)))(eta),
+    np.testing.assert_allclose(jax.jit(jax.grad(lambda target: jnp.sum(invert(target))))(eta),
                                np.sum(reference, axis=0), rtol=2e-6, atol=2e-7)
     jax.clear_caches()
 
