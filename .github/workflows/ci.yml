@@ -15,7 +15,15 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12"]
-
+  
+    env:
+      # Persistent XLA compilation cache (#136 step 4). Cache everything: the
+      # test suite compiles many small programs, none of which reach the
+      # default 1 s / non-zero-size thresholds individually.
+      JAX_COMPILATION_CACHE_DIR: ${{ github.workspace }}/.jax_cache
+      JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS: "0"
+      JAX_PERSISTENT_CACHE_MIN_ENTRY_SIZE_BYTES: "0"
+  
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +41,18 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Restore JAX compilation cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.JAX_COMPILATION_CACHE_DIR }}
+          # uv.lock pins jax/jaxlib (0.9.1), so a version bump rotates the
+          # cache. The source hash rotates it when the traced code changes;
+          # restore-keys fall back to the newest cache for the same jax pin.
+          key: jax-cache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}-${{ hashFiles('normix/**/*.py') }}
+          restore-keys: |
+            jax-cache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}-
+            jax-cache-${{ runner.os }}-py${{ matrix.python-version }}-
+    
       - name: Ruff unused-import check
         run: uv run ruff check --select F401,F811,F841 normix/
 
