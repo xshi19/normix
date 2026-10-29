@@ -28,18 +28,6 @@ Lean names are fully qualified in `AxiomAudit.lean`.
 | Risks of a weakened spec | Proving positivity as a property of a defined moment integral would be stronger; this card only checks the formula. Constructor clamps (`THETA_FLOOR`) are not modeled. |
 | Evidence and review | Local check for the formulas; Lean compilation checked. Distributional meaning of the formulas: not covered. Review: pending. |
 
-## EF-05: named statistic coordinates for the mixing variable
-
-| Field | Content |
-|---|---|
-| Statement in prose | GIG's statistic order $(\log Y,1/Y,Y)$ and the $Y$-part of `NormalMixtureEta` order $(1/Y,Y,\log Y)$ are related by explicit named-field maps, and both composites are the identity. |
-| Lean signature | `Normix.Foundations.gig_statistic_round_trip (s : GigStatistic) : mixtureToGigStatistic (gigToMixtureStatistic s) = s`; `mixture_statistic_round_trip`; `gig_statistic_coordinates` (each named field is preserved) |
-| Assumptions | None. |
-| Why this is the intended spec | Both orders are encoded as distinct structures with named fields, so a swapped index cannot typecheck as the identity. |
-| Covered normix function | `normix/fitting/eta.py`: `NormalMixtureEta` fields `E_inv_Y`, `E_Y`, `E_log_Y`; GIG statistics in `generalized_inverse_gaussian.py`. |
-| Risks of a weakened spec | Only the scalar $Y$-part is covered; the Gaussian fields `E_X`, `E_X_inv_Y`, `E_XXT_inv_Y` and the matrix layout are not. The lemma does not show the Python code uses these maps consistently. |
-| Evidence and review | Field order: local check. Lean: checked. Use sites in the EM code: to verify. Review: pending. |
-
 ## EF-06: validity preservation and the GIG clamp
 
 | Field | Content |

@@ -24,9 +24,6 @@ import Normix
 #print axioms Normix.Distributions.gig_from_natural_valid_iff
 #print axioms Normix.Distributions.gig_from_natural_round_trip
 #print axioms Normix.Distributions.gig_natural_round_trip
-#print axioms Normix.Foundations.gig_statistic_coordinates
-#print axioms Normix.Foundations.gig_statistic_round_trip
-#print axioms Normix.Foundations.mixture_statistic_round_trip
 #print axioms Normix.Numerics.normalized_weights_pos
 #print axioms Normix.Numerics.normalized_weights_eq_div
 #print axioms Normix.Numerics.normalized_weights_sum

@@ -49,7 +49,7 @@ Not used in this milestone and still to verify before M2-M4: Gamma integral and 
 
 ## Scope of this milestone
 
-Included: parameter identities for Gamma and GIG, named statistic coordinates for the mixing variable, normalization of finite positive log weights, the centered Gram covariance of a finite weighted family, and one fixed-geometry first derivative. All results are exact real arithmetic. They are statements about mathematical models of the Python formulas, not about floating-point execution, JAX tracing, or the generated bridge (W3).
+Included: parameter identities for Gamma and GIG, normalization of finite positive log weights, the centered Gram covariance of a finite weighted family, and one fixed-geometry first derivative. All results are exact real arithmetic. They are statements about mathematical models of the Python formulas, not about floating-point execution, JAX tracing, or the generated bridge (W3).
 
 Excluded: continuous integrals, Gamma/GIG normalization, Bessel analysis, Hessian of the finite log partition, matrix-valued statistic coordinates, floors beyond the single GIG `max(., 0)` clamp, and any link to a generated jaxpr certificate.
 

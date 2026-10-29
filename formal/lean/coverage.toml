@@ -21,17 +21,6 @@ spec_review = "pending"
 source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
 
 [[claim]]
-id = "EF-05"
-python_file = "normix/fitting/eta.py"
-python_symbol = "NormalMixtureEta"
-theorem = "Normix.Foundations.gig_statistic_round_trip"
-lean_file = "Normix/Foundations/StatisticCoordinates.lean"
-scope = "scalar mixing-variable statistics only"
-status = "statement-drafted"
-spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
-
-[[claim]]
 id = "EF-06"
 python_file = "normix/distributions/generalized_inverse_gaussian.py"
 python_symbol = "GeneralizedInverseGaussian.from_natural"
