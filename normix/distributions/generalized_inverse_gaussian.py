@@ -56,6 +56,7 @@ from __future__ import annotations
 from functools import partial
 from typing import Optional, Tuple
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -71,6 +72,7 @@ from normix.utils.constants import (
     BESSEL_WINDOW_ITERS, BESSEL_WINDOW_HI_MAX,
     THETA_FLOOR, GIG_THETA_PERTURB,
 )
+from normix.fitting.eta import _pack_gig_eta, _unpack_gig_eta
 from normix.fitting.solvers import (
     solve_bregman, solve_bregman_multistart,
     make_jit_newton_solver, _require_solved_theta,
@@ -723,7 +725,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     def mean(self) -> jax.Array:
         r""":math:`E[X] = \eta_3` from expectation parameters."""
-        return self.expectation_params()[2]
+        return _unpack_gig_eta(self.expectation_params())["E_Y"]
 
     def quadrature(self, n_nodes: int = SCENARIO_QUAD_NODES) -> DiscreteMeasure:
         r"""Construct a probability rule in :math:`s=\log Y`.
@@ -949,8 +951,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         :meth:`Gamma.from_expectation`.
         """
         from normix.distributions.gamma import Gamma
-        eta = self.expectation_params()
-        return Gamma.from_expectation(jnp.array([eta[0], eta[2]]))
+        moments = _unpack_gig_eta(self.expectation_params())
+        return Gamma.from_expectation(jnp.array([moments["E_log_Y"], moments["E_Y"]]))
 
     def to_inverse_gamma(self):
         r"""KL projection onto the :class:`InverseGamma` family.
@@ -958,8 +960,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         Matches :math:`E[-1/X] = -\eta_2,\; E[\log X] = \eta_1`.
         """
         from normix.distributions.inverse_gamma import InverseGamma
-        eta = self.expectation_params()
-        return InverseGamma.from_expectation(jnp.array([-eta[1], eta[0]]))
+        moments = _unpack_gig_eta(self.expectation_params())
+        return InverseGamma.from_expectation(jnp.array([-moments["E_inv_Y"], moments["E_log_Y"]]))
 
     def to_inverse_gaussian(self):
         r"""KL projection onto the :class:`InverseGaussian` family.
@@ -971,8 +973,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         degenerate inputs.
         """
         from normix.distributions.inverse_gaussian import InverseGaussian
-        eta = self.expectation_params()
-        return InverseGaussian.from_expectation(jnp.array([eta[2], eta[1]]))
+        moments = _unpack_gig_eta(self.expectation_params())
+        return InverseGaussian.from_expectation(jnp.array([moments["E_Y"], moments["E_inv_Y"]]))
 
     # ------------------------------------------------------------------
     # Constructors
@@ -980,11 +982,27 @@ class GeneralizedInverseGaussian(ExponentialFamily):
 
     @classmethod
     def from_natural(cls, theta: jax.Array) -> "GeneralizedInverseGaussian":
+        """Convert natural parameters, rejecting positive rate coordinates.
+
+        Zero rate coordinates retain the Gamma and InverseGamma limits.
+        The runtime check supports ``jit``, ``vmap``, and differentiation.
+        """
         theta = jnp.asarray(theta, dtype=jnp.float64)
-        p = theta[0] + 1.0
-        b = jnp.maximum(-2.0 * theta[1], 0.0)
-        a = jnp.maximum(-2.0 * theta[2], 0.0)
-        return cls(p=p, a=a, b=b)
+        # No tolerance: solver bounds and positive rescaling preserve nonpositive rates.
+        theta = eqx.error_if(
+            theta, jnp.any(theta[1:] > 0.0),
+            "GIG.from_natural requires theta[1] <= 0 and theta[2] <= 0",
+        )
+        return cls._from_natural_unchecked(theta)
+
+    @classmethod
+    def _from_natural_unchecked(cls, theta: jax.Array) -> "GeneralizedInverseGaussian":
+        """Convert validated or solver-bounded coordinates, including NaN failures.
+
+        Solvers enforce nonpositive rate bounds; positive rescaling preserves
+        their signs. This path keeps expectation inversion free of callbacks.
+        """
+        return cls(p=theta[0] + 1.0, a=-2.0 * theta[2], b=-2.0 * theta[1])
 
     @classmethod
     def from_expectation(
@@ -1041,7 +1059,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         """
         _check_backend(backend)
         eta = jnp.asarray(eta, dtype=jnp.float64)
-        ell, m_minus, m_plus = eta
+        moments = _unpack_gig_eta(eta)
+        ell, m_minus, m_plus = moments["E_log_Y"], moments["E_inv_Y"], moments["E_Y"]
         conditions = jnp.array([
             jnp.all(jnp.isfinite(eta)),
             m_minus > 0.0,
@@ -1065,7 +1084,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return jax.lax.cond(
             jnp.all(conditions),
             lambda target: cls._from_expectation_unchecked(target, **kwargs),
-            lambda target: cls.from_natural(jnp.full_like(target, jnp.nan) * target),
+            lambda target: cls._from_natural_unchecked(jnp.full_like(target, jnp.nan) * target),
             eta,
         )
 
@@ -1084,11 +1103,14 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         """Invert a target that passed the public moment-domain check."""
         eta_target = jnp.asarray(eta, dtype=jnp.float64)
         eta = jax.lax.stop_gradient(eta_target) if backend == "jax" else eta_target
-        eta1, eta2, eta3 = eta[0], eta[1], eta[2]
+        moments = _unpack_gig_eta(eta)
+        ell, m_minus, m_plus = moments["E_log_Y"], moments["E_inv_Y"], moments["E_Y"]
 
-        s = jnp.sqrt(eta2 / eta3)
-        geom = jnp.sqrt(eta2 * eta3)
-        eta_scaled = jnp.array([eta1 + 0.5 * jnp.log(eta2 / eta3), geom, geom])
+        s = jnp.sqrt(m_minus / m_plus)
+        geom = jnp.sqrt(m_minus * m_plus)
+        eta_scaled = _pack_gig_eta(
+            E_log_Y=ell + 0.5 * jnp.log(m_minus / m_plus), E_inv_Y=geom, E_Y=geom,
+        )
 
         _GIG_BOUNDS = cls._theta_bounds()
 
@@ -1169,7 +1191,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                            s * theta_scaled[2]])
         if backend == "jax":
             theta = cls._implicit_natural_params(eta_target, theta)
-        return cls.from_natural(theta)
+        return cls._from_natural_unchecked(theta)
 
     @classmethod
     def _theta_bounds(cls):
@@ -1204,11 +1226,11 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         from normix.distributions.inverse_gamma import InverseGamma
         from normix.distributions.inverse_gaussian import InverseGaussian
 
-        eta1, eta2, eta3 = eta_scaled
+        moments = _unpack_gig_eta(eta_scaled)
         eps = GIG_THETA_PERTURB
-        gamma = Gamma.from_expectation(jnp.array([eta1, eta3]))
-        invgamma = InverseGamma.from_expectation(jnp.array([-eta2, eta1]))
-        invgauss = InverseGaussian.from_expectation(jnp.array([eta3, eta2]))
+        gamma = Gamma.from_expectation(jnp.array([moments["E_log_Y"], moments["E_Y"]]))
+        invgamma = InverseGamma.from_expectation(jnp.array([-moments["E_inv_Y"], moments["E_log_Y"]]))
+        invgauss = InverseGaussian.from_expectation(jnp.array([moments["E_Y"], moments["E_inv_Y"]]))
         starting_points = jnp.array([
             [-1.5, -invgauss.lam / 2.0, -invgauss.lam / (2.0 * invgauss.mu**2)],
             [gamma.alpha - 1.0, -eps / 2.0, -gamma.beta],

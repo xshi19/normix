@@ -19,6 +19,7 @@ import jax.numpy as jnp
 
 from normix.exponential_family import _check_backend
 from normix.fitting.solvers import SolverDidNotConverge
+from normix.fitting.eta import _pack_gig_eta
 
 
 
@@ -464,7 +465,7 @@ class BatchEMFitter:
         joint = model._joint
         eta0 = rule.eta0
         eta0_flat = jnp.concatenate([
-            jnp.stack([eta0.E_log_Y, eta0.E_inv_Y, eta0.E_Y]),
+            _pack_gig_eta(E_log_Y=eta0.E_log_Y, E_inv_Y=eta0.E_inv_Y, E_Y=eta0.E_Y),
             jnp.ravel(eta0.E_X),
             jnp.ravel(eta0.E_X_inv_Y),
             jnp.ravel(eta0.E_XXT_inv_Y),

@@ -51,6 +51,16 @@ Not used in this milestone and still to verify before M2-M4: Gamma integral and 
 
 Included: parameter identities for Gamma and GIG, normalization of finite positive log weights, the centered Gram covariance of a finite weighted family, and one fixed-geometry first derivative. All results are exact real arithmetic. They are statements about mathematical models of the Python formulas, not about floating-point execution, JAX tracing, or the generated bridge (W3).
 
-Excluded: continuous integrals, Gamma/GIG normalization, Bessel analysis, Hessian of the finite log partition, matrix-valued statistic coordinates, floors beyond the single GIG `max(., 0)` clamp, and any link to a generated jaxpr certificate.
+Excluded: continuous integrals, Gamma/GIG normalization, Bessel analysis, Hessian of the finite log partition, matrix-valued statistic coordinates, floors beyond the historical GIG `max(., 0)` clamp, runtime validation, and any link to a generated jaxpr certificate.
 
 Layout notes: Lean names follow the roadmap rules (UpperCamelCase modules and namespaces, lowerCamelCase definitions, snake_case theorems). The GIG module is `GigParameters` so that the file name equals the module path component.
+
+## EF-06 Python correspondence update (2026-10-29)
+
+The approved Python change replaces the GIG `from_natural` clamp with
+`eqx.error_if` for positive rate coordinates. Accepted inputs use the same
+algebraic inverse. No tolerance is applied. The Lean definitions and proofs
+remain models of the pinned baseline; their clamp claims do not describe the
+current constructor on rejected inputs. The coverage entry now cites the
+unclamped validity theorem. Runtime rejection is tested in Python, not proved
+by these exact-real statements.

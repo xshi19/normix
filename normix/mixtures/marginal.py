@@ -24,6 +24,8 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.fitting.eta import _unpack_gig_eta
+
 
 from normix.utils.constants import SIGMA_INIT_REG
 from normix.utils.rvs import QuantileTable, build_pinv_table
@@ -651,9 +653,7 @@ class NormalMixture(MarginalMixture):
             log_k, p_post, a_post, b_post, floor=TINY, xp=jnp)
 
         return {
-            'E_log_Y': eta[:, 0],
-            'E_inv_Y': eta[:, 1],
-            'E_Y':     eta[:, 2],
+            **_unpack_gig_eta(eta),
             'psi_post': psi_post,
             'zw': zw_all,
         }

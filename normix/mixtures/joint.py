@@ -78,6 +78,8 @@ from typing import Dict, Tuple
 import jax
 import jax.numpy as jnp
 
+from normix.fitting.eta import _unpack_gig_eta
+
 from normix.exponential_family import ExponentialFamily, _check_backend
 
 
@@ -141,9 +143,10 @@ class JointNormalMixture(ExponentialFamily):
         """
         eta_s, m, v_s = self.subordinator()._gig_layout_eta(backend=backend)
         mu, gamma, sigma = self.mu, self.gamma, self.sigma()
-        E_log, E_inv_fin, E_Y_fin = eta_s[0], eta_s[1], eta_s[2]
+        moments = _unpack_gig_eta(eta_s)
+        E_inv_fin, E_Y_fin = moments["E_inv_Y"], moments["E_Y"]
         eta_fin = jnp.concatenate([
-            jnp.array([E_log, E_inv_fin, E_Y_fin]),
+            eta_s,
             mu + gamma * E_Y_fin,
             mu * E_inv_fin + gamma,
             (sigma
@@ -207,13 +210,13 @@ class JointNormalMixture(ExponentialFamily):
             return super().fisher_information(backend)
         sub = self.subordinator()
         eta_s, m, v_s = sub._gig_layout_eta(backend=backend)
-        e_b = self._combine_split(eta_s, m, v_s)
+        moments = _unpack_gig_eta(self._combine_split(eta_s, m, v_s))
         between = self._sandwich(
             self._direction_matrix(self.mu, self.gamma),
             sub._gig_layout_cov(backend=backend),
         )
         cond = self._expected_conditional_cov(
-            self.mu, self.gamma, self.sigma(), e_b[1], e_b[2],
+            self.mu, self.gamma, self.sigma(), moments["E_inv_Y"], moments["E_Y"],
         )
         return between + cond
 
@@ -488,9 +491,7 @@ class JointNormalMixture(ExponentialFamily):
         p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
         eta, psi_post = GIG._eta_psi_from_pab_jax(p_post, a_post, b_post)
         return {
-            'E_log_Y': eta[0],
-            'E_inv_Y': eta[1],
-            'E_Y': eta[2],
+            **_unpack_gig_eta(eta),
             'psi_post': psi_post,
             'zw': zw,
         }

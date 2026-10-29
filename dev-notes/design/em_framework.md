@@ -179,6 +179,17 @@ The additive $1$ avoids near-zero-$\mu$ inflation from a pure relative
 $\|\Delta\|/\|\theta\|$. RMS keeps a fixed diagnostic roughly
 dimension-free. It is not `converged`.
 
+### GIG statistic conversion
+
+Option C (accepted, 2026-10-29; session authorization) preserves the GIG array
+order `(E_log_Y, E_inv_Y, E_Y)` and mixture field order
+`(E_inv_Y, E_Y, E_log_Y)`. Private `_pack_gig_eta` and `_unpack_gig_eta` in
+`fitting/eta.py` own the conversion. They stack or select the last axis and
+support scalar and batched moments.
+Reordering either public layout was rejected because it changes positional
+consumers. Reopen only for an approved coordinate migration.
+Independent mapping tests and the named MAP-penalty regression pin both orders.
+
 ---
 
 ## 3. η-Update Rules: Two Layers

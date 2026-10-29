@@ -9,6 +9,41 @@ import pytest
 from normix import GIG, Gamma, InverseGamma
 
 
+@pytest.mark.contract
+@pytest.mark.parametrize("index", [1, 2])
+@pytest.mark.parametrize("positive", [1.0, 1e-15])
+@pytest.mark.parametrize("transform", ["eager", "jit", "vmap", "jit_vmap"])
+def test_gig_invalid_natural_rates_raise(index, positive, transform):
+    theta = jnp.array([0.5, -1.0, -2.0]).at[index].set(positive)
+    convert = lambda t: GIG.from_natural(t).natural_params()
+    if "vmap" in transform:
+        convert = jax.vmap(convert)
+        theta = jnp.stack((jnp.array([0.5, -1.0, -2.0]), theta))
+    if "jit" in transform:
+        convert = jax.jit(convert)
+    with pytest.raises(Exception, match="GIG.from_natural requires"):
+        jax.block_until_ready(convert(theta))
+
+
+@pytest.mark.contract
+def test_gig_valid_natural_rates_jit_vmap_grad():
+    theta = jnp.array([[0.5, -1.0, -2.0], [2.0, 0.0, -1.0], [-4.0, -2.0, 0.0],
+                       [0.5, -1e-15, -2e-15]])
+
+    def classical(t):
+        model = GIG.from_natural(t)
+        return jnp.array([model.p, model.a, model.b])
+
+    expected = jnp.stack((theta[:, 0] + 1.0, -2.0 * theta[:, 2], -2.0 * theta[:, 1]), axis=-1)
+    for row, reference in zip(theta, expected):
+        np.testing.assert_array_equal(classical(row), reference)
+    np.testing.assert_array_equal(jax.jit(jax.vmap(classical))(theta), expected)
+    np.testing.assert_array_equal(
+        jax.jit(jax.grad(lambda t: jnp.sum(classical(t))))(theta[0]),
+        jnp.array([1.0, -2.0, -2.0]),
+    )
+
+
 _INVALID = [
     ([0.0, -1.0, 2.0], 'E[1/X] > 0'),
     ([0.0, 0.0, 2.0], 'E[1/X] > 0'),

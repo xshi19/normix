@@ -92,24 +92,25 @@ algorithm iterates between two steps.
 ### E-Step
 
 The $(k+1)$-th E-step computes the average conditional expectations of the
-sufficient statistics:
+sufficient statistics in mixture order $(Y^{-1}, Y, \log Y, X, X/Y, XX^\top/Y)$:
 
 ```{math}
 :label: e-step
 
-\hat{\eta}_1^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
-\hat{\eta}_2^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \theta_k] \\
-\hat{\eta}_3^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \theta_k] \\
-\hat{\eta}_4^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j \\
-\hat{\eta}_5^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j E[Y^{-1} | X = x_j, \theta_k] \\
-\hat{\eta}_6^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j x_j^\top E[Y^{-1} | X = x_j, \theta_k]
+\hat{s}_1^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{s}_2^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[Y | X = x_j, \theta_k] \\
+\hat{s}_3^{(k)} &= \frac{1}{n} \sum_{j=1}^n E[\log Y | X = x_j, \theta_k] \\
+\hat{s}_4^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j \\
+\hat{s}_5^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j E[Y^{-1} | X = x_j, \theta_k] \\
+\hat{s}_6^{(k)} &= \frac{1}{n} \sum_{j=1}^n x_j x_j^\top E[Y^{-1} | X = x_j, \theta_k]
 ```
 
 where the conditional expectations are computed using {eq}`gig-moment-cond`.
 
-Note that $(\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})$ are
-estimates of the GIG expectation parameters, and
-$(\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})$ are estimates
+The GIG expectation vector uses the order $(\log Y, Y^{-1}, Y)$, so its estimate is
+$(\hat{s}_3^{(k)}, \hat{s}_1^{(k)}, \hat{s}_2^{(k)})$; see {eq}`gig-expectation-params`.
+The remaining statistics
+$(\hat{s}_4^{(k)}, \hat{s}_5^{(k)}, \hat{s}_6^{(k)})$ are estimates
 of the normal component expectation parameters.
 
 ### M-Step
@@ -125,8 +126,8 @@ expectation parameters:
 
 ```{math}
 \theta_{k+1} = \arg\max_\theta L_{\text{GH}}(\mu, \gamma, \Sigma, p, a, b |
-\hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)},
-\hat{\eta}_4^{(k)}, \hat{\eta}_5^{(k)}, \hat{\eta}_6^{(k)})
+\hat{s}_1^{(k)}, \hat{s}_2^{(k)}, \hat{s}_3^{(k)},
+\hat{s}_4^{(k)}, \hat{s}_5^{(k)}, \hat{s}_6^{(k)})
 ```
 
 The closed-form solutions are (see {doc}`gh` for derivation):
@@ -134,15 +135,15 @@ The closed-form solutions are (see {doc}`gh` for derivation):
 ```{math}
 :label: m-step
 
-\mu_{k+1} &= \frac{\hat{\eta}_4^{(k)} - \hat{\eta}_2^{(k)} \hat{\eta}_5^{(k)}}
-{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
-\gamma_{k+1} &= \frac{\hat{\eta}_5^{(k)} - \hat{\eta}_1^{(k)} \hat{\eta}_4^{(k)}}
-{1 - \hat{\eta}_1^{(k)} \hat{\eta}_2^{(k)}} \\
-\Sigma_{k+1} &= \hat{\eta}_6^{(k)} - \hat{\eta}_5^{(k)} \mu_{k+1}^\top
-- \mu_{k+1} (\hat{\eta}_5^{(k)})^\top + \hat{\eta}_1^{(k)} \mu_{k+1} \mu_{k+1}^\top
-- \hat{\eta}_2^{(k)} \gamma_{k+1} \gamma_{k+1}^\top \\
+\mu_{k+1} &= \frac{\hat{s}_4^{(k)} - \hat{s}_2^{(k)} \hat{s}_5^{(k)}}
+{1 - \hat{s}_1^{(k)} \hat{s}_2^{(k)}} \\
+\gamma_{k+1} &= \frac{\hat{s}_5^{(k)} - \hat{s}_1^{(k)} \hat{s}_4^{(k)}}
+{1 - \hat{s}_1^{(k)} \hat{s}_2^{(k)}} \\
+\Sigma_{k+1} &= \hat{s}_6^{(k)} - \hat{s}_5^{(k)} \mu_{k+1}^\top
+- \mu_{k+1} (\hat{s}_5^{(k)})^\top + \hat{s}_1^{(k)} \mu_{k+1} \mu_{k+1}^\top
+- \hat{s}_2^{(k)} \gamma_{k+1} \gamma_{k+1}^\top \\
 (p_{k+1}, a_{k+1}, b_{k+1}) &= \arg\max_{p, a, b}
-L_{\text{GIG}}(p, a, b | \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}, \hat{\eta}_3^{(k)})
+L_{\text{GIG}}(p, a, b | \hat{s}_3^{(k)}, \hat{s}_1^{(k)}, \hat{s}_2^{(k)})
 ```
 
 The first three equations have closed-form solutions, while the GIG parameters
@@ -189,10 +190,10 @@ E[\log Y | X = x, \tilde{\theta}_k] &= E[\log Y | X = x, \theta_k] - \log c
 
 where $\tilde{\theta}_k = (\mu_k, c\gamma_k, c\Sigma_k, p_k, a_k/c, c \, b_k)$.
 
-Thus if $\hat{\eta}_1^{(k)}, \ldots, \hat{\eta}_6^{(k)}$ are the E-step
+Thus if $\hat{s}_1^{(k)}, \ldots, \hat{s}_6^{(k)}$ are the E-step
 outputs given $\theta_k$, then
-$c \hat{\eta}_1^{(k)}, \hat{\eta}_2^{(k)}/c, \hat{\eta}_3^{(k)} - \log c,
-\hat{\eta}_4^{(k)}, c \hat{\eta}_5^{(k)}, c \hat{\eta}_6^{(k)}$ are the
+$c \hat{s}_1^{(k)}, \hat{s}_2^{(k)}/c, \hat{s}_3^{(k)} - \log c,
+\hat{s}_4^{(k)}, c \hat{s}_5^{(k)}, c \hat{s}_6^{(k)}$ are the
 corresponding outputs given $\tilde{\theta}_k$. The result follows by
 applying these to {eq}`m-step`. ∎
 

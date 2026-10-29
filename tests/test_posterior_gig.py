@@ -141,6 +141,30 @@ def _data_with_mode(seed):
     # Prepend an exact-mode observation so the VG floor is exercised.
     return jnp.concatenate([_MU[None, :], X], axis=0)
 
+
+@pytest.mark.contract
+@pytest.mark.parametrize("name", list(_FAMILIES))
+@pytest.mark.parametrize("factor", [False, True])
+@pytest.mark.parametrize("backend", ["jax", "cpu"])
+def test_posterior_gig_named_moments(name, factor, backend):
+    marg_cls, _, sub, _ = _FAMILIES[name]
+    model = (_make_factor(name) if factor else
+             marg_cls.from_classical(mu=_MU, gamma=_GAMMA, sigma=_SIGMA, **sub))
+    joint = _make_joint(name)
+    X = _data_with_mode(seed=3)[:2]
+    if backend == "cpu":
+        actual = model._e_step_subordinator_cpu(X)
+    elif factor:
+        actual = model._e_step_subordinator_jax(X)
+    else:
+        actual = model._e_step_subordinator(X)
+    for i, x in enumerate(X):
+        _, _, z2, w2, _ = joint._quad_forms(x)
+        p, a, b = joint._posterior_gig_params(z2, w2)
+        expected = GIG(p, a, jnp.maximum(b, B_POST_FLOOR)).expectation_params()
+        for key, index in (("E_log_Y", 0), ("E_inv_Y", 1), ("E_Y", 2)):
+            np.testing.assert_allclose(actual[key][i], expected[index], rtol=1e-7, atol=1e-8)
+
 @pytest.mark.parametrize("name", list(_FAMILIES))
 def test_estep_marginal_backend_parity(name):
     """Both E-step backends route through the same floored chokepoint, so

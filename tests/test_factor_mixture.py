@@ -72,6 +72,19 @@ def small_factor_setup():
     gamma = jnp.array([0.2, 0.0, -0.1, 0.1])
     return mu, gamma, F, D
 
+
+@pytest.mark.contract
+def test_factor_gh_prior_moments_have_gig_names(small_factor_setup):
+    mu, gamma, F, D = small_factor_setup
+    model = FactorGeneralizedHyperbolic.from_classical(
+        mu=mu, gamma=gamma, F=F, D=D, p=0.7, a=1.6, b=2.2,
+    )
+    expected = model.subordinator().expectation_params()
+    actual = model.compute_eta_from_model()
+    np.testing.assert_allclose(actual.E_log_Y, expected[0], rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(actual.E_inv_Y, expected[1], rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(actual.E_Y, expected[2], rtol=1e-12, atol=1e-12)
+
 # ============================================================================
 # 1. Density / Woodbury agreement
 # ============================================================================

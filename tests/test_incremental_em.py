@@ -22,7 +22,7 @@ from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
 from normix.distributions.generalized_hyperbolic import GeneralizedHyperbolic
 from normix.fitting.em import BatchEMFitter, IncrementalEMFitter
-from normix.fitting.eta import NormalMixtureEta, affine_combine
+from normix.fitting.eta import NormalMixtureEta, affine_combine, _pack_gig_eta, _unpack_gig_eta
 from normix.fitting.eta_rules import (
     IdentityUpdate,
     RobbinsMonroUpdate,
@@ -41,6 +41,45 @@ from normix.fitting.shrinkage_targets import (
 KEY = jax.random.PRNGKey(42)
 D = 3
 N = 200
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("batched", [False, True])
+def test_pack_gig_eta_positions_and_round_trip(batched):
+    moments = {"E_inv_Y": jnp.array(2.0), "E_Y": jnp.array(5.0), "E_log_Y": jnp.array(-0.5)}
+    if batched:
+        moments = {name: jnp.stack((value, value + 1.0)) for name, value in moments.items()}
+    packed = jax.jit(_pack_gig_eta)(**moments)
+    np.testing.assert_array_equal(packed[..., 0], moments["E_log_Y"])
+    np.testing.assert_array_equal(packed[..., 1], moments["E_inv_Y"])
+    np.testing.assert_array_equal(packed[..., 2], moments["E_Y"])
+    for name, value in _unpack_gig_eta(packed).items():
+        np.testing.assert_array_equal(value, moments[name])
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("batched", [False, True])
+def test_unpack_gig_eta_names_and_round_trip(batched):
+    packed = jnp.array([[-0.5, 2.0, 5.0], [0.5, 3.0, 6.0]]) if batched else jnp.array([-0.5, 2.0, 5.0])
+    moments = jax.jit(_unpack_gig_eta)(packed)
+    assert set(moments) == {"E_log_Y", "E_inv_Y", "E_Y"}
+    np.testing.assert_array_equal(moments["E_log_Y"], packed[..., 0])
+    np.testing.assert_array_equal(moments["E_inv_Y"], packed[..., 1])
+    np.testing.assert_array_equal(moments["E_Y"], packed[..., 2])
+    np.testing.assert_array_equal(_pack_gig_eta(**moments), packed)
+
+
+@pytest.mark.contract
+def test_gig_eta_helpers_vmap_grad():
+    def weighted(eta):
+        moments = _unpack_gig_eta(eta)
+        return 2.0 * moments["E_log_Y"] + 3.0 * moments["E_inv_Y"] + 7.0 * moments["E_Y"]
+
+    values = jnp.array([[-0.5, 2.0, 5.0], [0.5, 3.0, 6.0]])
+    np.testing.assert_array_equal(jax.jit(jax.vmap(weighted))(values), jnp.array([40.0, 52.0]))
+    np.testing.assert_array_equal(jax.jit(jax.grad(weighted))(values[0]), jnp.array([2.0, 3.0, 7.0]))
+    packed = jax.jit(jax.vmap(lambda row: _pack_gig_eta(E_log_Y=row[0], E_inv_Y=row[1], E_Y=row[2])))(values)
+    np.testing.assert_array_equal(packed, values)
 
 def _make_data(key=KEY, n=N, d=D):
     return jax.random.normal(key, shape=(n, d), dtype=jnp.float64) * 0.5

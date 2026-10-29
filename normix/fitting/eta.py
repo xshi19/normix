@@ -17,6 +17,8 @@ in the *theory order* used in :doc:`/theory/shrinkage` and
 
 This is the expectation parametrization of
 :class:`~normix.mixtures.joint.JointNormalMixture`.
+GIG arrays use the last-axis order ``(E_log_Y, E_inv_Y, E_Y)``.
+The private packing helpers convert between these layouts by name.
 """
 from __future__ import annotations
 
@@ -25,6 +27,16 @@ from typing import Any, Callable, Union
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+
+
+def _pack_gig_eta(*, E_log_Y: jax.Array, E_inv_Y: jax.Array, E_Y: jax.Array) -> jax.Array:
+    """Pack named moments in GIG order along the last axis."""
+    return jnp.stack((E_log_Y, E_inv_Y, E_Y), axis=-1)
+
+
+def _unpack_gig_eta(eta: jax.Array) -> dict[str, jax.Array]:
+    """Name the moments of a scalar or batched GIG expectation array."""
+    return {"E_log_Y": eta[..., 0], "E_inv_Y": eta[..., 1], "E_Y": eta[..., 2]}
 
 
 class EStepResult(eqx.Module):

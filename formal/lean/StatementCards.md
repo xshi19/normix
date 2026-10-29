@@ -4,6 +4,12 @@ Seven English proposition cards, one per checklist group in [`05_math_checklist.
 
 Lean names are fully qualified in `AxiomAudit.lean`.
 
+Current Python correspondence (2026-10-29): `GIG.from_natural` rejects positive
+rate coordinates with `eqx.error_if` and applies the unclamped inverse on
+accepted inputs. The unchanged Lean clamp model describes the pinned baseline.
+It agrees with current Python on nonpositive rate coordinates; it does not
+model runtime rejection, JAX transformations, or floating-point behavior.
+
 ## EF-01, EF-02, EF-03: GIG parameter round trips
 
 | Field | Content |
@@ -12,8 +18,8 @@ Lean names are fully qualified in `AxiomAudit.lean`.
 | Lean signature | `Normix.Distributions.gig_b_round_trip (b : ℝ) : -2 * (-b / 2) = b`; `gig_a_round_trip`; `gig_p_round_trip (p : ℝ) : (p - 1) + 1 = p`; `gig_from_natural_unclamped_round_trip (q : GigParams) : gigFromNaturalUnclamped (gigNatural q) = q`; `gig_natural_unclamped_round_trip (t : GigNatural) : gigNatural (gigFromNaturalUnclamped t) = t` |
 | Assumptions | None (real arithmetic). Validity ($a,b>0$) is a separate card (EF-06). |
 | Why this is the intended spec | It fixes the sign, the factor 2, and the coordinate order $(\theta_0,\theta_1,\theta_2)$ paired with $(\log y,1/y,y)$ that the Python formulas use. Both round-trip directions are stated so that a wrong inverse cannot cancel a wrong forward map unnoticed. |
-| Covered normix function | `normix/distributions/generalized_inverse_gaussian.py`: `natural_params` (`[p - 1, -b/2, -a/2]`), `from_natural` before its `max(., 0)` clamps. |
-| Risks of a weakened spec | Testing positive inputs only would lose the universal identity. Equating the unclamped model with the constructor omits the clamp behavior (see EF-06). Round trips alone do not check the conventions against the density exponent. |
+| Covered normix function | `normix/distributions/generalized_inverse_gaussian.py`: `natural_params` (`[p - 1, -b/2, -a/2]`), `from_natural` on accepted inputs. The inverse formula is unchanged; runtime validation is outside the proof. |
+| Risks of a weakened spec | Testing positive inputs only would lose the universal identity. Equating the unrestricted algebraic model with the current constructor omits input rejection (see EF-06). Round trips alone do not check the conventions against the density exponent. |
 | Evidence and review | Formula correspondence: local check. Algebra and Lean compilation: checked on this branch. Implementation correspondence beyond the formulas: to verify. Review: pending. |
 
 ## EF-04: Gamma classical/natural round trip, mean and variance positivity
@@ -28,17 +34,17 @@ Lean names are fully qualified in `AxiomAudit.lean`.
 | Risks of a weakened spec | Proving positivity as a property of a defined moment integral would be stronger; this card only checks the formula. Constructor clamps (`THETA_FLOOR`) are not modeled. |
 | Evidence and review | Local check for the formulas; Lean compilation checked. Distributional meaning of the formulas: not covered. Review: pending. |
 
-## EF-06: validity preservation and the GIG clamp
+## EF-06: validity preservation and the historical GIG clamp
 
 | Field | Content |
 |---|---|
 | Statement in prose | A GIG parameter triple has $a>0,b>0$ iff its natural image has $\theta_1<0,\theta_2<0$; the same holds for the unclamped and the clamped inverse. The clamped inverse always has $a,b\ge0$. The clamp on $b$ (resp. $a$) is inactive exactly when $\theta_1\le0$ (resp. $\theta_2\le0$), so clamped and unclamped inverses agree on the valid natural domain, and `gigFromNatural (gigNatural q) = q` for valid $q$. |
 | Lean signature | `gig_natural_valid_iff`, `gig_from_natural_unclamped_valid_iff`, `gig_from_natural_valid_iff`, `gig_from_natural_b_nonneg`, `gig_from_natural_a_nonneg`, `gig_b_clamp_inactive_iff`, `gig_a_clamp_inactive_iff`, `gig_from_natural_eq_unclamped (t) : t.Valid → gigFromNatural t = gigFromNaturalUnclamped t`, `gig_from_natural_round_trip (q) : q.Valid → gigFromNatural (gigNatural q) = q`, `gig_natural_round_trip` |
 | Assumptions | `GigParams.Valid` is `0 < a ∧ 0 < b`; `GigNatural.Valid` is `theta1 < 0 ∧ theta2 < 0`. $p$ is unrestricted. |
-| Why this is the intended spec | It separates the formula from the constructor clamp and states exactly where they coincide. The valid domain is the GIG interior; Gamma and InverseGamma boundary cases ($a=0$ or $b=0$) are excluded. |
-| Covered normix function | `GeneralizedInverseGaussian.from_natural` (`max(-2*theta, 0)`), `natural_params`. |
+| Why this is the intended spec | It separates the formula from the historical constructor clamp and states exactly where they coincide. The valid domain is the GIG interior; Gamma and InverseGamma boundary cases ($a=0$ or $b=0$) are excluded. |
+| Covered normix function | `GeneralizedInverseGaussian.natural_params`; the algebra of `from_natural` on accepted inputs. Current Python rejects positive rate coordinates without a tolerance. The clamp theorems describe the pinned baseline only. |
 | Risks of a weakened spec | Restricting to the interior says nothing about boundary distributions. Other floors in constructors (for example `LOG_EPS`, `THETA_FLOOR`) are not modeled and need separate correspondence. |
-| Evidence and review | Local check for the clamp; Lean checked. Review: pending. |
+| Evidence and review | Historical clamp model: Lean checked. Current rejection and transformation behavior: `tests/test_gig_expectation_domain.py`. Runtime validation is not proved in Lean. Review: pending. |
 
 ## EF-07: normalization of finite positive exponential weights
 
