@@ -2025,7 +2025,9 @@ degenerate inputs.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_natural</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_inverse_gaussian.html#GeneralizedInverseGaussian.from_natural"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural" title="Link to this definition">#</a></dt>
-<dd><p>Construct from natural parameters θ. Subclasses must override.</p>
+<dd><p>Convert natural parameters, rejecting positive rate coordinates.</p>
+<p>Zero rate coordinates retain the Gamma and InverseGamma limits.
+The runtime check supports <code class="docutils literal notranslate"><span class="pre">jit</span></code>, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>, and differentiation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>theta</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>

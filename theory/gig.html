@@ -629,21 +629,21 @@ In practice it can only be approximated numerically.</p>
 <section id="maximum-likelihood-estimation">
 <h2>Maximum Likelihood Estimation<a class="headerlink" href="#maximum-likelihood-estimation" title="Link to this heading">#</a></h2>
 <p>Given the expectation parameters <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span>, computing the
-natural parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> by solving the above equations is a challenging
+classical parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> by solving the above equations is a challenging
 problem. Let <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_n\)</span> be a sequence of sample data, then the
 maximum likelihood estimator (MLE) of GIG is given by:</p>
 <div class="math notranslate nohighlight" id="equation-gig-mle">
 <span class="eqno">(9)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation">#</a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
 <p>where <span class="math notranslate nohighlight">\(L_{GIG}\)</span> is the log-likelihood function (excluding constants):</p>
 <div class="math notranslate nohighlight" id="equation-gig-loglik">
-<span class="eqno">(10)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \eta_1, \eta_2, \eta_3) =
--\frac{1}{2} b \hat{\eta}_1 - \frac{1}{2} a \hat{\eta}_2 + p \hat{\eta}_3
+<span class="eqno">(10)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3) =
+(p-1) \hat{\eta}_1 - \frac{1}{2} b \hat{\eta}_2 - \frac{1}{2} a \hat{\eta}_3
 + \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),\]</div>
-<p>and the sufficient statistics are:</p>
+<p>and the empirical sufficient statistics retain the order <span class="math notranslate nohighlight">\((\log X, X^{-1}, X)\)</span>:</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}\)</span></p></li>
-<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k\)</span></p></li>
-<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n \log(x_k)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n \log(x_k)\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n x_k\)</span></p></li>
 </ul>
 <p>One can verify that the optimal solution <span class="math notranslate nohighlight">\((\hat{p}, \hat{a}, \hat{b})\)</span> must
 satisfy <a class="reference internal" href="#equation-gig-expectation-params">(8)</a> where <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> are

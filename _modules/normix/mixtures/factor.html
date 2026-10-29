@@ -455,6 +455,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">_unpack_gig_eta</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactorMixtureStats</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -758,9 +760,7 @@
         <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_floored_posterior_gig_params</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
         <span class="n">eta</span><span class="p">,</span> <span class="n">psi_post</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_eta_psi_from_pab_jax</span><span class="p">(</span><span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">),</span>
             <span class="s1">&#39;psi_post&#39;</span><span class="p">:</span> <span class="n">psi_post</span><span class="p">,</span>
             <span class="s1">&#39;zw&#39;</span><span class="p">:</span> <span class="n">zw</span><span class="p">,</span>
         <span class="p">}</span>
@@ -817,9 +817,7 @@
         <span class="n">psi_post</span> <span class="o">=</span> <span class="n">GIG</span><span class="o">.</span><span class="n">_psi_from_log_k</span><span class="p">(</span>
             <span class="n">log_k</span><span class="p">,</span> <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span><span class="p">,</span> <span class="n">floor</span><span class="o">=</span><span class="n">TINY</span><span class="p">,</span> <span class="n">xp</span><span class="o">=</span><span class="n">jnp</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;E_log_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
-            <span class="s1">&#39;E_inv_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
-            <span class="s1">&#39;E_Y&#39;</span><span class="p">:</span> <span class="n">eta</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">),</span>
             <span class="s1">&#39;psi_post&#39;</span><span class="p">:</span> <span class="n">psi_post</span><span class="p">,</span>
             <span class="s1">&#39;zw&#39;</span><span class="p">:</span> <span class="n">zw_all</span><span class="p">,</span>
         <span class="p">}</span>

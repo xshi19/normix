@@ -469,6 +469,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -484,6 +485,7 @@
     <span class="n">BESSEL_WINDOW_ITERS</span><span class="p">,</span> <span class="n">BESSEL_WINDOW_HI_MAX</span><span class="p">,</span>
     <span class="n">THETA_FLOOR</span><span class="p">,</span> <span class="n">GIG_THETA_PERTURB</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">_pack_gig_eta</span><span class="p">,</span> <span class="n">_unpack_gig_eta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">solve_bregman</span><span class="p">,</span> <span class="n">solve_bregman_multistart</span><span class="p">,</span>
     <span class="n">make_jit_newton_solver</span><span class="p">,</span> <span class="n">_require_solved_theta</span><span class="p">,</span>
@@ -1158,7 +1160,7 @@
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;:math:`E[X] = \eta_3` from expectation parameters.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">())[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.quadrature">
@@ -1414,8 +1416,8 @@
 <span class="sd">        :meth:`Gamma.from_expectation`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gamma</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]]))</span></div>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">]]))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gamma">
@@ -1426,8 +1428,8 @@
 <span class="sd">        Matches :math:`E[-1/X] = -\eta_2,\; E[\log X] = \eta_1`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span></div>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">]]))</span></div>
 
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.to_inverse_gaussian">
@@ -1442,8 +1444,8 @@
 <span class="sd">        degenerate inputs.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
-        <span class="n">eta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">]]))</span></div>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expectation_params</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">]]))</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1454,12 +1456,28 @@
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_natural</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
-        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
-        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert natural parameters, rejecting positive rate coordinates.</span>
 
+<span class="sd">        Zero rate coordinates retain the Gamma and InverseGamma limits.</span>
+<span class="sd">        The runtime check supports ``jit``, ``vmap``, and differentiation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="c1"># No tolerance: solver bounds and positive rescaling preserve nonpositive rates.</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">error_if</span><span class="p">(</span>
+            <span class="n">theta</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="s2">&quot;GIG.from_natural requires theta[1] &lt;= 0 and theta[2] &lt;= 0&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_natural_unchecked</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_from_natural_unchecked</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedInverseGaussian&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert validated or solver-bounded coordinates, including NaN failures.</span>
+
+<span class="sd">        Solvers enforce nonpositive rate bounds; positive rescaling preserves</span>
+<span class="sd">        their signs. This path keeps expectation inversion free of callbacks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">a</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">b</span><span class="o">=-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 <div class="viewcode-block" id="GeneralizedInverseGaussian.from_expectation">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation">[docs]</a>
@@ -1518,7 +1536,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_check_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">ell</span><span class="p">,</span> <span class="n">m_minus</span><span class="p">,</span> <span class="n">m_plus</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="n">ell</span><span class="p">,</span> <span class="n">m_minus</span><span class="p">,</span> <span class="n">m_plus</span> <span class="o">=</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">]</span>
         <span class="n">conditions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">eta</span><span class="p">)),</span>
             <span class="n">m_minus</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -1542,7 +1561,7 @@
         <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">conditions</span><span class="p">),</span>
             <span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_expectation_unchecked</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
-            <span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span><span class="p">),</span>
+            <span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_natural_unchecked</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">target</span><span class="p">),</span>
             <span class="n">eta</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -1562,11 +1581,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Invert a target that passed the public moment-domain check.&quot;&quot;&quot;</span>
         <span class="n">eta_target</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">eta_target</span><span class="p">)</span> <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="k">else</span> <span class="n">eta_target</span>
-        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">eta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span>
+        <span class="n">ell</span><span class="p">,</span> <span class="n">m_minus</span><span class="p">,</span> <span class="n">m_plus</span> <span class="o">=</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">]</span>
 
-        <span class="n">s</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">)</span>
-        <span class="n">geom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eta2</span> <span class="o">*</span> <span class="n">eta3</span><span class="p">)</span>
-        <span class="n">eta_scaled</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">eta2</span> <span class="o">/</span> <span class="n">eta3</span><span class="p">),</span> <span class="n">geom</span><span class="p">,</span> <span class="n">geom</span><span class="p">])</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m_minus</span> <span class="o">/</span> <span class="n">m_plus</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m_minus</span> <span class="o">*</span> <span class="n">m_plus</span><span class="p">)</span>
+        <span class="n">eta_scaled</span> <span class="o">=</span> <span class="n">_pack_gig_eta</span><span class="p">(</span>
+            <span class="n">E_log_Y</span><span class="o">=</span><span class="n">ell</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">m_minus</span> <span class="o">/</span> <span class="n">m_plus</span><span class="p">),</span> <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="n">geom</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">_GIG_BOUNDS</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_theta_bounds</span><span class="p">()</span>
 
@@ -1647,7 +1669,7 @@
                            <span class="n">s</span> <span class="o">*</span> <span class="n">theta_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span><span class="p">:</span>
             <span class="n">theta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_implicit_natural_params</span><span class="p">(</span><span class="n">eta_target</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_natural</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_natural_unchecked</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_theta_bounds</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -1682,11 +1704,11 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gamma</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGamma</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">InverseGaussian</span>
 
-        <span class="n">eta1</span><span class="p">,</span> <span class="n">eta2</span><span class="p">,</span> <span class="n">eta3</span> <span class="o">=</span> <span class="n">eta_scaled</span>
+        <span class="n">moments</span> <span class="o">=</span> <span class="n">_unpack_gig_eta</span><span class="p">(</span><span class="n">eta_scaled</span><span class="p">)</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="n">GIG_THETA_PERTURB</span>
-        <span class="n">gamma</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta1</span><span class="p">,</span> <span class="n">eta3</span><span class="p">]))</span>
-        <span class="n">invgamma</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta2</span><span class="p">,</span> <span class="n">eta1</span><span class="p">]))</span>
-        <span class="n">invgauss</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eta3</span><span class="p">,</span> <span class="n">eta2</span><span class="p">]))</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">Gamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">]]))</span>
+        <span class="n">invgamma</span> <span class="o">=</span> <span class="n">InverseGamma</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_log_Y&quot;</span><span class="p">]]))</span>
+        <span class="n">invgauss</span> <span class="o">=</span> <span class="n">InverseGaussian</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_Y&quot;</span><span class="p">],</span> <span class="n">moments</span><span class="p">[</span><span class="s2">&quot;E_inv_Y&quot;</span><span class="p">]]))</span>
         <span class="n">starting_points</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
             <span class="p">[</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="n">invgauss</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">invgauss</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">invgauss</span><span class="o">.</span><span class="n">mu</span><span class="o">**</span><span class="mi">2</span><span class="p">)],</span>
             <span class="p">[</span><span class="n">gamma</span><span class="o">.</span><span class="n">alpha</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="n">eps</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="n">gamma</span><span class="o">.</span><span class="n">beta</span><span class="p">],</span>

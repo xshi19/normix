@@ -804,6 +804,11 @@ in the constrained space, not log-space).</p></li>
 <p><code class="docutils literal notranslate"><span class="pre">jnp.where</span></code> is preferred over <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code> whenever possible: it is
 <code class="docutils literal notranslate"><span class="pre">vmap</span></code>-compatible without changing the trace, and the clamping prevents
 NaN gradients without branch divergence.</p>
+<p>Natural-parameter input is validated, not clamped. <code class="docutils literal notranslate"><span class="pre">GIG.from_natural</span></code>
+raises (via <code class="docutils literal notranslate"><span class="pre">eqx.error_if</span></code>, compatible with <code class="docutils literal notranslate"><span class="pre">jit</span></code>, <code class="docutils literal notranslate"><span class="pre">vmap</span></code>, and <code class="docutils literal notranslate"><span class="pre">grad</span></code>)
+when a rate coordinate <code class="docutils literal notranslate"><span class="pre">theta[1]</span></code> or <code class="docutils literal notranslate"><span class="pre">theta[2]</span></code> is positive; zero is still
+allowed so the Gamma and InverseGamma limits remain reachable. This is
+separate from the M-step <code class="docutils literal notranslate"><span class="pre">GIG_CLAMP_LO</span></code>/<code class="docutils literal notranslate"><span class="pre">GIG_CLAMP_HI</span></code> window, which is unchanged.</p>
 <p>Commit <code class="docutils literal notranslate"><span class="pre">9346ad6</span></code> selected one Bessel regime with <code class="docutils literal notranslate"><span class="pre">lax.cond</span></code>.
 <a class="reference external" href="https://github.com/xshi19/normix/pull/113">PR #113</a> removed that dispatch and the rest of the four-regime kernel.</p>
 </section>

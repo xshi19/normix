@@ -1095,7 +1095,9 @@ s_4 = E[X], \;\;
 s_5 = E[X / Y], \;\;
 s_6 = E[X X^\top / Y].\]</div>
 <p>This is the expectation parametrization of
-<a class="reference internal" href="mixtures.html#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>.</p>
+<a class="reference internal" href="mixtures.html#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>.
+GIG arrays use the last-axis order <code class="docutils literal notranslate"><span class="pre">(E_log_Y,</span> <span class="pre">E_inv_Y,</span> <span class="pre">E_Y)</span></code>.
+The private packing helpers convert between these layouts by name.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.EStepResult">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">EStepResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_lik</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#EStepResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.EStepResult" title="Link to this definition">#</a></dt>
