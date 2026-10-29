@@ -243,6 +243,12 @@ recipe (when JAXopt breaks): wrap `optax.scale_by_lbfgs` in
 `vmap`-compatible without changing the trace, and the clamping prevents
 NaN gradients without branch divergence.
 
+Natural-parameter input is validated, not clamped. `GIG.from_natural`
+raises (via `eqx.error_if`, compatible with `jit`, `vmap`, and `grad`)
+when a rate coordinate `theta[1]` or `theta[2]` is positive; zero is still
+allowed so the Gamma and InverseGamma limits remain reachable. This is
+separate from the M-step `GIG_CLAMP_LO`/`GIG_CLAMP_HI` window, which is unchanged.
+
 Commit `9346ad6` selected one Bessel regime with `lax.cond`.
 [PR #113](https://github.com/xshi19/normix/pull/113) removed that dispatch and the rest of the four-regime kernel.
 
