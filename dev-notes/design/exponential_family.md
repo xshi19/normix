@@ -182,6 +182,18 @@ Commit `9346ad6` dispatched one Bessel regime per scalar with `lax.cond`.
 [PR #113](https://github.com/xshi19/normix/pull/113) removed that dispatch with the rest of the four-regime kernel (S10).
 `jnp.where` stays the log-partition choice under `vmap` (F7).
 
+**EF-06 exception (accepted, 2026-10-29; session authorization).**
+`GIG.from_natural` rejects either positive rate coordinate with `eqx.error_if`,
+following the runtime validation in `DiscreteMeasure`. Zero coordinates remain
+valid Gamma/InverseGamma limits. There is no tolerance or output clamp.
+The bounded expectation solver uses the unchecked algebraic conversion: its
+upper bounds are zero, and positive rescaling preserves their signs. This also
+preserves S9's callback-free solve and MD2's NaN failure result.
+The former clamp hid invalid input; a Python-only check would miss traced input.
+Reopen the tolerance choice only with a failing valid-input regression.
+Tests: `tests/test_gig_expectation_domain.py`, `tests/test_no_host_callbacks.py`,
+and the GH EM regressions.
+
 ### 4.4 Module-level functions are forbidden
 
 Distribution behaviour lives on the class as `@classmethod` or

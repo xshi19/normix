@@ -31,6 +31,8 @@ from typing import Tuple
 import jax
 import jax.numpy as jnp
 
+from normix.fitting.eta import _pack_gig_eta, _unpack_gig_eta
+
 from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
 from normix.mixtures.factor import FactorNormalMixture
@@ -221,7 +223,7 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y]),
+            _pack_gig_eta(E_log_Y=eta.E_log_Y, E_inv_Y=eta.E_inv_Y, E_Y=eta.E_Y),
             theta0=theta0,
             backend=kwargs.get('backend', 'jax'),
             method=kwargs.get('method', 'newton'),
@@ -367,7 +369,8 @@ class GeneralizedHyperbolic(NormalMixture):
     def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
         j = self._joint
         eta = j.subordinator().expectation_params()
-        return eta[0], eta[1], eta[2]
+        moments = _unpack_gig_eta(eta)
+        return moments["E_log_Y"], moments["E_inv_Y"], moments["E_Y"]
 
     @classmethod
     def _joint_class(cls):
@@ -422,7 +425,7 @@ class GeneralizedHyperbolic(NormalMixture):
         method = kwargs.get('method', 'newton')
         maxiter = kwargs.get('maxiter', 20)
 
-        gig_eta = jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y])
+        gig_eta = _pack_gig_eta(E_log_Y=eta.E_log_Y, E_inv_Y=eta.E_inv_Y, E_Y=eta.E_Y)
         current_gig = GIG(p=j.p, a=j.a, b=j.b)
 
         if backend == 'cpu':
@@ -670,13 +673,14 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
 
     def _subordinator_expectations(self):
         eta = self._subordinator.expectation_params()
-        return eta[0], eta[1], eta[2]
+        moments = _unpack_gig_eta(eta)
+        return moments["E_log_Y"], moments["E_inv_Y"], moments["E_Y"]
 
     @classmethod
     def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG.from_expectation(
-            jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y]),
+            _pack_gig_eta(E_log_Y=eta.E_log_Y, E_inv_Y=eta.E_inv_Y, E_Y=eta.E_Y),
             theta0=theta0,
             backend=kwargs.get('backend', 'jax'),
             method=kwargs.get('method', 'newton'),
@@ -706,7 +710,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         method = kwargs.get('method', 'newton')
         maxiter = kwargs.get('maxiter', 20)
 
-        gig_eta = jnp.array([eta.E_log_Y, eta.E_inv_Y, eta.E_Y])
+        gig_eta = _pack_gig_eta(E_log_Y=eta.E_log_Y, E_inv_Y=eta.E_inv_Y, E_Y=eta.E_Y)
         current_gig = self._subordinator
 
         if backend == 'cpu':

@@ -7,6 +7,7 @@ log-likelihoods for all mixture distribution families.
 
 import jax
 import jax.numpy as jnp
+import equinox as eqx
 import numpy as np
 import pytest
 
@@ -18,6 +19,86 @@ from normix.fitting.em import BatchEMFitter
 from normix.fitting.solvers import SolverDidNotConverge
 from normix.fitting.eta import NormalMixtureEta
 from normix.mixtures.joint import JointNormalMixture
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("factor", [False, True])
+@pytest.mark.parametrize("warm", [False, True])
+def test_gh_subordinator_target_uses_named_gig_moments(factor, warm, monkeypatch):
+    from types import SimpleNamespace
+
+    from normix import FactorGeneralizedHyperbolic, GIG
+
+    params = dict(mu=jnp.zeros(1), gamma=jnp.zeros(1), p=0.5, a=2.0, b=3.0)
+    model = (FactorGeneralizedHyperbolic.from_classical(F=jnp.ones((1, 1)), D=jnp.ones(1), **params)
+             if factor else GeneralizedHyperbolic.from_classical(sigma=jnp.eye(1), **params))
+    target = SimpleNamespace(E_log_Y=jnp.array(-0.5), E_inv_Y=jnp.array(2.0), E_Y=jnp.array(5.0))
+    targets = []
+
+    def capture(cls, eta, **kwargs):
+        targets.append(eta)
+        return model.subordinator()
+
+    monkeypatch.setattr(GIG, "from_expectation", classmethod(capture))
+    if warm:
+        model.m_step_subordinator(target)
+    else:
+        owner = type(model) if factor else type(model._joint)
+        owner._subordinator_from_eta(target)
+    assert len(targets) == 1
+    np.testing.assert_array_equal(targets[0], jnp.array([-0.5, 2.0, 5.0]))
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("backend", ["jax", "cpu"])
+@pytest.mark.parametrize("factor", [False, True])
+def test_gh_em_solver_rates_stay_nonpositive(backend, factor, monkeypatch):
+    from normix import FactorGeneralizedHyperbolic, GIG
+
+    convert = GIG._from_natural_unchecked.__func__
+    observed = []
+
+    def checked(cls, theta):
+        if backend == "cpu":
+            observed.append(theta)
+        theta = eqx.error_if(theta, jnp.any(theta[1:] > 0.0), "EM solver returned a positive GIG rate")
+        return convert(cls, theta)
+
+    monkeypatch.setattr(GIG, "_from_natural_unchecked", classmethod(checked))
+    params = dict(mu=jnp.zeros(1), gamma=jnp.array([0.2]), p=0.5, a=2.0, b=3.0)
+    model = (FactorGeneralizedHyperbolic.from_classical(F=jnp.array([[0.5]]), D=jnp.ones(1), **params)
+             if factor else GeneralizedHyperbolic.from_classical(sigma=jnp.array([[1.25]]), **params))
+    X = jax.random.normal(jax.random.key(7), (32, 1))
+    result = BatchEMFitter(max_iter=3, e_step_backend=backend, m_step_backend=backend).fit(model, X)
+    if backend == "cpu":
+        assert observed
+        for theta in observed:
+            assert (theta[1:] <= 0.0).all()
+    assert not result.solver_failed
+    assert np.isfinite(result.model.subordinator().natural_params()).all()
+    assert (result.model.subordinator().natural_params()[1:] <= 0.0).all()
+
+
+@pytest.mark.contract
+def test_map_penalty_uses_named_gig_moments():
+    from normix.fitting.eta_rules import IdentityUpdate, Shrinkage
+
+    model = GeneralizedHyperbolic.from_classical(
+        mu=jnp.array([0.0]), gamma=jnp.array([0.0]), sigma=jnp.eye(1),
+        p=2.0, a=4.0, b=6.0,
+    )
+    eta0 = NormalMixtureEta(
+        E_inv_Y=jnp.array(2.0), E_Y=jnp.array(5.0), E_log_Y=jnp.array(-0.5),
+        E_X=jnp.array([0.0]), E_X_inv_Y=jnp.array([0.0]), E_XXT_inv_Y=jnp.array([[7.0]]),
+    )
+    tau, log_lik = 0.25, jnp.array(-4.0)
+    fitter = BatchEMFitter(eta_update=Shrinkage(IdentityUpdate(), eta0=eta0, tau=tau))
+    named_dot = (model.p - 1.0 - 0.5) * eta0.E_log_Y - model.b / 2.0 * eta0.E_inv_Y \
+        - model.a / 2.0 * eta0.E_Y - 0.5 * eta0.E_XXT_inv_Y[0, 0]
+    expected = log_lik + tau * (named_dot - model._joint.log_partition())
+    np.testing.assert_allclose(fitter._penalized_objective(model, log_lik), expected, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(jax.jit(fitter._penalized_objective)(model, log_lik), expected, rtol=1e-12, atol=1e-12)
+
 
 class TestVGEMRegression:
 
@@ -738,4 +819,3 @@ class TestConjugacyMeanLogLik:
         assert result.log_likelihoods is not None
         assert result.log_likelihoods.shape[0] == int(result.n_iter)
         assert result.param_changes.shape[0] == int(result.n_iter)
-

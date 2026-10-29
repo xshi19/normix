@@ -76,7 +76,7 @@ the class as `@classmethod` or `@staticmethod`.
 | F3 | Autodiff | `jax.grad` on `_log_partition_from_theta` | Single source of truth. Extends to `log_kv` (S10): frozen quadrature, no `custom_jvp`. Supersedes the GIG ratio plus finite-difference $\partial_p$ gradient (`ee8cf8b`, on the closed [PR #23](https://github.com/xshi19/normix/pull/23) commit list and on master). [PR #113](https://github.com/xshi19/normix/pull/113) replaced it with one `log_kv_moments` image. `jax.grad` through `jnp.where` still fails as $a\to 0$. `exponential_family.md` § 2.3. |
 | F4 | Triad classmethods | `_grad_log_partition`, `_hessian_log_partition`, plus CPU triad | `exponential_family.md` § 2 |
 | F5 | Unbatched core | `log_prob(x)` for single obs | Clean; batch via `jax.vmap` |
-| F6 | Constraints | `jnp.maximum(x, LOG_EPS)` (clamp) | `exponential_family.md` § 4.3 |
+| F6 | Constraints | Constructor clamps where specified; GIG `from_natural` rejects positive rate coordinates with `eqx.error_if` (EF-06) | `exponential_family.md` § 4.3 |
 | F7 | `jnp.where` over `lax.cond` in log-partition | `jnp.where` | `vmap`-compatible; clamping prevents NaN gradients. `exponential_family.md` § 4.3. |
 | F8 | Precision | float64 throughout | Bessel + EM convergence require it |
 | F9 | Numerical constants | Centralised in `utils/constants.py` | No scattered magic numbers |
@@ -115,7 +115,7 @@ the class as `@classmethod` or `@staticmethod`.
 | E6 | `EtaUpdateRule` | `eqx.Module` (not plain ABC) | Hyperparams are JAX leaves — JIT-compatible, differentiable |
 | E7 | `affine_combine` weight forms | scalar / stats-shape pytree / callable | Per-field shrinkage, custom linear ops; `em_framework.md` § 3.1 |
 | E8 | `Shrinkage` | Combinator wrapping any base rule (replaces `ShrinkageUpdate`) | `em_framework.md` § 4 |
-| E9 | Sufficient statistics | Pytree (`NormalMixtureEta`, `FactorMixtureStats`) in **theory order** | Readable; first 6 fields shared across families |
+| E9 | Sufficient statistics | Pytree (`NormalMixtureEta`, `FactorMixtureStats`) in **theory order**; private GIG pack/unpack helpers in `fitting/eta.py` | First 6 fields shared across families. GIG arrays keep log/inverse/forward order; adapters preserve both contracts (Option C). `em_framework.md` § GIG statistic conversion |
 | E10 | `lax.scan` EM | Both backends JAX, low verbosity, no `eta_update` | JIT-friendly; otherwise Python loop |
 | E11 | Cold vs warm η→θ | `from_expectation(theta0=None)` defaults to `jnp.zeros_like(eta)`; instance `fit` uses `natural_params()` | GIG overrides cold start with multistart |
 | E15 | Default likelihood fitter | EM + constrained Bregman $\eta\to\theta$. No first-class Adam / L-BFGS NLL fitter. | Interior GIG: L-BFGS+softplus matches `fit_mle` at $\sim 5$–$14\times$ cost; Adam lags. Degenerate GIG: NLL methods collapse $b\to 0$; η-rescaling does not. GH $d=2$: EM matches L-BFGS NLL, $\sim 10$–$25\times$ faster. The old claim "`log_kv` $\partial_\nu$ is not the blocker" was true only for CPU first-order FD away from seams; Hessians were wrong on every path (S10). Fitter decision unchanged. Reopen if a caller must co-optimise NLL with non-normix parameters, or if a full E-step is infeasible (streaming). Then expose `nll(params, X)`, not an optimiser. Public: `../../docs/design/why_not_gradient_descent.md`. Internal: `../tech_notes/gradient_fitting_comparison.md`. |

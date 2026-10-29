@@ -42,6 +42,8 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.fitting.eta import _unpack_gig_eta
+
 from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
 from normix.mixtures.marginal import (
@@ -319,9 +321,7 @@ class FactorNormalMixture(MarginalMixture):
         p_post, a_post, b_post = self._floored_posterior_gig_params(z2, w2)
         eta, psi_post = GIG._eta_psi_from_pab_jax(p_post, a_post, b_post)
         return {
-            'E_log_Y': eta[0],
-            'E_inv_Y': eta[1],
-            'E_Y': eta[2],
+            **_unpack_gig_eta(eta),
             'psi_post': psi_post,
             'zw': zw,
         }
@@ -375,9 +375,7 @@ class FactorNormalMixture(MarginalMixture):
         psi_post = GIG._psi_from_log_k(
             log_k, p_post, a_post, b_post, floor=TINY, xp=jnp)
         return {
-            'E_log_Y': eta[:, 0],
-            'E_inv_Y': eta[:, 1],
-            'E_Y': eta[:, 2],
+            **_unpack_gig_eta(eta),
             'psi_post': psi_post,
             'zw': zw_all,
         }

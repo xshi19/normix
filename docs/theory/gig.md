@@ -218,7 +218,7 @@ In practice it can only be approximated numerically.
 ## Maximum Likelihood Estimation
 
 Given the expectation parameters $(\eta_1, \eta_2, \eta_3)$, computing the
-natural parameters $(p, a, b)$ by solving the above equations is a challenging
+classical parameters $(p, a, b)$ by solving the above equations is a challenging
 problem. Let $x_1, x_2, \ldots, x_n$ be a sequence of sample data, then the
 maximum likelihood estimator (MLE) of GIG is given by:
 
@@ -233,16 +233,16 @@ where $L_{GIG}$ is the log-likelihood function (excluding constants):
 ```{math}
 :label: gig-loglik
 
-L_{GIG}(p, a, b | \eta_1, \eta_2, \eta_3) =
--\frac{1}{2} b \hat{\eta}_1 - \frac{1}{2} a \hat{\eta}_2 + p \hat{\eta}_3
+L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3) =
+(p-1) \hat{\eta}_1 - \frac{1}{2} b \hat{\eta}_2 - \frac{1}{2} a \hat{\eta}_3
 + \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),
 ```
 
-and the sufficient statistics are:
+and the empirical sufficient statistics retain the order $(\log X, X^{-1}, X)$:
 
-- $\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}$
-- $\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k$
-- $\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n \log(x_k)$
+- $\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n \log(x_k)$
+- $\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}$
+- $\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n x_k$
 
 One can verify that the optimal solution $(\hat{p}, \hat{a}, \hat{b})$ must
 satisfy {eq}`gig-expectation-params` where $(\eta_1, \eta_2, \eta_3)$ are
