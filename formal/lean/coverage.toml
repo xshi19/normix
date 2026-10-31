@@ -1,13 +1,20 @@
+# Historical clamp provenance: 51e053c57237a29c71b56d3a2a86988277477bd9.
+# source_commit records current correspondence, not a program-translation certificate.
+
 [[claim]]
 id = "EF-01"
 python_file = "normix/distributions/generalized_inverse_gaussian.py"
 python_symbol = "GeneralizedInverseGaussian.natural_params"
 theorem = "Normix.Distributions.gig_from_natural_unclamped_round_trip"
 lean_file = "Normix/Distributions/GigParameters.lean"
-scope = "exact-real parameter formulas; current inverse on accepted inputs; runtime validation excluded; also EF-02, EF-03"
+scope = "exact-real natural_params and _from_natural_unchecked algebra; public from_natural rejection via eqx.error_if excluded; also EF-02, EF-03"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-04"
@@ -17,8 +24,12 @@ theorem = "Normix.Distributions.gamma_from_natural_round_trip"
 lean_file = "Normix/Distributions/GammaParameters.lean"
 scope = "exact-real parameter formulas; mean and variance formula positivity; no distributional claim"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-06"
@@ -26,10 +37,14 @@ python_file = "normix/distributions/generalized_inverse_gaussian.py"
 python_symbol = "GeneralizedInverseGaussian.from_natural"
 theorem = "Normix.Distributions.gig_from_natural_unclamped_valid_iff"
 lean_file = "Normix/Distributions/GigParameters.lean"
-scope = "interior domain a, b > 0; current Python rejects positive rate coordinates; runtime rejection is not modeled; clamp theorems cover the pinned baseline only"
+scope = "strict interior a, b > 0; public from_natural uses eqx.error_if to reject positive rate coordinates, accepts zero rates, then calls _from_natural_unchecked; rejection and boundary normalizability are not proved; historical clamp model does not cover current rejection"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-07"
@@ -39,8 +54,12 @@ theorem = "Normix.Numerics.normalized_weights_sum"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
 scope = "exact-real finite weights; no rounding or underflow bound"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-08"
@@ -48,10 +67,14 @@ python_file = "normix/utils/bessel.py"
 python_symbol = "_moments_from_weights"
 theorem = "Normix.Numerics.fixed_geometry_log_partition_has_deriv_at"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
-scope = "one statistic coordinate, frozen nodes and weights; not JAX autodiff"
+scope = "one statistic coordinate, frozen nodes and weights; multidimensional EF-08 and Hessian/covariance EF-10 remain W2 M1 work; not JAX autodiff"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-09"
@@ -61,5 +84,9 @@ theorem = "Normix.Numerics.centered_cov_pos_semidef"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
 scope = "exact-real centered Gram matrix for nonnegative weights; no floating-point eigenvalue claim"
 status = "statement-drafted"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
