@@ -2,7 +2,9 @@
 
 2026-10-24.
 
-Explore a study fork of [jax-lean](https://github.com/srush/jax-lean), by srush, while developing hand-written Lean models under `formal/lean/` in parallel. The jaxpr route should cover as much of normix as possible. Start with small distribution formulas, finite sums, and mixture moments. Use Bessel as a demanding application, not as the limit of the project. Write difficult mathematical components by hand and connect them to translated code when the bridge supports them.
+Explore a study fork of [jax-lean](https://github.com/srush/jax-lean) while developing hand-written Lean models under `formal/lean/` in parallel. The jaxpr route should cover as much of normix as possible. Start with small distribution formulas, finite sums, and mixture moments. Use Bessel as a demanding application, not as the limit of the project. Write difficult mathematical components by hand and connect them to translated code when the bridge supports them.
+
+Update (2026-10-31): the [integrated roadmap](04_integrated_roadmap.md#w3-jaxpr-to-lean-bridge) controls delivery order. Audit the existing `xshi19/jax-lean` fork, then connect actual `Gamma.var` to $\alpha/\beta^2$ for $\alpha,\beta>0$; positivity alone is insufficient. Defer Gamma log-density and choose one bounded follow-up. This report's 0.8.0/4.33 pins and certificate exclusions describe the historical snapshot, not current fork capabilities. Issue #136 landed as `05b0785`; re-inventory current `_geometry` before Bessel work.
 
 The local copy has no project-wide LICENSE file. The fork is for study and experiments. Reuse or redistribution of its code requires the author's permission. Open an issue asking for a license, and do not copy its code into normix until this is clarified. This report records the plan; it does not report a fork, issue, or external review as completed.
 

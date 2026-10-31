@@ -1,14 +1,21 @@
 # Statement cards for W2 M0
 
-Seven English proposition cards, one per checklist group in [`05_math_checklist.md`](../../dev-notes/research/formal_verification/05_math_checklist.md). IDs come from that inventory. Template: report 01, section 6.4. Every card below is **statement-drafted**: the Lean statement compiles and has zero proof holes, but a maintainer has not reviewed it as the intended specification. Source baseline: `51e053c57237a29c71b56d3a2a86988277477bd9`; Python symbols were re-read at `f5e454259d640b04c9ba2e49f43ae3f1a17e2d57`. All claims are exact real arithmetic and exclude floating-point, JAX tracing, and constructor floors other than the one named clamp.
+Six English proposition cards, one per checklist group in [`05_math_checklist.md`](../../dev-notes/research/formal_verification/05_math_checklist.md). IDs come from that inventory. Template: report 01, section 6.4. W2 M0 implementation **merged** in PR #161 (`80073f3`): 31 exported theorems across three modules. Every card remains **statement-drafted**, with human statement review **pending**. Merge status does not mean `statement-reviewed`.
+
+Historical source baseline: `51e053c57237a29c71b56d3a2a86988277477bd9`; current correspondence: master `d557399905c533b3f15825941be6f04a6e897584`. Compilation and zero-proof-hole evidence come from the merged build record; this documentation update reruns no Lean build.
+
+Shared assurance record for every card: **math theorem** — checked, statement review pending; **program-translation certificate** — not covered; **approximation-error bound** — not covered; **floating-point guarantee** — not covered. All claims use exact real arithmetic. Future acceptance records must retain all four labels; see the [roadmap](../../dev-notes/research/formal_verification/04_integrated_roadmap.md#execution-and-mathematical-boundaries).
+
+Human-review statements, definitions, and domains before assigning proof work. AI edits proofs only against that specification. Changes to definitions, assumptions, domains, or source mappings require visible revisions and renewed human review.
 
 Lean names are fully qualified in `AxiomAudit.lean`.
 
-Current Python correspondence (2026-10-29): `GIG.from_natural` rejects positive
-rate coordinates with `eqx.error_if` and applies the unclamped inverse on
-accepted inputs. The unchanged Lean clamp model describes the pinned baseline.
-It agrees with current Python on nonpositive rate coordinates; it does not
-model runtime rejection, JAX transformations, or floating-point behavior.
+Current Python correspondence (2026-10-31): `GIG.from_natural` rejects positive
+rate coordinates with `eqx.error_if` and calls `_from_natural_unchecked` on
+accepted inputs, including zero rates. Acceptance is a rate-sign check, not a
+normalizability theorem for every boundary tuple. The unchanged Lean clamp model
+describes the historical baseline. It agrees algebraically on nonpositive rates;
+it does not model runtime rejection, JAX transformations, or floating-point behavior.
 
 ## EF-01, EF-02, EF-03: GIG parameter round trips
 
@@ -17,10 +24,10 @@ model runtime rejection, JAX transformations, or floating-point behavior.
 | Statement in prose | The natural-parameter map $(p,a,b)\mapsto(p-1,-b/2,-a/2)$ and its unclamped inverse $(\theta_0,\theta_1,\theta_2)\mapsto(\theta_0+1,-2\theta_2,-2\theta_1)$ compose to the identity in both orders, for all real inputs. Each coordinate identity is also stated separately. |
 | Lean signature | `Normix.Distributions.gig_b_round_trip (b : ℝ) : -2 * (-b / 2) = b`; `gig_a_round_trip`; `gig_p_round_trip (p : ℝ) : (p - 1) + 1 = p`; `gig_from_natural_unclamped_round_trip (q : GigParams) : gigFromNaturalUnclamped (gigNatural q) = q`; `gig_natural_unclamped_round_trip (t : GigNatural) : gigNatural (gigFromNaturalUnclamped t) = t` |
 | Assumptions | None (real arithmetic). Validity ($a,b>0$) is a separate card (EF-06). |
-| Why this is the intended spec | It fixes the sign, the factor 2, and the coordinate order $(\theta_0,\theta_1,\theta_2)$ paired with $(\log y,1/y,y)$ that the Python formulas use. Both round-trip directions are stated so that a wrong inverse cannot cancel a wrong forward map unnoticed. |
-| Covered normix function | `normix/distributions/generalized_inverse_gaussian.py`: `natural_params` (`[p - 1, -b/2, -a/2]`), `from_natural` on accepted inputs. The inverse formula is unchanged; runtime validation is outside the proof. |
+| Why this is the intended spec | The separate coordinate identities fix the sign, factor 2, and order $(\theta_0,\theta_1,\theta_2)$ paired with $(\log y,1/y,y)$. Both round trips are also checked; they alone cannot exclude a consistently wrong permutation. |
+| Covered normix function | `normix/distributions/generalized_inverse_gaussian.py`: `natural_params` (`[p - 1, -b/2, -a/2]`) and `_from_natural_unchecked`. Public `from_natural` delegates on accepted inputs; its rejection path is outside the proof. |
 | Risks of a weakened spec | Testing positive inputs only would lose the universal identity. Equating the unrestricted algebraic model with the current constructor omits input rejection (see EF-06). Round trips alone do not check the conventions against the density exponent. |
-| Evidence and review | Formula correspondence: local check. Algebra and Lean compilation: checked on this branch. Implementation correspondence beyond the formulas: to verify. Review: pending. |
+| Evidence and review | Formula correspondence: local check. Algebra and Lean compilation: merged PR #161 build record. Implementation correspondence beyond the formulas: to verify. Review: pending. |
 
 ## EF-04: Gamma classical/natural round trip, mean and variance positivity
 
@@ -31,7 +38,7 @@ model runtime rejection, JAX transformations, or floating-point behavior.
 | Assumptions | Round trips: none. Positivity: `p.Valid` (`0 < alpha ∧ 0 < beta`). |
 | Why this is the intended spec | `gammaMean` and `gammaVar` are the closed formulas of `Gamma.mean` and `Gamma.var`; the card does not claim they are the moments of the Gamma law (that needs the distribution instance, DM-01/DM-02). |
 | Covered normix function | `normix/distributions/gamma.py`: `natural_params`, `from_natural`, `mean`, `var`. |
-| Risks of a weakened spec | Proving positivity as a property of a defined moment integral would be stronger; this card only checks the formula. Constructor clamps (`THETA_FLOOR`) are not modeled. |
+| Risks of a weakened spec | Positivity alone permits wrong positive scale factors. W3 M1 must connect actual `Gamma.var`, with both parameters varying, to W2's `gammaVar`, $\alpha/\beta^2$, then derive positivity. Distributional moments remain DM-01/DM-02; constructor clamps (`THETA_FLOOR`) are excluded. |
 | Evidence and review | Local check for the formulas; Lean compilation checked. Distributional meaning of the formulas: not covered. Review: pending. |
 
 ## EF-06: validity preservation and the historical GIG clamp
@@ -42,8 +49,8 @@ model runtime rejection, JAX transformations, or floating-point behavior.
 | Lean signature | `gig_natural_valid_iff`, `gig_from_natural_unclamped_valid_iff`, `gig_from_natural_valid_iff`, `gig_from_natural_b_nonneg`, `gig_from_natural_a_nonneg`, `gig_b_clamp_inactive_iff`, `gig_a_clamp_inactive_iff`, `gig_from_natural_eq_unclamped (t) : t.Valid → gigFromNatural t = gigFromNaturalUnclamped t`, `gig_from_natural_round_trip (q) : q.Valid → gigFromNatural (gigNatural q) = q`, `gig_natural_round_trip` |
 | Assumptions | `GigParams.Valid` is `0 < a ∧ 0 < b`; `GigNatural.Valid` is `theta1 < 0 ∧ theta2 < 0`. $p$ is unrestricted. |
 | Why this is the intended spec | It separates the formula from the historical constructor clamp and states exactly where they coincide. The valid domain is the GIG interior; Gamma and InverseGamma boundary cases ($a=0$ or $b=0$) are excluded. |
-| Covered normix function | `GeneralizedInverseGaussian.natural_params`; the algebra of `from_natural` on accepted inputs. Current Python rejects positive rate coordinates without a tolerance. The clamp theorems describe the pinned baseline only. |
-| Risks of a weakened spec | Restricting to the interior says nothing about boundary distributions. Other floors in constructors (for example `LOG_EPS`, `THETA_FLOOR`) are not modeled and need separate correspondence. |
+| Covered normix function | `GeneralizedInverseGaussian.natural_params` and `_from_natural_unchecked` algebra. Public `from_natural` rejects positive rate coordinates with `eqx.error_if`, without a tolerance. Historical clamp theorems do not cover that rejection. |
+| Risks of a weakened spec | The strict interior excludes zero rates accepted by Python. A sign check does not establish all boundary laws. A certificate for `_from_natural_unchecked` must name that method and cannot silently claim the public error path. Other constructor floors need separate correspondence. |
 | Evidence and review | Historical clamp model: Lean checked. Current rejection and transformation behavior: `tests/test_gig_expectation_domain.py`. Runtime validation is not proved in Lean. Review: pending. |
 
 ## EF-07: normalization of finite positive exponential weights
@@ -67,7 +74,7 @@ model runtime rejection, JAX transformations, or floating-point behavior.
 | Assumptions | $w_i>0$, nonempty index set; nodes and weights are fixed, independent of $\theta$. |
 | Why this is the intended spec | The derivative object is the function with geometry frozen, as the checklist requires; it is not a statement about the quadrature that moves its window with the argument. The result is a real-analysis derivative, not a statement about JAX autodiff. |
 | Covered normix function | Mathematical model of `_moments_from_weights` / `log_kv_moments` with frozen nodes (one statistic coordinate only). |
-| Risks of a weakened spec | One dimension only; the Hessian (EF-10) and multi-dimensional gradients are not covered. Equality with the code's custom derivative needs the W3 bridge. |
+| Risks of a weakened spec | One dimension only; multidimensional EF-08 and Hessian/covariance EF-10 are the remaining W2 M1 target (5–10 days). Equality with JAX AD under frozen geometry needs W3; Bessel uses `stop_gradient`, not a custom JVP. |
 | Evidence and review | Derivation and Lean check. Review: pending. |
 
 ## EF-09: centered covariance is a positive-semidefinite Gram matrix

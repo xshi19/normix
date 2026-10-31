@@ -1,6 +1,7 @@
 # Integrated verification roadmap
 
-2026-10-24. Planning baseline: `51e053c57237a29c71b56d3a2a86988277477bd9`.
+Updated 2026-10-31 against master `d557399905c533b3f15825941be6f04a6e897584`.
+Historical planning baseline: `51e053c57237a29c71b56d3a2a86988277477bd9`.
 
 Start with properties of real normix code, while building hand-written Lean models and a jaxpr-to-Lean bridge in parallel. Property tests offer the earliest feedback on backend routing, parameter conventions, and numerical failures. Lean supplies precise mathematical statements; the bridge connects selected programs to those statements. Extend the bridge across normix, using hand-written Lean for parts that are difficult to translate. Keep the mathematical inventory in [05_math_checklist.md](05_math_checklist.md). Treat the first three months as a sequence of bounded deliveries, with one maintainer reviewing specifications and evidence. A small TLA+ publishing model is optional. Continuous Bessel analysis, numerical error bounds, and complete GH/EM proofs require longer work.
 
@@ -10,8 +11,9 @@ This roadmap combines [report 01](01_lean_math_feasibility.md),
 [report 02](02_jaxpr_to_lean_feasibility.md), and
 [report 03](03_tla_vs_hypothesis.md). All three reports were read before this
 roadmap was written. Repository guidance came from [AGENTS.md](../../../AGENTS.md)
-and [dev-notes/README.md](../../README.md). This revision used static reading.
-No tests, tracing, Lean builds, TLC checks, or benchmarks were run.
+and [dev-notes/README.md](../../README.md). This update checks documentation,
+TOML, and the workflow snippet. No normix tests, JAX traces, Lean builds, TLC
+checks, or benchmarks were run.
 
 The evidence labels have these meanings:
 
@@ -22,15 +24,20 @@ The evidence labels have these meanings:
 | **literature memory** | Mathematical or tool knowledge carried by the reports. External sources and current tool versions have not been checked again. |
 | **to verify** | A future executable check, library lookup, source review, or unresolved condition. |
 
-All milestones below are proposed work. Their acceptance criteria are **to verify**.
-Effort ranges and time limits are planning estimates, not measurements.
-No milestone is marked complete by this document.
+W2 M0 implementation merged in PR #161 (`80073f3`): 31 exported theorems
+across three modules, 31 axiom-audit entries, and six statement cards.
+This includes part of W2 M1. Build evidence is recorded in
+[decisions.md](../../../formal/lean/decisions.md); no build was rerun for this update.
+**Merged** and **statement-reviewed** are separate statuses: all six cards
+remain `statement-drafted`, with specification review **pending**. The remaining
+milestones and their acceptance criteria are **to verify**. Effort ranges are
+planning estimates, not measurements.
 
 The following decisions govern the plan:
 
 - Reports and proposition cards use English. The mathematical inventory is a separate tracking file: see [05_math_checklist.md](05_math_checklist.md).
 - Plan D, the hand-written project under `formal/lean/`, proceeds alongside the jaxpr bridge. Neither waits for the other to finish.
-- The bridge will use a fork of [jax-lean](https://github.com/srush/jax-lean), by srush, as its base. Its intended scope extends across normix.
+- The bridge uses the existing [xshi19/jax-lean fork](https://github.com/xshi19/jax-lean). Inspect its revision, capabilities, pins, and permission record before the first pilot. Broad normix coverage remains a backlog.
 - The fork is for study and experiments while licensing is unresolved. Open an issue asking for a license. Reuse or redistribution of its code requires the author's permission; do not copy its code into normix until clarified.
 - Hand-written mathematical definitions and proofs belong in W2. W3 adds generated programs, translation certificates, and explicit connections to W2.
 - Lean source files, modules, directories, and namespaces use UpperCamelCase. Definitions use lowerCamelCase; theorems use snake_case. Lake maps module names to paths. The lowercase `formal/lean/` is the package directory.
@@ -46,8 +53,8 @@ independently established. No current upstream state is claimed here.
 
 ## Priority order
 
-1. **First, establish specifications and test real code.** Start W1 with backend contracts, round trips, and recursive no-callback checks. These need little mathematical infrastructure and can expose failures within days. Start W2's dependency audit and W3's fork study during the same week. Review input domains before expanding tests or proofs.
-2. **Second, connect small Lean results to small real programs.** W2 proves parameter identities and finite weighted-moment properties. W3 starts with `Gamma.var`, then fixed vectors and reusable primitive rules. These targets keep analytical risk low and expose importer errors early. A checked certificate plus one useful property is the first bridge acceptance target. Bessel is a later target, after issue #136 lands.
+1. **First, review the merged baseline and add Lean CI.** Review the six W2 cards and enforce the axiom policy. Keep W1 backend, round-trip, and no-callback checks active. Audit the existing W3 fork and its first target within the diagnostic cap.
+2. **Second, connect `Gamma.var` to its exact formula.** Trace the real method with both parameters varying, certify the translation, and prove equality to $\alpha/\beta^2$ for shape $\alpha>0$ and rate $\beta>0$. Derive positivity afterwards. W2 completes finite-dimensional EF-08/EF-10 in parallel. After the pilot, choose one bounded follow-up below. Issue #136 already landed as `05b0785`; later Bessel work uses current `_geometry`.
 3. **Third, expand along demonstrated dependencies.** W2 develops continuous exponential families, distributions, mixtures, and EM. W3 broadens coverage by reusable primitive families, including non-Bessel code. W1 supplies independent numerical checks throughout. Admit W4 only for a defined publishing policy. Defer expensive error proofs until a short analysis study identifies a useful bound.
 
 This order ranks review priority, not exclusive execution slots. W1 can deliver
@@ -62,10 +69,10 @@ and competence with Lean proof development. They exclude unrelated numerical
 repairs, hardware waits, and unresolved licensing delays.
 
 One maintainer reviews all streams. Review hours are additional to engineering
-effort. AI can prepare tests, models, proof attempts, source mappings, and evidence
-records independently within an agreed statement. The maintainer reviews the
-statement, assumptions, numerical tolerances, trust boundaries, and completion
-label. Changed assumptions require renewed review. Learning Lean from scratch
+effort. Statements and definitions require human review. Within a reviewed Lean
+specification, AI edits proofs only; definition, domain, assumption, and source-slice
+changes require visible specification revisions and renewed review. AI can also
+prepare tests, source mappings, and evidence records. Learning Lean from scratch
 needs extra calendar time; the reports suggest at least twice the allowance.
 
 The tables state a review allowance for each milestone. The calendar allocates
@@ -90,7 +97,7 @@ runtime failures or completed fixes.
 |---|---|---|---|---|
 | M0: domains and execution budget | A short property plan, development dependency proposal, and fixed shape/dtype profiles. Each property names its real entry point, domain, oracle, exclusions, and tolerance source. Acceptance: reviewed first batch and a recorded timing baseline when execution becomes available. | 0.5–1 day; review 1 hour. | AI extracts existing assertions and prepares strategies. Review domains, independent references, and CI cost. | No W2/W3 dependency. Stop expansion if no independent oracle or meaningful invariant can be stated. |
 | M1: contracts and round trips | Six to eight small properties covering backend routing, invalid names, classical/natural round trips, immutable updates, and nested no-callback jaxpr. Cover JAX GIG cold/hot starts and a fixed batched case. Acceptance: real-code checks pass; a targeted mutation fails for the intended reason; failures retain a reproducible example. | 3–5 days; review 3–5 hours. | AI writes tests, reduces examples, and checks traversal coverage. Review routing, constructor clamps, and coordinate conventions. | W1 M0. Share the graph inventory with W3 M0. Stop increasing generated cases if compilation dominates; fix test structure before adding cases. Confirmed bugs become separate failing-test-first repairs. |
-| M2: Bessel reference and derivative checks | Compare values and first/second derivatives with the mpmath reference pipeline. Keep AD/moment consistency, symmetry, and recurrence checks separate. Acceptance: stable high-precision references, component-specific tolerances, finite-value checks, and results for eager/JIT/vmap on recorded devices. | 3–5 days; review 2–3 hours. | AI extends strategies and reference records using `scripts/gen_bessel_reference.py` and `tests/data/bessel_reference.json`. Review precision stability, parameter regions, and absolute tolerances near zero. | W1 M0–M1. Re-run affected cases after #136. No Lean prerequisite. Stop widening the domain if the oracle is unstable or failures remain unexplained. |
+| M2: Bessel reference and derivative checks | Compare values and first/second derivatives with the mpmath reference pipeline. Keep AD/moment consistency, symmetry, and recurrence checks separate. Acceptance: stable high-precision references, component-specific tolerances, finite-value checks, and results for eager/JIT/vmap on recorded devices. | 3–5 days; review 2–3 hours. | AI extends strategies and reference records using `scripts/gen_bessel_reference.py` and `tests/data/bessel_reference.json`. Review precision stability, parameter regions, and absolute tolerances near zero. | W1 M0–M1. Check affected cases against landed #136 (`05b0785`). No Lean prerequisite. Stop widening the domain if the oracle is unstable or failures remain unexplained. |
 | M3: inverse maps and EM | Slow properties for expectation round trips, residuals, and ordinary batch EM objective changes. Start with NIG, then GH. Acceptance: evaluate each accepted model on the same data; check the stated tolerance; cover stop, failure, and iteration-budget outcomes. | 3–5 days; review 3–5 hours. | AI prepares valid moment generators and failure injection. Review floors, approximate solves, objective definitions, and the distinction between batch and incremental EM. | W1 M1–M2. W2 cards inform assumptions but completed proofs are not required. Stop a claimed monotonicity test if the update lacks a justified objective; record that gap instead of filtering failures away. |
 | M4: broader contracts and stable operation | Selected cumulative-weight, CDF/table, sampling, and finance properties from report 03. Acceptance: independent references where needed, recorded statistical error budgets, correct markers, and a separate workflow within its measured budget. Retain useful counterexamples as fixed regressions. | 2–4 days for one selected group; review 2–4 hours. | AI tests `SampleWeightedUpdate`, table snapshots, or a selected finance constraint. Review moment existence, sampling assumptions, and local versus global optimization claims. | W1 M1–M3. Prioritize properties that support W2/W3 targets. Stop broadening if review or runtime cost exceeds the phase budget. Keep the accepted subset. |
 
@@ -129,8 +136,8 @@ as separate results.
 
 ## W2: hand-written Lean mathematics under `formal/lean/`
 
-Use the module structure proposed in report 01. This is a planned tree; no Lean
-files are created by this roadmap.
+PR #161 supplies the distribution-parameter and finite-moment modules. The tree
+below includes planned extensions; this roadmap creates no Lean files.
 
 ```text
 formal/lean/
@@ -174,7 +181,7 @@ programs, trace shapes, or a particular JAX version.
 
 Track mathematical propositions and their identifiers only through
 [05_math_checklist.md](05_math_checklist.md). This roadmap uses milestone numbers
-for scheduling, not a second proposition-ID scheme. A future `coverage.toml`
+for scheduling, not a second proposition-ID scheme. The existing `coverage.toml`
 records implementation mappings and refers to that inventory; it must not become
 a competing mathematical checklist.
 
@@ -185,8 +192,8 @@ any existing Mathlib definition remains **to verify**.
 
 | Milestone | Deliverable and acceptance criterion | Effort | Independent AI work; maintainer review | Dependencies and kill criteria |
 |---|---|---|---|---|
-| M0: build and statement baseline | A pinned Lake project, dependency audit, five to eight English statement cards, and an explicit axiom policy. Acceptance: minimal examples compile on the chosen versions; formal imports and audit targets are complete; every card has a nonempty intended domain. | 3–5 days; review 3–5 hours. | AI locates exact library definitions and prepares minimal examples. Review definitions, conventions, and missing analysis. | Independent of W1 and W3. Stop proof expansion if the pinned environment cannot build or statements remain unreviewed. |
-| M1: finite foundations | Parameter identities, positive-weight normalization, covariance as a centered Gram matrix, and fixed-geometry first derivatives. Acceptance: at least three useful checked results mapped to real functions, with zero formal proof holes. | 10–15 days; review 4–6 hours. | AI implements small lemmas and proof terms. Review statistic order, positivity versus strict positivity, and frozen-geometry meaning. | W2 M0. Supplies W3 scalar/vector properties; W1 provides examples. If three engineering weeks produce only demonstrations or weakened statements, stop adding modules and reassess proof support. |
+| M0: merged build and statement baseline | PR #161 (`80073f3`): 31 theorems, three modules, six cards, pinned Lean/Mathlib. Statement review remains pending. Remaining acceptance: human review of definitions, nonempty domains, source mappings, and exclusions; enforced CI audit. | Rebaseline: 0.5–1 day; review 2–4 hours. CI budget below. | AI prepares evidence; a human reviews statements. | Independent of W1/W3. Reuse delivered proofs. Do not infer specification acceptance from merge status. |
+| M1: remaining finite calculus | Extend EF-08 to multidimensional statistics and prove EF-10: the finite log-partition Hessian equals covariance. Reuse merged normalization, scalar derivative, and centered-Gram results; then instantiate BES-15 with the relevant fixed statistics. Acceptance: derivative existence and matrix equality, with fixed nodes and weights; zero proof holes. | 5–10 days; review 3–5 hours. Replaces the unfinished part of the original 10–15 days. | AI edits proofs of reviewed statements. Review coordinate domains and the distinction between PSD and strict positivity. | W2 M0 statement review. Supplies W3 M3. A scalar second derivative is an intermediate result; stop expansion if no useful calculus result fits the budget. |
 | M2: continuous exponential families | Definitions on an explicit natural-parameter domain; convexity, gradient/expectation and Hessian/covariance results under stated analytical conditions. Acceptance: derivative existence and integrability appear in checked statements; Fisher information is related to the score, not defined to make the result tautological. | 20–40 days; review 8–16 hours. | AI develops integral and derivative lemmas. Review support, local domination, minimality, and identifiable coordinates. | W2 M0–M1. Special-function preparation can proceed independently. If four weeks yield no reusable analytical lemma, narrow one theorem and defer duality rather than adding conclusion-shaped assumptions. |
 | M3: first continuous distribution | Gamma normalization and moments, then the InverseGamma reciprocal relation. Acceptance: at least one concrete law discharges the analytical assumptions; rate/scale and moment-existence domains are explicit. IG normalization, moments, and CDF form a later increment. | Gamma/InverseGamma: 10–20 days after usable foundations; review 4–8 hours. IG: another 10–25 days; review 4–8 hours. | AI implements substitutions and library connections. Review density constants, support, and divergent moments. | Relevant W2 M2 lemmas; no need to finish all abstract duality first. W3 Gamma formulas connect when available. If four weeks produce no distribution instance, retain finite results and stop opening additional continuous families. |
 | M4: special functions | Bessel integral, integrability, positivity, and symmetry; then recurrence and parameter derivatives. Acceptance: the chosen definition matches $K_\nu(z)$; derivative proofs include neighborhood-wide domination and boundary terms. | Foundations: 20–40 days; identities: another 10–20 days. Review 2–4 hours per active week. | AI proves auxiliary integral bounds and substitutions. Review the main analytical route, conventions, and compact parameter domains. | W2 foundations. Independent of W3 translation and #136. Pause if four weeks produce no credible tail-bound route. Keep conditional results labelled as conditional. |
@@ -207,21 +214,28 @@ MLE convergence, and ideal independent inputs do not verify a real PRNG
 The following findings are **local check (reported)** and require focused review.
 They are not fixes delivered by this roadmap.
 
-- `docs/theory/gig.md`: with $\delta=\sqrt{b/a}$ for GIG parameters $a,b>0$, substitution gives a density prefactor $\delta^{-p}$, where $p$ is the GIG shape parameter. Report 01 found $\delta^p$ in the alternative parametrization. The sign correction is a **derivation** to confirm against the page.
-- `docs/theory/em_algorithm.md`: separate one-step nondecrease, likelihood-value convergence, stationary accumulation points, and parameter convergence. Gamma and InverseGamma expectation inversion includes shape solving; it is not wholly closed form.
-- For a positive mixing variable $Y$, GIG's flat order is $(\log Y,1/Y,Y)$. `NormalMixtureEta` starts with $(1/Y,Y,\log Y)$. Use named fields and explicit maps.
+- For a positive mixing variable $Y$, GIG's flat order is $(\log Y,1/Y,Y)$. `NormalMixtureEta` starts with $(1/Y,Y,\log Y)$. PR #162 centralized the map in `_pack_gig_eta` / `_unpack_gig_eta`; verify named slots and both compositions in W3 M2. EF-05 stays dropped from the mathematical inventory.
+- `GIG.from_natural` now rejects positive rate coordinates via `eqx.error_if` and delegates to `_from_natural_unchecked`. Zero rates are accepted; that sign check does not establish normalizability for every boundary tuple. EF-06's strict-interior theorem and historical clamp model do not cover the public rejection path. Keep this gap explicit in coverage and any future certificate.
 - Repeated symmetric-matrix coordinates prevent an unrestricted positive-definite Fisher claim. Restricted joint subfamilies return ambient moments; these are not automatically gradients in their own coordinates.
 - `_rescale` concerns the marginal law. Changing the latent coordinate needs a Jacobian for joint densities. Exact invariance also needs inactive clamps.
 - `dev-notes/tech_notes/gig_eta_to_theta.md` contains an old non-JIT description. Use current code and S9/S11 for backend and derivative contracts.
 
+### Known doc issues
+
+Record only; leave these pages unchanged in this update:
+
+- `docs/theory/gig.md` uses $\delta^p$ where $\delta=\sqrt{b/a}$ implies $\delta^{-p}$ for GIG parameters $a,b>0$ and shape $p$.
+- `docs/theory/em_algorithm.md` claims convergence to the MLE. Separate likelihood nondecrease, likelihood-value convergence, stationary accumulation points, and parameter convergence; global MLE convergence needs stronger assumptions.
+
 ## W3: jaxpr-to-Lean bridge
 
-The fork of https://github.com/srush/jax-lean is the implementation base for this
-stream. Keep study work separate from normix until reuse permission is clear.
+The existing [xshi19/jax-lean fork](https://github.com/xshi19/jax-lean) is the
+implementation base. Its current revision and capabilities remain to be checked.
+Keep study work separate from normix until reuse permission is clear.
 While waiting, prepare normix trace inventories, statement cards, and W2 proofs.
 An unresolved license pauses code integration, not the entire verification plan.
 
-**Local check (reported):** jax-lean has distinct readable-code and IR import
+**Historical local check (reported):** the audited jax-lean snapshot has distinct readable-code and IR import
 paths. `certify.py` generates equality obligations between the resulting Lean
 function and `Program.eval` of the imported IR. Ordinary translation has broader
 coverage than certification. The reviewed certificate path excludes `scan`,
@@ -229,10 +243,12 @@ coverage than certification. The reviewed certificate path excludes `scan`,
 Ordinary `scan` expansion defaults to 32 iterations. Raising that limit alone
 does not supply a loop certificate.
 
-**Local check (reported):** the reviewed fork base requires JAX 0.8.0. normix's
+**Historical local check (reported):** the reviewed base requires JAX 0.8.0. normix's
 repository resolution constraints select JAX/jaxlib 0.9.1. This does not mean its
-published dependency range has an exact 0.9.1 upper bound. Reproduce 0.8.0 examples
-in isolation, then adapt the fork to normix's version. Do not downgrade normix.
+published dependency range has an exact 0.9.1 upper bound. The report's JAX 0.8.0
+and Lean/Mathlib 4.33 pins describe that snapshot, not today's fork. Inspect the
+fork first, reproduce its certificate/application example, then measure any
+adaptation needed for normix's JAX 0.9.1 and Lean/Mathlib 4.35. Do not downgrade normix.
 
 Every trace record must include the source commit, entry point, static options,
 shape, dtype, backend, device, transformation, nested primitives, and constants.
@@ -241,21 +257,36 @@ cannot be advertised as arbitrary-dimensional coverage.
 
 | Milestone | Deliverable and acceptance criterion | Effort | Independent AI work; maintainer review | Dependencies and kill criteria |
 |---|---|---|---|---|
-| M0: fork study and trace inventory | A license-status record, isolated baseline reproduction, and a recursive primitive/constant inventory spanning distributions, mixtures, solvers, CDFs, sampling, EM, and finance. Acceptance: distinguish generated source, checked certificates, and application proofs. Reproduce examples with the appropriate example build target; record failures honestly. | 1–3 days; review 1–2 hours. | AI prepares inventories, version differences, and diagnostics. Review the fork boundary and choose the first supported slice. The maintainer opens the license issue. | No W2 completion dependency. W1 shares graph traversal knowledge. Stop environment repair after three days without a clear diagnosis; continue static study and W2. No code integration without permission. |
-| M1: first real function | A generated certificate for actual `Gamma.var`, connected to W2's proof that $\alpha/\beta^2>0$ for Gamma shape $\alpha>0$ and rate $\beta>0$. Next attempt the positive-domain Gamma log-density formula. Acceptance: Lean checks both the certificate and property; a changed operation or divisor causes rejection. The distributional variance theorem and full `log_prob` support remain separate. | 4–8 days; review 3–5 hours. | AI adapts the version interface, generates obligations, and writes proof attempts. Review literal values, domains, importer trust, and the Gamma special-function boundary. | W3 M0 and permission for reuse/integration; W2 supplies the mathematical property. If two engineering weeks produce only Lean text, stop extending the importer until one checked result exists. |
-| M2: reusable arrays and primitives | Captured floating-array constants, fixed-vector reductions, and the primitive rules selected by the inventory. Acceptance: preserve stored binary values and shapes; reject unsupported cases; certify a second non-Bessel target such as a finite weighted sum. Positive-domain Gamma functions require separate semantic proofs. | 5–10 days; review 4–6 hours. | AI extends rules and independent primitive tests. Review shape/index semantics, constant provenance, and exceptional values. | W3 M1; W2 finite mathematics. Choose primitives serving several targets. Stop a general tensor redesign if it consumes the budget without another accepted function. |
-| M3: Bessel finite mathematics after #136 | Certificates for arithmetic subgraphs in the new batched window loop body and for fixed-geometry quadrature. The enclosing loop waits for M4. Connect normalization, covariance, and frozen-geometry derivative claims to W2. Acceptance: traces come from the landed change; actual constants and protective branches remain visible; no continuous-integral accuracy claim. | 5–10 days; review 4–6 hours. | AI imports subgraphs and connects finite lemmas. Review the selected derivative object, tilt dominance, and changes from the baseline. | Issue #136 must land first; W3 M2 and W2 M1. Stop Bessel-specific tracing while the structure is changing. Use a non-Bessel M5 slice meanwhile. |
+| M0: fork audit and selected traces | Record the existing fork revision, pins, permission status, and current certificate support. Reproduce one certificate and application proof. Inventory `Gamma.var`, then helpers and the selected update/derivative target; retain the broad inventory as backlog. | 1–3 days; review 1–2 hours. | AI prepares diagnostics and source mappings. Review import/layout trust and supported primitives. | No W2 completion dependency. Stop open-ended environment repair after three days; record the gap and continue W2. Integration still requires reuse permission. |
+| M1: actual `Gamma.var` | Trace the real method with both $\alpha,\beta$ as inputs. Prove IR evaluation equals the generated function, then that function equals W2's `gammaVar`, $\alpha/\beta^2$, for $\alpha,\beta>0$; derive positivity. Acceptance: mutate one generated side to fail certification; mutate the source formula to fail the fixed specification connection. Defer Gamma log-density and its `lgamma`/support obligations. | 4–8 days including adapter work; review 3–5 hours. | AI generates obligations and edits proofs. Review domains, source wrapper, constants, and importer trust. | W3 M0 and reuse permission; reviewed W2 formula. Capturing one fixed instance or proving positivity alone is insufficient. At two weeks, generated text without a certificate and application theorem does not pass. Distributional variance remains DM-01/DM-02. |
+| M2: selected follow-up and reusable rules | Choose one target from the table below. Add only its required array/primitive rules, preserving shapes and stored constants. Include PR #162's helper contract when selected. Reject unsupported cases explicitly. | Per-target costs below; broader array support remains 5–10 days, review 4–6 hours. Do not count shared adapter work twice. | AI extends rules and checks; review named slots, domains, and failure behavior. | W3 M1 and relevant W2 statements. Stop a tensor redesign that consumes the budget without another accepted function. |
+| M3: Bessel finite mathematics on current `_geometry` | Certificates for arithmetic subgraphs of the landed batched window loop and fixed-geometry quadrature. The enclosing loop waits for M4. Connect normalization, covariance, and frozen-geometry derivatives to W2. Preserve constants and protective branches; make no continuous-integral accuracy claim. | 5–10 days; review 4–6 hours. | AI connects finite lemmas; review the derivative object, tilt dominance, and component invariants. | #136 landed in `05b0785`; refresh traces at current master. W3 M2 and W2 M1. If the graph changes again, refresh provenance before continuing. |
 | M4: loops and complete forward Bessel | Loop certificate rules and a modular real-semantics connection for `log_kv(..., backend='jax')`. Acceptance: preserve landed iteration limits, clipping, constants, and return behavior; prove a conditional bracket invariant; connect GIG's outer formula without assuming exact Bessel evaluation. | 10–20 days; review 6–10 hours. | AI builds loop rules, certificates, and mutation checks. Review the loop bound, bracket preconditions, component states, and all excluded failures. | W3 M3; W2 finite lemmas. Numerical accuracy waits for W2 M7. If a scalar certificate repeatedly exceeds a proposed 10-minute limit or the agreed memory limit, try modular proofs. Stop whole-graph expansion after two failed redesigns. |
 | M5: breadth beyond Bessel | One accepted slice per increment: distribution formulas, mixture linear algebra, GIG outer log-density, CDF table operations, deterministic EM updates, or finance reductions. Acceptance: a named source slice has a certificate, a useful property, and explicit gaps to its enclosing API. | 5–15 days per bounded slice; review 3–6 hours. | AI ranks primitive reuse and prepares certificates. Review positive-definite assumptions, support branches, and the meaning of each API claim. | W3 M1/M2 and relevant W2 statements. A non-Bessel slice need not wait for M3/M4. Stop each slice at its budget if a new semantic subsystem is required; retain it in the coverage inventory. |
 | M6: solver, AD, and random-program extensions | Separate studies for bounded `while`/`cond`, custom JVPs, and ideal random programs. Acceptance: one narrow study produces a checked property, or a precise unsupported-case report. Successful solver state, residual accuracy, derivative correctness, and sampling law remain distinct claims. | 20–50 days per selected subsystem, after a 2–5 day scope study; review 2–4 hours per active week. | AI builds small semantic models and proof attempts. Review termination measures, failure values, residual assumptions, independence, and the relation to the actual API. | Mature W3 loop/array rules and relevant W2 mathematics. Defer full solver and sampler coverage if the scope study cannot isolate a useful result. Never equate finite integer sampling support with verified continuous sampling. |
 
-### Bessel dependency on issue #136
+### Post-pilot: choose one
 
-The reported baseline searches both edges for five tilts. Issue #136 changes
-window search to the $k=+2$ right edge and the $k=-2$ left edge, batched in one
-loop. This is a supplied implementation dependency; its landed commit and exact
-graph remain **to verify**. Write verification targets against that new structure.
-Do not carry old counts of edge searches into the new certificate.
+After the first accepted `Gamma.var` certificate, select one increment. Costs
+assume its primitives are supported; stop and record any larger semantic gap.
+
+| Target | Acceptance boundary | Engineering / review cost |
+|---|---|---|
+| PR #162 GIG statistic helpers (W3 M2) | Certify actual `_pack_gig_eta` / `_unpack_gig_eta` for declared scalar and batched shapes. Prove slots 0, 1, 2 preserve `E_log_Y`, `E_inv_Y`, `E_Y`, plus both round trips. If multiple outputs are unsupported, certify projections and state that limit. Connect a selected caller only when checked. | 1–3 days; 1–2 review hours. |
+| Incremental-EM weighted mean (W3 M2/M5; TH-09/TH-10) | Connect an actual scalar-leaf `SampleWeightedUpdate` step using `affine_combine`; prove cumulative count and sample-weighted mean for supplied batch summaries. Full fitting and invariance under changed minibatch boundaries are excluded. | 3–5 days; 2–3 review hours. A later aggregation slice needs a separate 3–5 days. |
+| Inverse Gaussian log-partition gradient (W3 M2) | Certify primal, `jax.grad`, and analytical `_grad_log_partition` outputs; prove derivative existence and equality. For natural coordinates $\theta_0,\theta_1$, require $a=-2\theta_0$ and $b=-2\theta_1$ above stored `LOG_EPS`; retain guards and prove them inactive. | 3–7 days; 2–3 review hours. General custom-JVP work stays in M6. |
+
+For batch sizes $n_A,n_B>0$ and supplied statistic means $\eta_A,\eta_B$, the
+update target is $(n_A\eta_A+n_B\eta_B)/(n_A+n_B)$. Subsequent E-steps use updated
+models, so this identity does not make the fitted model invariant to batching.
+Exact-real sum identities also give no bitwise floating-point guarantee.
+
+### Bessel baseline after issue #136
+
+Issue #136 landed in commit `05b0785`. At current master, `_geometry` batches the
+$k=+2$ right edge and $k=-2$ left edge on one leading axis. Re-inventory that
+implementation; the older five-tilt search is historical. Budget 0.5–1 day within
+M0/M3 for provenance and graph refresh; actual traces remain **to verify**.
 
 There is a simple supporting **derivation**. Let $g(x)$ be the centered exponent,
 $x$ the centered integration coordinate, and $k\in[-2,2]$ the tilt. For $x\ge0$,
@@ -265,11 +296,10 @@ The actual search still needs bracket, clipping, and finite-iteration arguments.
 The batched loop must preserve both component invariants. Exponent domination
 alone is not a tail-integral or relative-error bound.
 
-After #136 lands, record its commit beside the original baseline, regenerate
-the inventory, and review the new loop state. Preserve actual constants from
-that revision. The reports describe 8 expansion steps, 40 bisections, and 192
-quadrature nodes at the baseline; these are reported source constants, not
-fresh measurements or assumptions about the final change.
+Preserve the current 8 expansion steps, 40 bisections, and 192 quadrature nodes,
+including clipping and conditional-bracket assumptions. Use componentwise loop
+invariants and reusable iteration lemmas. Landing #136 does not establish the
+cost of whole-Bessel certification or a numerical error bound.
 
 ### Breadth and trust boundaries
 
@@ -333,11 +363,11 @@ checks; they do not include authoring workflow changes or repairing numerical bu
 
 | Phase | W1 | W2 | W3 | W4 | Maintainer review budget |
 |---|---|---|---|---|---|
-| Week 1 | M0; begin backend and round-trip tests | M0; cards and dependency audit | M0; license issue, study fork, inventory | Deferred | 7 hours: W1 3, W2 2, W3 2. |
-| Week 2 | Finish first M1 checks; preserve failures | Begin M1 parameter and finite-sum proofs | M1 `Gamma.var`; integration subject to permission | Deferred | 8 hours: W1 3, W2 2, W3 3. |
-| Weeks 3–4 | M2 Bessel reference checks | Finish useful M1 subset; begin M2 analysis | Finish first checked property; begin M2 array rules | Deferred | 10 hours: W1 3, W2 3, W3 4. |
-| Weeks 5–6 | M3 inverse-map and EM checks | M2; begin M3 Gamma lemmas as prerequisites permit | M2; select next slice by actual primitive coverage | M0 only if publishing policy needs it | 12 hours: W1 3, W2 4, W3 4, W4 1. |
-| Weeks 7–8 | Finish selected M3 cases; one M4 group | M2/M3; assess special-function prerequisites | M3 only after #136; otherwise non-Bessel M5 work | Optional M1 | 12 hours: W1 2, W2 4, W3 4, W4 2. |
+| Week 1 | Backend and round-trip checks; preserve counterexamples | Review merged M0 cards; Lean CI | Audit existing fork revision, permission, and selected traces | Deferred | 7 hours: W1 3, W2 2, W3 2. |
+| Week 2 | Finish first M1 checks; preserve failures | Begin remaining EF-08/EF-10 calculus | M1 `Gamma.var` formula connection or diagnosed adapter gap | Deferred | 8 hours: W1 3, W2 2, W3 3. |
+| Weeks 3–4 | M2 Bessel reference checks | Complete finite calculus; begin M2 analysis | Finish first certificate; choose one post-pilot target | Deferred | 10 hours: W1 3, W2 3, W3 4. |
+| Weeks 5–6 | M3 inverse-map and EM checks | Start M3 Gamma when integral lemmas permit; abstract duality need not finish | Finish selected increment; extend shared rules as needed | M0 only if publishing policy needs it | 12 hours: W1 3, W2 4, W3 4, W4 1. |
+| Weeks 7–8 | Finish selected M3 cases; one M4 group | M2/M3; assess special-function prerequisites | M3 on current `_geometry` if prerequisites pass; otherwise non-Bessel M5 | Optional M1 | 12 hours: W1 2, W2 4, W3 4, W4 2. |
 | Weeks 9–10 | M4 and counterexample maintenance | First distribution instance or documented analytical gap | M3; begin M4 only after subgraph acceptance | Review pilot outcome | 10 hours: W1 2, W2 4, W3 4. |
 | Weeks 11–12 | Stable selected suite and cost report | Accept the continuous instance if complete; decide M4 scope | Accept bounded certificates; decide loop and breadth budget | Continue or archive publishing model | 9 hours: W1 1, W2 4, W3 4. |
 
@@ -350,8 +380,8 @@ GH instances, and EM convergence are outside this calendar.
 When review time is exhausted, finish the current evidence package before opening
 another statement. Keep W1 failures visible and W2/W3 progress independent. A
 license delay redirects effort to W1, W2, and normix-owned trace preparation.
-A delay in #136 redirects W3 to non-Bessel targets. Do not recover schedule by
-weakening claims or skipping review.
+Further Bessel source changes require a fresh inventory. Do not recover schedule
+by weakening claims or skipping review.
 
 ## Rules across all streams
 
@@ -359,7 +389,7 @@ weakening claims or skipping review.
 
 Use English in reports, statement cards, generated explanations, and status
 records. Omit personal names, private material, and correspondence drafts.
-Credit jax-lean by its repository URL and srush. Keep paths, source commits, and
+Credit jax-lean by its repository URL. Keep paths, source commits, and
 evidence provenance exact.
 
 The repository is public, but `dev-notes/` is not built into the documentation
@@ -370,6 +400,107 @@ commit or a verified generated theorem anchor. Link W2 coverage metadata back
 to the theory page and Python symbol. Record assumptions and excluded execution
 layers next to the link. Do not create badges or theorem links before the target
 exists. Use `docs/references.md` for established bibliography entries.
+
+### Lean CI plan
+
+Add a separate Lean job before expanding the proofs: 1–2 engineering days and
+1–2 review hours. Pin Lean `leanprover/lean4:v4.35.0` and Mathlib commit
+`56a005855ea17e0b0958f73ec801ae140b0a1679`, as recorded in
+[`lake-manifest.json`](../../../formal/lean/lake-manifest.json).
+Build all production imports with `lake build`, run `AxiomAudit.lean`, and
+**fail on every non-allowlisted axiom**, including `sorryAx`. Printing alone
+does not enforce the policy.
+
+Ready-to-paste GitHub Actions workflow; documentation only. The audit checks the
+current single-namespace modules and direct root imports. Extend that inventory
+check when the layout changes. The [elan installer](https://github.com/leanprover/elan)
+supplies the toolchain manager; `lean-toolchain` selects the pinned Lean release.
+
+```yaml
+name: Lean
+on:
+  pull_request:
+    paths: ['formal/lean/**', '.github/workflows/lean.yml']
+  push:
+    branches: [master]
+    paths: ['formal/lean/**', '.github/workflows/lean.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lean:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: formal/lean
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pins
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          assert Path('lean-toolchain').read_text().strip() == 'leanprover/lean4:v4.35.0'
+          packages = json.loads(Path('lake-manifest.json').read_text())['packages']
+          mathlib = next(p for p in packages if p['name'] == 'mathlib')
+          assert mathlib['rev'] == '56a005855ea17e0b0958f73ec801ae140b0a1679'
+          PY
+      - name: Install Lean
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/v4.2.4/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/elan" toolchain install leanprover/lean4:v4.35.0
+      - uses: actions/cache@v4
+        with:
+          path: formal/lean/.lake/packages
+          key: lean-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('formal/lean/lean-toolchain', 'formal/lean/lake-manifest.json') }}
+      - name: Build
+        run: |
+          lake exe cache get
+          lake build
+      - name: Enforce axiom allowlist and audit coverage
+        run: |
+          lake env lean AxiomAudit.lean > "$RUNNER_TEMP/axioms.log"
+          cat "$RUNNER_TEMP/axioms.log"
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          allowed = {'propext', 'Classical.choice', 'Quot.sound'}
+          files = list(Path('Normix').rglob('*.lean'))
+          modules = {str(p.with_suffix('')).replace('/', '.') for p in files}
+          imports = set(re.findall(r'^public import (Normix\.[\w.]+)$', Path('Normix.lean').read_text(), re.M))
+          assert modules == imports, 'Production module missing from root imports'
+          exported = set()
+          for path in files:
+              source = path.read_text()
+              namespaces = re.findall(r'^namespace ([\w.]+)$', source, re.M)
+              assert len(namespaces) == 1, f'Review inventory parser for {path}'
+              exported.update(namespaces[0] + '.' + n for n in re.findall(r'^theorem (\w+)\b', source, re.M))
+          entries = re.findall(r'^#print axioms ([\w.]+)$', Path('AxiomAudit.lean').read_text(), re.M)
+          assert exported and set(entries) == exported and len(entries) == len(exported), 'Incomplete or duplicate theorem audit'
+          output = Path(os.environ['RUNNER_TEMP'], 'axioms.log').read_text()
+          pattern = r"'([^']+)' (?:depends on axioms:\s*\[([^\]]*)\]|does not depend on any axioms)"
+          records = re.findall(pattern, output)
+          assert len(records) == len(entries) and {n for n, _ in records} == exported, 'Missing audit output'
+          for name, body in records:
+              unexpected = {a.strip() for a in body.split(',') if a.strip()} - allowed
+              assert not unexpected, f'{name}: forbidden axioms {sorted(unexpected)}'
+          PY
+```
+
+Before enabling the job, check that a forbidden axiom, missing audit entry, and
+missing root import each fail it. Source review still enforces the ban on
+unapproved computation mechanisms and checks statement meaning. No workflow is
+installed or CI run claimed by this document.
+
+Once W3 exports a real target, add regeneration checks (another 1–2 days and
+1–2 review hours). Trigger on mapped Python, constants, dependencies, or generator
+changes; regenerate traces, reject stale generated files, and build certificates
+**and application proofs**. Record source/fork commits, shapes, static options,
+constant digests, and tool versions. Run source/formula and translation mutations
+when accepting or changing a rule; two paths can share an importer error.
 
 ### CI cost and versions
 
@@ -382,8 +513,8 @@ be done by the maintainer. This roadmap does not authorize publication or releas
 Pin Lean, Mathlib, JAX/jaxlib, and bridge revisions. Use a Mathlib build cache,
 keyed by toolchain, platform, and dependency manifest. Rebuild normix's proof
 modules after changes. Explicitly include all formal modules and the axiom audit;
-an unimported file must not escape checking. The usual `lake exe cache get`
-mechanism is **literature memory**; compatibility with the selected version is
+an unimported file must not escape checking. The merged W2 build record reports
+successful `lake exe cache get` use on the pinned versions; CI execution remains
 **to verify**.
 
 Begin property experiments with roughly 8–20 cases per cheap property. A separate
@@ -395,19 +526,22 @@ Keep JAX compilation outside per-example construction where possible.
 
 For JAX upgrades, regenerate the primitive inventory and certificate manifests,
 then run primitive, rejection, and application checks. Review changed lowering
-and wrapper structure, not just primitive names. The 0.8.0/0.9.1 mismatch is the
-first such exercise. Future compatibility claims require fresh evidence.
+and wrapper structure, not just primitive names. Check whether the historical
+0.8.0/0.9.1 mismatch persists in the fork. Compatibility claims require fresh evidence.
 
 ### Statement review, axioms, and proof holes
 
 Each English statement card contains the formula, quantifiers, domain, support,
 integrability, relevant derivatives, source symbol, theory page, and excluded
-cases. It also records whether the target is mathematical, algorithmic,
-approximate, or about execution. Use the inventory identifiers from
+cases. Every acceptance record carries the four assurance labels below, marking
+each as checked, pending, or not covered. Use the inventory identifiers from
 [05_math_checklist.md](05_math_checklist.md); do not invent a second scheme.
 
-Review the card before proof work. Review a changed definition or stronger
-assumption as a changed specification. Include examples satisfying the
+Human-review the card, Lean signature, and definitions before proof work. AI
+edits proofs only against that reviewed specification. Changes to definitions,
+domains, assumptions, or the source slice must appear as visible specification
+revisions and receive renewed human review. A blocked proof returns a missing
+lemma or counterexample. Include examples satisfying the
 assumptions and counterexample attempts. Defining a quantity so the desired
 identity becomes tautological is not acceptance. Conditional lemmas remain useful,
 but their unresolved premises must remain visible.
@@ -441,34 +575,37 @@ with Lean code, shorten loops to fit an importer, or route specialized
 distributions through GH for proof convenience. Mathematical lemma reuse does
 not require runtime implementation reuse.
 
-Report progress in separate categories: tested code, checked mathematical
-theorem, checked translation certificate, connected algorithm property, proved
-approximation bound, and machine-execution guarantee. No category implies the
-next one. In particular, a real covariance proof does not establish nonnegative
-floating-point eigenvalues, and a forward certificate does not verify a custom
-derivative or the compiler.
+Every acceptance record must include these four assurance labels separately:
+
+| Assurance label | Required evidence and boundary |
+|---|---|
+| Math theorem | Reviewed real-valued statement, checked proof, and axiom audit. The 31 merged exports belong here; statement review remains pending. |
+| Program-translation certificate | Imported trace equals generated function, plus a connection to the reviewed property; record shapes, primitive semantics, and trusted import/tracing boundary. |
+| Approximation-error bound | Explicit domain and error bound relative to the intended integral or distribution, including relevant table/constant errors. |
+| Floating-point guarantee | A stated machine-arithmetic property with rounding, overflow, underflow, and execution assumptions addressed. |
+
+No label implies the next. Record numerical tests separately; tolerances are not
+proved bounds. Real covariance PSD does not ensure nonnegative computed
+eigenvalues. Bessel frozen-geometry derivatives do not differentiate the adaptive
+geometry, and a forward certificate does not verify AD, XLA, hardware, or a PRNG.
 
 ## First two weeks: ordered checklist
 
-These are future implementation actions. None is marked done by this roadmap.
+The first two entries record delivered artifacts, not statement acceptance.
 
-- [ ] Day 1: reserve the first 15 review hours and confirm the first acceptance targets.
-- [ ] Day 1: record baseline `51e053c57237a29c71b56d3a2a86988277477bd9`; keep future source revisions separate.
-- [ ] Days 1–2: prepare five to eight English cards; use the inventory in `05_math_checklist.md`.
-- [ ] Days 1–2: review backend errors, statistic order, clamps, and the reported GIG/EM documentation issues.
-- [ ] Days 1–2: create the study fork and open the license issue. Record permission status before code integration.
-- [ ] Days 2–3: audit and pin Lean/Mathlib; build a minimal W2 example when execution is available.
-- [ ] Days 2–3: prepare W1 backend and round-trip checks with fixed shapes, dtype, and independent references.
-- [ ] Days 3–5: reproduce the backend findings; preserve failing cases before any separate implementation repair.
-- [ ] Days 3–5: inventory nested jaxpr primitives across the proposed normix targets on JAX 0.9.1.
-- [ ] Days 3–5: isolate the jax-lean 0.8.0 examples and distinguish source generation from checked certificates.
-- [ ] End of week 1: review the cards, library gaps, license status, and first execution evidence.
-- [ ] Week 2: prove parameter and finite-weight results in W2; audit their axioms and source mappings.
-- [ ] Week 2: obtain the `Gamma.var` certificate and property in W3 if permission and tooling permit.
-- [ ] Week 2: run targeted negative checks and retain reduced counterexamples in W1 and W3.
-- [ ] Week 2: have the maintainer configure separate workflows, explicit test selection, and Lean caches.
-- [ ] Week 2: check #136's status. Schedule Bessel-specific W3 work only against its landed structure.
-- [ ] End of week 2: accept completed evidence or apply the milestone stop rules; budget the next bounded increment.
+- [x] W2 M0 merged: PR #161, `80073f3`, 31 theorems and six cards; review pending.
+- [x] Source baseline updated to `d557399905c533b3f15825941be6f04a6e897584`; #136 landed as `05b0785`; retain `51e053c` as historical provenance.
+- [ ] Days 1–2: reserve review time, review the six existing cards, and record all four assurance labels.
+- [ ] Days 1–3: check `xshi19/jax-lean` revision, capabilities, pins, and permission; reproduce one certificate/application example.
+- [ ] Days 1–3: implement the separate Lean CI plan with failing axiom and inventory checks.
+- [ ] Days 2–5: keep W1 counterexamples and numerical checks active; reuse PR #162 helper and constructor tests.
+- [ ] Days 3–5: inventory `Gamma.var` and selected next targets; defer repository-wide graph work.
+- [ ] Week 2: connect the actual `Gamma.var` trace to $\alpha/\beta^2$ and run translation/source mutation checks.
+- [ ] Week 2: start the remaining multidimensional EF-08/EF-10 work; refresh Bessel provenance against current `_geometry`.
+- [ ] End of week 2: accept evidence or record an adapter gap under the stop rules. After pilot acceptance, choose one follow-up and budget regeneration checks.
+
+The high estimates exceed two weeks. A diagnosed adapter gap is a valid checkpoint
+outcome, but does not complete the bridge milestone.
 
 ## Risk register
 
@@ -477,11 +614,13 @@ These are future implementation actions. None is marked done by this roadmap.
 | Wrong or weakened specification | Missing domains, circular assumptions, or changed definitions. Freeze reviewed cards and require explicit revisions. | Maintainer, at each card and acceptance review. |
 | License remains unresolved | No reuse permission. Continue study and independent W1/W2 work; keep upstream code out of normix. | Maintainer, at W3 integration decisions. |
 | JAX or importer drift | Changed nested graphs, constants, or wrapper semantics. Pin versions and regenerate inventories with negative checks. | W3 prepares evidence; maintainer reviews the boundary. |
-| Moving Bessel target | #136 has not landed or changes loop structure again. Delay W3's Bessel milestones and continue non-Bessel work. | Maintainer, at W3 M3 entry. |
+| Bessel provenance drift | #136 landed as `05b0785`; an inventory of the old five-tilt search is stale. Use current `_geometry` and refresh after further changes. | Maintainer, at W3 M3 entry. |
 | Analysis exceeds budget | No usable integral lemma, tail bound, or continuous instance by a milestone checkpoint. Preserve finite results and pause the blocked branch. | Maintainer, at W2 stop points. |
 | Tests share errors or hide failures | Round trips and backend agreement pass without an independent reference; tolerances widen after failures. Add independent evidence and keep counterexamples. | Maintainer, at W1 acceptance. |
 | CI or review becomes the bottleneck | Recompilation, growing proof time, or an unreviewed card queue. Reduce active scope; keep workflows separate. | Maintainer, at each calendar phase. |
 | Model and implementation diverge | TLA+ atomicity is unreal, or a Lean wrapper omits clamps and failure paths. Revisit the implementation map and downgrade the claim. | Maintainer, at W3/W4 acceptance. |
+| GIG historical clamp mistaken for current validation | At `d557399`, `GIG.from_natural` uses `eqx.error_if` and `_from_natural_unchecked`. The old clamp model does not cover rejection or all accepted zero-rate boundaries. Name the unchecked method when certifying only its algebra. | Maintainer, at EF-06/W3 acceptance. |
+| Statistic order loses verification coverage | EF-05 is dropped as mathematics, but PR #162's order helpers still need implementation verification. Follow [EF-05](05_math_checklist.md#1-exponential-families) to W3 M2; require named slots as well as round trips. | Maintainer, at helper acceptance. |
 | Real-semantics results are overstated | A certificate is described as floating-point, PRNG, or whole-library verification. Use the separate coverage categories. | Maintainer, before public documentation links. |
 
 ## Rejected alternatives for this plan
@@ -506,3 +645,9 @@ At every milestone, record accepted results, unresolved premises, implementation
 gaps, and actual effort. Use those records to choose the next increment. A stopped
 translation or analysis study leaves its accepted tests and mathematical results
 available without expanding their claims.
+
+## References for this update
+
+- [Lean Verified Transformers](https://srush.github.io/lean-transformer/): finite sums, folds, and composition proofs; its rational model does not verify normix floating-point execution.
+- [Provably Correct Tensor Puzzles](https://srush.github.io/jax-lean/): separate translation certificates, application properties, and derivative connections.
+- [Lean Verified Tokenizers](https://srush.github.io/verified-tokenizer/): independent representation specifications and explicit success/failure behavior.
