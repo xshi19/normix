@@ -82,11 +82,8 @@ it should reference the rule.
 
 ### 5. Enforce Mechanically, Not Verbally
 
-Prefer tests and linters over prose. When a constraint matters:
-
-1. First choice: encode it in a test (e.g. "all distributions must round-trip through natural params")
-2. Second choice: encode it in a linter or CI check
-3. Last resort: write it as a rule in prose
+Prefer mechanisms that prevent a recurring mistake over reminders that an agent can skip.
+The enforcement order lives in [Agent Makes a Recurring Mistake](../../.cursor/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake).
 
 Prose rules are fragile. Tests are self-enforcing.
 
@@ -132,6 +129,8 @@ principles live in **one** consolidated skill
   eighteen description lines in every Cursor session.
   One description line, named sections inside (§ Prove it works,
   § Subtract before you add, …).
+  Detailed leaves stay under that skill's `references/` directory:
+  [Mutation testing](../../.cursor/skills/principles/references/mutation-testing.md).
 - No duplication: a pstack principle that restated an AGENTS.md priority
   contributed only its operational test (">3 files to trace → flatten",
   the 30-second reader test) plus normix grounding (design rows, the
