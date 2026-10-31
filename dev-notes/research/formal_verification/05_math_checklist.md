@@ -8,6 +8,14 @@ Use these statuses: `not-started`, `statement-drafted`, `statement-reviewed`, `p
 
 The reading baseline is `51e053c57237a29c71b56d3a2a86988277477bd9`. No Lean proof, test, benchmark, or build was run for this inventory. **local check** means source or documentation evidence from the original static investigation. **derivation** means the calculation or recalled mathematics described here. **to verify** marks uncompiled statements, unchecked library support, and literature details. Source labels N1–N8 and J1–J5 refer to [the report's sources](01_lean_math_feasibility.md#sources).
 
+The many-to-many [`coverage.toml`](../../../formal/lean/coverage.toml) records
+implementation claims, targets, hashes, and Hypothesis fallbacks. Its
+`proved | tested | blocked` statuses are separate from this checklist's review
+states; tests never promote to proofs. Cover what is feasible now. Partial
+coverage is acceptable; Mathlib or translation gaps leave claims blocked without
+a full-coverage requirement. See the [synchronization policy](04_integrated_roadmap.md#synchronization-and-failure-triage)
+for `in sync / updated / bug / blocked` outcomes.
+
 Update (2026-10-31): W2 M0 implementation merged in PR #161 (`80073f3`), with 31 theorems across three modules. Its six cards remain `statement-drafted`; statement review is pending. Current source correspondence is `d557399905c533b3f15825941be6f04a6e897584`. Acceptance records must distinguish [all four assurance labels](04_integrated_roadmap.md#execution-and-mathematical-boundaries); merge status does not establish specification acceptance or a program connection.
 
 Lean module paths are planned except the merged `GammaParameters`, `GigParameters`, and `FiniteMoments` modules. Files, directories, modules, and namespaces use UpperCamelCase; definitions use lowerCamelCase; theorems use snake_case. The lowercase `formal/lean/` is the package directory. Hand-written Lean models and the jaxpr bridge proceed in parallel. The bridge aims for broad normix coverage; difficult translations receive explicit hand-written models and separate correspondence obligations.

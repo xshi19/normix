@@ -41,6 +41,8 @@ The following decisions govern the plan:
 - The fork is for study and experiments while licensing is unresolved. Open an issue asking for a license. Reuse or redistribution of its code requires the author's permission; do not copy its code into normix until clarified.
 - Hand-written mathematical definitions and proofs belong in W2. W3 adds generated programs, translation certificates, and explicit connections to W2.
 - Lean source files, modules, directories, and namespaces use UpperCamelCase. Definitions use lowerCamelCase; theorems use snake_case. Lake maps module names to paths. The lowercase `formal/lean/` is the package directory.
+- Cover what is feasible now; partial coverage is acceptable, with no full-coverage quota. Mathlib gaps or jax-lean translation limits leave claims `blocked`, with useful Hypothesis fallbacks where possible.
+- Dryer-style duplication checks are scan/report only, never forced deduplication. Later scans skip the scoped entries in [`duplication_allowlist.toml`](../../../formal/lean/duplication_allowlist.toml), including explicit distribution formulas. See the [decision](../../../formal/lean/decisions.md#duplication-scanning-2026-10-31).
 
 These decisions supersede the reports' earlier preference for an independent
 exporter and their treatment of the bridge as an optional successor to W2.
@@ -156,6 +158,7 @@ formal/lean/
     Bridge/
   AxiomAudit.lean
   coverage.toml
+  duplication_allowlist.toml
   decisions.md
   Scratch/
 ```
@@ -185,6 +188,32 @@ for scheduling, not a second proposition-ID scheme. The existing `coverage.toml`
 records implementation mappings and refers to that inventory; it must not become
 a competing mathematical checklist.
 
+The map has one record per claim/theorem, with a fully qualified Lean `theorem`,
+qualified Python `targets`, per-target `target_hashes`, `status`, and
+`fallback_hypothesis_test`. Targets may occur in several records; a changed target
+flags every referencing claim. `checklist_ids` link those claims to the existing
+cards. Hashes initially cover each target's defining module, so unrelated changes
+within that module can also trigger review. Placeholders are explicitly unreviewed.
+
+Coverage status is `proved | tested | blocked`, separate from checklist and card
+review states. `proved` needs a reviewed statement, checked proof, and axiom audit
+for its stated scope. `tested` records executed Hypothesis evidence only; it never
+promotes to `proved`. An unresolved proof stays `blocked`, with passing fallback
+results recorded separately. The migrated records retain their earlier build
+evidence but remain blocked pending statement review and hash baselining.
+Their fallback test names are marked `PLANNED`; no tests are added by this update.
+
+For example, `EF-04-var` maps the existing variance/mean identity to `Gamma.var`
+and `Gamma.mean`. The separate `EF-04-var-bridge` claim references EF-04 and names
+the planned `Normix.Bridge.GammaVar.gamma_var_eq_spec` theorem. It must connect
+actual `Gamma.var`, with both positive parameters varying, to the fixed W2 formula
+$\alpha/\beta^2$. A Python-only variance edit flags both claims for review.
+After jax-lean regeneration, changing the formula to $2\alpha/\beta^2$ must break
+the application theorem even if translation certification and positivity pass.
+At $\alpha=2,\beta=3$, the mutated value $4/9$ differs from the specified $2/9$.
+This is a proposed mutation example, not an observed bug. The bridge theorem
+does not yet exist; unchanged hand-written proofs cannot detect a Python edit.
+
 For the Bessel goals, $K_\nu(z)$ denotes the modified Bessel function of the
 second kind, with real order $\nu$ and argument $z>0$. Report 01 proposes its
 whole-line integral as the starting definition. Matching that definition to
@@ -192,7 +221,7 @@ any existing Mathlib definition remains **to verify**.
 
 | Milestone | Deliverable and acceptance criterion | Effort | Independent AI work; maintainer review | Dependencies and kill criteria |
 |---|---|---|---|---|
-| M0: merged build and statement baseline | PR #161 (`80073f3`): 31 theorems, three modules, six cards, pinned Lean/Mathlib. Statement review remains pending. Remaining acceptance: human review of definitions, nonempty domains, source mappings, and exclusions; enforced CI audit. | Rebaseline: 0.5–1 day; review 2–4 hours. CI budget below. | AI prepares evidence; a human reviews statements. | Independent of W1/W3. Reuse delivered proofs. Do not infer specification acceptance from merge status. |
+| M0: merged build and statement baseline | PR #161 (`80073f3`): 31 theorems, three modules, six cards, pinned Lean/Mathlib. Statement review remains pending. Remaining acceptance: human review of definitions, nonempty domains, source mappings, and exclusions; enforced CI audit and correspondence hash check, including Python-only changes. | Rebaseline: 0.5–1 day; review 2–4 hours. CI budget below. | AI prepares evidence; a human reviews statements. | Independent of W1/W3. Reuse delivered proofs. Do not infer specification acceptance from merge status. |
 | M1: remaining finite calculus | Extend EF-08 to multidimensional statistics and prove EF-10: the finite log-partition Hessian equals covariance. Reuse merged normalization, scalar derivative, and centered-Gram results; then instantiate BES-15 with the relevant fixed statistics. Acceptance: derivative existence and matrix equality, with fixed nodes and weights; zero proof holes. | 5–10 days; review 3–5 hours. Replaces the unfinished part of the original 10–15 days. | AI edits proofs of reviewed statements. Review coordinate domains and the distinction between PSD and strict positivity. | W2 M0 statement review. Supplies W3 M3. A scalar second derivative is an intermediate result; stop expansion if no useful calculus result fits the budget. |
 | M2: continuous exponential families | Definitions on an explicit natural-parameter domain; convexity, gradient/expectation and Hessian/covariance results under stated analytical conditions. Acceptance: derivative existence and integrability appear in checked statements; Fisher information is related to the score, not defined to make the result tautological. | 20–40 days; review 8–16 hours. | AI develops integral and derivative lemmas. Review support, local domination, minimality, and identifiable coordinates. | W2 M0–M1. Special-function preparation can proceed independently. If four weeks yield no reusable analytical lemma, narrow one theorem and defer duality rather than adding conclusion-shaped assumptions. |
 | M3: first continuous distribution | Gamma normalization and moments, then the InverseGamma reciprocal relation. Acceptance: at least one concrete law discharges the analytical assumptions; rate/scale and moment-existence domains are explicit. IG normalization, moments, and CDF form a later increment. | Gamma/InverseGamma: 10–20 days after usable foundations; review 4–8 hours. IG: another 10–25 days; review 4–8 hours. | AI implements substitutions and library connections. Review density constants, support, and divergent moments. | Relevant W2 M2 lemmas; no need to finish all abstract duality first. W3 Gamma formulas connect when available. If four weeks produce no distribution instance, retain finite results and stop opening additional continuous families. |
@@ -411,23 +440,79 @@ Build all production imports with `lake build`, run `AxiomAudit.lean`, and
 **fail on every non-allowlisted axiom**, including `sorryAx`. Printing alone
 does not enforce the policy.
 
-Ready-to-paste GitHub Actions workflow; documentation only. The audit checks the
+Proposed GitHub Actions workflow; documentation only. The audit checks the
 current single-namespace modules and direct root imports. Extend that inventory
 check when the layout changes. The [elan installer](https://github.com/leanprover/elan)
 supplies the toolchain manager; `lean-toolchain` selects the pinned Lean release.
+Run on every PR and master push so Python-only changes also reach the hash check.
+The correspondence job resolves symbols without importing normix, walks every
+claim's targets and hashes, and reports all affected claims as `needs-review`.
+Placeholder, missing, or changed hashes fail that job until reviewed baselines
+exist; a hash mismatch does not declare a bug or invalidate a mathematical proof.
 
 ```yaml
 name: Lean
 on:
   pull_request:
-    paths: ['formal/lean/**', '.github/workflows/lean.yml']
   push:
     branches: [master]
-    paths: ['formal/lean/**', '.github/workflows/lean.yml']
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  correspondence:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check every claim target and content hash
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import ast
+          import hashlib
+          import tomllib
+          from pathlib import Path
+
+          def module_for_target(target: str) -> Path:
+              parts = target.split('.')
+              for size in range(len(parts) - 1, 0, -1):
+                  path = Path(*parts[:size]).with_suffix('.py')
+                  if not path.is_file():
+                      continue
+                  node = ast.parse(path.read_bytes())
+                  for name in parts[size:]:
+                      node = next((n for n in node.body if isinstance(n, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == name), None)
+                      if node is None:
+                          raise ValueError(f'missing symbol: {target}')
+                  if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                      raise ValueError(f'expected function or method: {target}')
+                  return path
+              raise ValueError(f'missing module: {target}')
+
+          coverage = tomllib.loads(Path('formal/lean/coverage.toml').read_text())
+          assert coverage['schema_version'] == 2
+          assert coverage['hash_scope'] == 'defining-module-sha256'
+          claims = coverage['claim']
+          assert len({c['id'] for c in claims}) == len(claims)
+          needs_review = set()
+          for claim in claims:
+              targets = claim['targets']
+              hashes = claim['target_hashes']
+              assert targets and len(set(targets)) == len(targets)
+              assert set(targets) == set(hashes), claim['id']
+              assert claim['status'] in {'proved', 'tested', 'blocked'}
+              for target in targets:
+                  try:
+                      path = module_for_target(target)
+                      current = 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+                      reason = 'missing, placeholder, or changed hash' if hashes[target] != current else ''
+                  except (OSError, ValueError, SyntaxError) as error:
+                      reason = str(error)
+                  if reason:
+                      needs_review.add(claim['id'])
+                      print(f"needs-review: {claim['id']} -> {target}: {reason}")
+          raise SystemExit(bool(needs_review))
+          PY
   lean:
     runs-on: ubuntu-24.04
     defaults:
@@ -491,16 +576,54 @@ jobs:
 ```
 
 Before enabling the job, check that a forbidden axiom, missing audit entry, and
-missing root import each fail it. Source review still enforces the ban on
+missing root import each fail it. Check that a Python-only target edit flags
+every referencing claim, and that placeholders and missing symbols fail review.
+Source review still enforces the ban on
 unapproved computation mechanisms and checks statement meaning. No workflow is
 installed or CI run claimed by this document.
 
-Once W3 exports a real target, add regeneration checks (another 1–2 days and
-1–2 review hours). Trigger on mapped Python, constants, dependencies, or generator
-changes; regenerate traces, reject stale generated files, and build certificates
-**and application proofs**. Record source/fork commits, shapes, static options,
-constant digests, and tool versions. Run source/formula and translation mutations
-when accepting or changing a rule; two paths can share an importer error.
+Use the `sync_path` recorded per claim. For hand-written statements (`manual`),
+hash changes require a human or agent to review and update the mapping and Lean
+material, then rerun relevant checks. Specification changes require statement
+review. Replace placeholder hashes and advance `source_commit` only with review
+evidence; never refresh them merely to clear an alert.
+
+For traceable pure-JAX functions (`jax-lean`), add auto-regeneration once W3 exports
+a real target (another 1–2 days and 1–2 review hours). Trigger on mapped Python,
+constants, dependencies, or generator changes; reject stale generated files and
+build certificates **and application proofs** against the fixed specification.
+Record source/fork commits, shapes, static options, constant digests, and tool
+versions. The module hash example does not infer cross-module dependencies or
+validate review evidence; include those checks before claiming full drift detection.
+Run source/formula and translation mutations when accepting or changing a rule;
+two paths can share an importer error. Unsupported translations stay blocked.
+
+### Synchronization and failure triage
+
+After updating the Lean side, a failure can mean a real code bug that falsifies
+the statement, a broken or stale proof, or a toolchain issue. Neither a failed
+build nor a changed hash establishes a bug. First save the old check result,
+review changes since the correspondence baseline, synchronize by the recorded
+path, and rerun the relevant checks.
+
+Declare `bug` only with a concrete Hypothesis counterexample or hand computation
+violating the applicable statement. Check the domain, oracle, tolerance, and
+source mapping; replay generated inputs on the real Python entry point with the
+recorded dtype/backend/device. An exact-real versus floating-point discrepancy
+alone is insufficient. Without a qualifying counterexample, report `blocked`.
+
+| Sync state | Required record |
+|---|---|
+| `in sync` | Correspondence reviewed; relevant checks pass without verification changes. |
+| `updated` | Verification material changed, correspondence reviewed, and checks rerun; include their results. |
+| `bug` | Concrete counterexample showing that current code violates the applicable statement. |
+| `blocked` | Unresolved proof, toolchain, support, or correspondence issue without an established code counterexample. |
+
+Keep these outcomes separate from coverage status and assurance. `updated + bug`
+can record successful synchronization that exposes a violation; synchronization
+is not a passing result. Do not advance the baseline while blocked. Passing
+Hypothesis fallbacks never promote a claim to `proved`. The durable policy is in
+[decisions.md](../../../formal/lean/decisions.md#synchronization-and-lean-failure-triage-2026-10-31).
 
 ### CI cost and versions
 

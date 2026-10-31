@@ -10,6 +10,14 @@ Human-review statements, definitions, and domains before assigning proof work. A
 
 Lean names are fully qualified in `AxiomAudit.lean`.
 
+[`coverage.toml`](coverage.toml) maps each claim/theorem to all Python targets and
+per-target hashes. Its `proved | tested | blocked` evidence status is separate
+from these cards' review state. Placeholder hashes and planned fallback tests
+establish no new evidence. Use the [synchronization and failure triage policy](decisions.md#synchronization-and-lean-failure-triage-2026-10-31):
+`in sync / updated / bug / blocked`. A Lean failure alone is `blocked`; `bug`
+requires a concrete counterexample violating the applicable statement.
+Tested evidence never promotes to proved.
+
 Current Python correspondence (2026-10-31): `GIG.from_natural` rejects positive
 rate coordinates with `eqx.error_if` and calls `_from_natural_unchecked` on
 accepted inputs, including zero rates. Acceptance is a rate-sign check, not a
@@ -38,6 +46,7 @@ it does not model runtime rejection, JAX transformations, or floating-point beha
 | Assumptions | Round trips: none. Positivity: `p.Valid` (`0 < alpha ∧ 0 < beta`). |
 | Why this is the intended spec | `gammaMean` and `gammaVar` are the closed formulas of `Gamma.mean` and `Gamma.var`; the card does not claim they are the moments of the Gamma law (that needs the distribution instance, DM-01/DM-02). |
 | Covered normix function | `normix/distributions/gamma.py`: `natural_params`, `from_natural`, `mean`, `var`. |
+| Correspondence claims | `EF-04` covers the round-trip theorem; `EF-04-var` maps the variance/mean identity to both methods. `EF-04-var-bridge` is the blocked, planned W3 connection from actual `Gamma.var` to this card's fixed formula. A Python edit triggers hash review; after regeneration, a wrong formula must break that application theorem. |
 | Risks of a weakened spec | Positivity alone permits wrong positive scale factors. W3 M1 must connect actual `Gamma.var`, with both parameters varying, to W2's `gammaVar`, $\alpha/\beta^2$, then derive positivity. Distributional moments remain DM-01/DM-02; constructor clamps (`THETA_FLOOR`) are excluded. |
 | Evidence and review | Local check for the formulas; Lean compilation checked. Distributional meaning of the formulas: not covered. Review: pending. |
 
