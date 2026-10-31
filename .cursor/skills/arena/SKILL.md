@@ -19,6 +19,15 @@ candidate. It compares the three and grafts a synthesis.
 
 Do not run a bake-off in this repo.
 The package, the relay, and the return are in `dev-notes/design/agent_instructions_design.md` § Host support.
+Include this rejected-seat rule for the external coordinator:
+
+- If a runner's model is rejected, try its family's configured default.
+  If that fails, use the closest valid variant from the same family listed in the rejection.
+  If none is available, drop the seat.
+- If fewer than two runners remain, add replacement seats using a remaining runner's model.
+  If none remain, use the external coordinator's model.
+- Record every substitution and dropout in the synthesis.
+
 Prepare that package. Then stop.
 With no returned synthesis, the state is "ready for external review".
 Do not treat the bake-off as a pass (principles skill § Prove it works).

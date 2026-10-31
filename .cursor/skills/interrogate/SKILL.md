@@ -23,6 +23,13 @@ It is not independent cross-family review.
 
 The deliverable is a synthesized verdict. Do not auto-apply changes.
 
+Every finding must carry a reproducible run against the reviewed revision.
+Record the exact command, observed output, and expected behavior under the governing contract.
+Include any repro script and inputs needed to repeat the command.
+For a design or plan, run a prototype or probe the current tree.
+Omit claims that no run demonstrates.
+Include these requirements in the external review package.
+
 ## Tiers
 
 | Tier | Where | Reviewers | When |
@@ -101,12 +108,17 @@ The state is "ready for external review".
    Check the proposal against related decisions, including rows outside the diff.
    A rewritten decision row cannot authorize itself.
 
-   Completion criterion: classify every finding; cite decision evidence for contract findings and their dismissals.
+   Rerun every finding's command against the reviewed revision before retaining it.
+   Keep only findings whose rerun confirms a failure of the goal or governing contract.
+   Drop findings that fail to reproduce or cannot be rerun, with the reason recorded under Dismissed.
+
+   Completion criterion: every retained finding has a confirming lead rerun and contract evidence; every dismissal has a reason.
 
 ## Output
 
 Report the reviewed revision and review state under `dev-notes/design/agent_instructions_design.md` § Host support.
 Separate test results from preliminary checks and returned external review.
+For each retained finding, include the command, observed lead-rerun output, and expected behavior.
 
 **Cursor.** The bullets below are the three-reviewer tier.
 

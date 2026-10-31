@@ -70,8 +70,22 @@ packages:
 
 ### Agent Makes a Recurring Mistake
 
-1. Add to the "Things to Avoid" / "Gotchas" section of the relevant rule
-2. If no relevant rule exists, consider whether the mistake warrants a new rule
+Group observed corrections by the mistake they reveal.
+Keep evidence from at least two occurrences before treating a mistake as recurring.
+An existing rule that fails to prevent another occurrence needs stronger enforcement.
+
+Prefer the first mechanism that prevents the mistake:
+
+- **Architecture.** Remove the invalid path through ownership, boundaries, or one source of truth.
+- **Types, then lint.** Make the invalid state unrepresentable where possible.
+  Otherwise, add a lint check whose error names the supported alternative.
+- **Behavior tests.** Check the observable contract so a broken behavior fails while an internal refactor still passes.
+- **Docs last.** Reserve rule gotchas or skill guidance for judgment that mechanical checks cannot enforce.
+  Update the existing canonical location.
+
+Prove each new check rejects a real past mistake and accepts the corrected behavior.
+Record the evidence, chosen mechanism, and why stronger mechanisms did not fit.
+Completion criterion: checks reject past mistakes, or the record explains why enforcement requires judgment.
 
 ### Advancing a Plan Phase
 
@@ -110,11 +124,9 @@ path. Skip for trivial sessions — one-offs are not lessons.
    the dead-end → working-path pattern, and rules/skills that were
    missing, stale, or failed to trigger when they should have.
    Separate observed failures from inferred causes and reviews whose execution is unverified.
-2. Structural check first: if a lesson can be a test, a constant, a lint,
-   or a glob fix, encode that instead of prose (principles skill § Encode
-   lessons in structure). The instruction is often the symptom.
+2. Choose enforcement through "Agent Makes a Recurring Mistake" above before adding prose.
 3. Route each surviving lesson through the triggers above (recurring
-   mistake → rule gotcha; new multi-step workflow → skill; design insight
+   mistake → enforcement; new multi-step workflow → skill; design insight
    → `design.md` row).
 4. Present the proposed edits as an Accepted / Rejected list and wait for
    approval before applying — rule and skill edits affect every future
