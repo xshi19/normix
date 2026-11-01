@@ -1,0 +1,33 @@
+# Intentional duplication examples for scan/report tools; no automatic deduplication.
+# Paths are repository-relative; symbols limit each exception within those files.
+# Skip only the listed fragments, not every similarity in a listed file.
+# source identifies the in-repo rationale; review entries when their scope changes.
+
+[[allow]]
+id = "distribution-natural-parameters"
+paths = ["normix/distributions/gamma.py", "normix/distributions/inverse_gamma.py", "normix/distributions/inverse_gaussian.py"]
+symbols = [
+  "normix.distributions.gamma.Gamma.natural_params",
+  "normix.distributions.inverse_gamma.InverseGamma.natural_params",
+  "normix.distributions.inverse_gaussian.InverseGaussian.natural_params",
+]
+reason = "Keep each distribution's explicit theta formula beside its own sufficient statistics and parameter conventions."
+source = "AGENTS.md#design-philosophy"
+
+[[allow]]
+id = "distribution-expectation-formulas"
+paths = ["normix/distributions/gamma.py", "normix/distributions/inverse_gamma.py", "normix/distributions/inverse_gaussian.py"]
+symbols = [
+  "normix.distributions.gamma.Gamma._grad_log_partition",
+  "normix.distributions.inverse_gamma.InverseGamma._grad_log_partition",
+  "normix.distributions.inverse_gaussian.InverseGaussian._grad_log_partition",
+]
+reason = "Keep explicit eta formulas and their domains for each distribution; similar structure does not justify a shared formula."
+source = ".cursor/rules/coding-conventions.mdc#log-partition-triad"
+
+[[allow]]
+id = "independent-gamma-specification"
+paths = ["normix/distributions/gamma.py", "formal/lean/Normix/Distributions/GammaParameters.lean"]
+symbols = ["normix.distributions.gamma.Gamma.var", "Normix.Distributions.gammaVar"]
+reason = "The hand-written specification stays independent of generated code so a shared formula error cannot satisfy the application check."
+source = "formal/lean/StatementCards.md#ef-04-gamma-classicalnatural-round-trip-mean-and-variance-positivity"

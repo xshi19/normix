@@ -286,7 +286,11 @@ lake env lean AxiomAudit.lean
 
 ### 6.3 Mapping functions to theorems
 
-Mappings must identify a function and a property. All Lean names below are **proposed**, not existing Mathlib or normix theorems.
+Mappings identify a claim/theorem and all relevant Python functions or methods.
+The table below is the historical proposal; its Lean names are **proposed**.
+Current identifiers and many-to-many mappings live in
+[`coverage.toml`](../../../formal/lean/coverage.toml), linked to the mathematical
+checklist. A target can occur in several claims.
 
 | ID | Existing code | Proposed theorem | Covered scope |
 |---|---|---|---|
@@ -299,28 +303,39 @@ Mappings must identify a function and a property. All Lean names below are **pro
 | NM-BES-001 | `_moments_from_weights`, `BesselMoments.cov` | `Normix.FiniteEF.cov_psd` | Real covariance for finite positive weights |
 | NM-BES-002 | `_eval_quad`, `log_kv_moments` | `Normix.Quadrature.frozen_derivatives` | Partial derivatives with fixed geometry; approximation is separate |
 
-A mapping file is sufficient; a new Python decorator is unnecessary. A proposed `coverage.toml` entry is:
+A mapping file is sufficient; a new Python decorator is unnecessary. One current
+record has this shape (hashes and the fallback test remain placeholders):
 
 ```toml
 [[claim]]
-id = "NM-BES-001"
-python_file = "normix/utils/bessel.py"
-python_symbol = "_moments_from_weights"
-theorem = "Normix.FiniteEF.cov_psd"
+id = "EF-09"
+checklist_ids = ["EF-09"]
+theorem = "Normix.Numerics.centered_cov_pos_semidef"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
-theory_page = "docs/design/solvers_and_bessel.md"
-scope = "exact-real finite positive weights; no rounding bound"
-status = "not-started"
+targets = ["normix.utils.bessel._moments_from_weights"]
+target_hashes = { "normix.utils.bessel._moments_from_weights" = "PLACEHOLDER:UNREVIEWED" }
+scope = "exact-real centered Gram matrix for nonnegative weights; no floating-point eigenvalue claim"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_centered_covariance_psd"
 spec_review = "pending"
-source_commit = "51e053c57237a29c71b56d3a2a86988277477bd9"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 ```
 
-Later entries should include domains, assumptions, theorem dependencies, axiom-audit results, and the checked commit. Task status uses the checklist's six states. Coverage is a separate field: conditional theorem, distribution instance, code bridge, and error bound are distinct claims. None is established by this report.
+Each hash covers the target's defining module bytes; the proposed checker flags
+every referencing claim on change, including Python-only edits. Coverage status
+is `proved | tested | blocked`, separate from checklist review states. Tested
+evidence never promotes to proved. Partial coverage is acceptable; missing
+Mathlib or translation support leaves the proof claim blocked, with a Hypothesis
+fallback on real code where useful. See the [roadmap's CI and synchronization plan](04_integrated_roadmap.md#lean-ci-plan).
+Conditional theorem, distribution instance, code bridge, and error bound remain
+distinct claims. This report establishes none of them.
 
 A future docstring label can go in `Notes` without affecting execution:
 
 ```text
-Formal specification: NM-BES-001.
+Formal specification: EF-09.
 Exact-real covariance identity; excludes rounding error.
 See :doc:`/design/solvers_and_bessel`.
 ```

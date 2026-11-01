@@ -1,65 +1,170 @@
+# Historical clamp provenance: 51e053c57237a29c71b56d3a2a86988277477bd9.
+# Many-to-many map: one record per claim/theorem; targets may recur across records.
+# checklist_ids refer to statement cards; suffixed IDs distinguish implementation claims.
+# Each target_hashes value is SHA-256 of the target's defining Python module bytes.
+# PLACEHOLDER values are not reviewed hashes and must fail the proposed drift check.
+# source_commit is the last recorded correspondence reference, not a checked hash baseline.
+# status: proved | tested | blocked, for the stated scope and assurance only.
+# All migrated claims remain blocked pending statement review and hash baselining.
+# fallback_hypothesis_test names a planned test, not an existing or executed check.
+# Policy and synchronization states: decisions.md; mathematical inventory: 05_math_checklist.md.
+
+schema_version = 2
+hash_scope = "defining-module-sha256"
+
 [[claim]]
 id = "EF-01"
-python_file = "normix/distributions/generalized_inverse_gaussian.py"
-python_symbol = "GeneralizedInverseGaussian.natural_params"
+checklist_ids = ["EF-01", "EF-02", "EF-03"]
 theorem = "Normix.Distributions.gig_from_natural_unclamped_round_trip"
 lean_file = "Normix/Distributions/GigParameters.lean"
-scope = "exact-real parameter formulas; current inverse on accepted inputs; runtime validation excluded; also EF-02, EF-03"
-status = "statement-drafted"
+targets = [
+  "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params",
+  "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian._from_natural_unchecked",
+]
+target_hashes = { "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian._from_natural_unchecked" = "PLACEHOLDER:UNREVIEWED" }
+scope = "exact-real natural_params and _from_natural_unchecked algebra; public from_natural rejection via eqx.error_if excluded; also EF-02, EF-03"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gig_parameter_round_trip"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-04"
-python_file = "normix/distributions/gamma.py"
-python_symbol = "Gamma.natural_params"
+checklist_ids = ["EF-04"]
 theorem = "Normix.Distributions.gamma_from_natural_round_trip"
 lean_file = "Normix/Distributions/GammaParameters.lean"
-scope = "exact-real parameter formulas; mean and variance formula positivity; no distributional claim"
-status = "statement-drafted"
+targets = ["normix.distributions.gamma.Gamma.natural_params", "normix.distributions.gamma.Gamma.from_natural"]
+target_hashes = { "normix.distributions.gamma.Gamma.natural_params" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.gamma.Gamma.from_natural" = "PLACEHOLDER:UNREVIEWED" }
+scope = "exact-real parameter round trip; constructor floors and distributional moments excluded"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gamma_parameter_round_trip"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
+
+[[claim]]
+id = "EF-04-var"
+checklist_ids = ["EF-04"]
+theorem = "Normix.Distributions.gamma_var_eq_mean_div_beta"
+lean_file = "Normix/Distributions/GammaParameters.lean"
+targets = ["normix.distributions.gamma.Gamma.var", "normix.distributions.gamma.Gamma.mean"]
+target_hashes = { "normix.distributions.gamma.Gamma.var" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.gamma.Gamma.mean" = "PLACEHOLDER:UNREVIEWED" }
+scope = "exact-real variance equals mean divided by nonzero beta; positive shape/rate for the runtime fallback; no distributional or floating-point claim"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; hand-written formulas have no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gamma_var_formula"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
+spec_review = "pending"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
+
+[[claim]]
+id = "EF-04-var-bridge"
+checklist_ids = ["EF-04"]
+theorem = "Normix.Bridge.GammaVar.gamma_var_eq_spec"
+lean_file = "Normix/Bridge/GammaVar.lean"
+targets = ["normix.distributions.gamma.Gamma.var"]
+target_hashes = { "normix.distributions.gamma.Gamma.var" = "PLACEHOLDER:UNREVIEWED" }
+scope = "planned W3 M1: actual Gamma.var with both positive parameters varying equals fixed W2 gammaVar; distributional moments and machine rounding excluded"
+status = "blocked"
+blocked_reason = "Planned theorem and module do not exist; trace, translation certificate, application proof, statement review, and hash baseline pending."
+sync_path = "jax-lean"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gamma_var_formula"
+implementation_status = "planned"
+assurance = { math_theorem = "pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
+spec_review = "pending"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-06"
-python_file = "normix/distributions/generalized_inverse_gaussian.py"
-python_symbol = "GeneralizedInverseGaussian.from_natural"
+checklist_ids = ["EF-06"]
 theorem = "Normix.Distributions.gig_from_natural_unclamped_valid_iff"
 lean_file = "Normix/Distributions/GigParameters.lean"
-scope = "interior domain a, b > 0; current Python rejects positive rate coordinates; runtime rejection is not modeled; clamp theorems cover the pinned baseline only"
-status = "statement-drafted"
+targets = [
+  "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params",
+  "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian._from_natural_unchecked",
+  "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural",
+]
+target_hashes = { "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.natural_params" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian._from_natural_unchecked" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural" = "PLACEHOLDER:UNREVIEWED" }
+scope = "strict interior a, b > 0; public from_natural uses eqx.error_if to reject positive rate coordinates, accepts zero rates, then calls _from_natural_unchecked; rejection and boundary normalizability are not proved; historical clamp model does not cover current rejection"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; public rejection and boundary laws remain outside the theorem."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gig_natural_domain"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-07"
-python_file = "normix/utils/bessel.py"
-python_symbol = "_moments_from_weights"
+checklist_ids = ["EF-07"]
 theorem = "Normix.Numerics.normalized_weights_sum"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
+targets = ["normix.utils.bessel._moments_from_weights"]
+target_hashes = { "normix.utils.bessel._moments_from_weights" = "PLACEHOLDER:UNREVIEWED" }
 scope = "exact-real finite weights; no rounding or underflow bound"
-status = "statement-drafted"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_finite_weight_normalization"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-08"
-python_file = "normix/utils/bessel.py"
-python_symbol = "_moments_from_weights"
+checklist_ids = ["EF-08"]
 theorem = "Normix.Numerics.fixed_geometry_log_partition_has_deriv_at"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
-scope = "one statistic coordinate, frozen nodes and weights; not JAX autodiff"
-status = "statement-drafted"
+targets = ["normix.utils.bessel._moments_from_weights", "normix.utils.bessel.log_kv_moments"]
+target_hashes = { "normix.utils.bessel._moments_from_weights" = "PLACEHOLDER:UNREVIEWED", "normix.utils.bessel.log_kv_moments" = "PLACEHOLDER:UNREVIEWED" }
+scope = "one statistic coordinate, frozen nodes and weights; multidimensional EF-08 and Hessian/covariance EF-10 remain W2 M1 work; not JAX autodiff"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; frozen-geometry correspondence and multidimensional extension remain open."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_frozen_geometry_derivative"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
 
 [[claim]]
 id = "EF-09"
-python_file = "normix/utils/bessel.py"
-python_symbol = "_moments_from_weights"
+checklist_ids = ["EF-09"]
 theorem = "Normix.Numerics.centered_cov_pos_semidef"
 lean_file = "Normix/Numerics/FiniteMoments.lean"
+targets = ["normix.utils.bessel._moments_from_weights"]
+target_hashes = { "normix.utils.bessel._moments_from_weights" = "PLACEHOLDER:UNREVIEWED" }
 scope = "exact-real centered Gram matrix for nonnegative weights; no floating-point eigenvalue claim"
-status = "statement-drafted"
+status = "blocked"
+blocked_reason = "Statement review and target hash baseline pending; no program connection."
+sync_path = "manual"
+fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_centered_covariance_psd"
+implementation_status = "merged"
+implementation_pr = 161
+implementation_commit = "80073f3"
+assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
-source_commit = "f5e454259d640b04c9ba2e49f43ae3f1a17e2d57"
+source_commit = "d557399905c533b3f15825941be6f04a6e897584"
