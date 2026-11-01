@@ -73,17 +73,25 @@ with one caller, speculative configuration, dead code.
 
 ## Findings format
 
+Prove each finding with a run against the real code.
+Use a failing test, a repro script, or a command that demonstrates the contract violation.
+Provide any script and inputs needed to reproduce the run.
+Leave out findings you did not run.
+
 ```
 ### N. [critical|warning|nit] Short title
 **Location**: file:line or function
 **Finding**: what's wrong, concretely
 **Evidence**: why — the reasoning or traced path
+**Command**: exact reproducible command against the reviewed revision
+**Observed output**: what the run printed
+**Expected behavior**: what the goal or governing contract requires, with its source
 **Suggestion** (optional): a concrete alternative
 ```
 
 `critical` = broken behavior, wrong math, NaN/overflow on reachable inputs.
-`warning` = design or correctness risk that will cause pain later.
-`nit` = only if genuinely useful; do not pad the review.
+`warning` = demonstrated contract violation with limited immediate impact.
+`nit` = minor violation demonstrated by a run; do not pad the review.
 
 Do not restate what the code does, do not praise, and do not suggest
 rewrites of working code on style preference alone.
