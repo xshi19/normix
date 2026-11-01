@@ -51,6 +51,7 @@ plotting = [
     "matplotlib>=3.10.0",
 ]
 dev = [
+    "hypothesis>=6.0",
     "pytest>=8.0",
     "matplotlib>=3.9",
     "ipykernel>=6.29",
@@ -138,6 +139,7 @@ exclude_lines = [
 [dependency-groups]
 dev = [
     "asv>=0.6.6",
+    "hypothesis>=6.0",
     "marimo>=0.23.2",
     "nbconvert>=7.17.0",
     "pandas>=2.0.0",

@@ -1,16 +1,16 @@
 # Historical clamp provenance: 51e053c57237a29c71b56d3a2a86988277477bd9.
 # Many-to-many map: one record per claim/theorem; targets may recur across records.
 # checklist_ids refer to statement cards; suffixed IDs distinguish implementation claims.
-# Each target_hashes value is SHA-256 of the target's defining Python module bytes.
-# PLACEHOLDER values are not reviewed hashes and must fail the proposed drift check.
+# Each target_hashes value is SHA-256 of normalized function source; see check_coverage.py.
+# PLACEHOLDER values fail for proved/tested claims; blocked placeholders are reported/skipped.
 # source_commit is the last recorded correspondence reference, not a checked hash baseline.
 # status: proved | tested | blocked, for the stated scope and assurance only.
-# All migrated claims remain blocked pending statement review and hash baselining.
-# fallback_hypothesis_test names a planned test, not an existing or executed check.
+# Unreviewed claims remain blocked; EF-04-var is the first pilot.
+# PLANNED fallback_hypothesis_test values name tests that do not yet exist.
 # Policy and synchronization states: decisions.md; mathematical inventory: 05_math_checklist.md.
 
 schema_version = 2
-hash_scope = "defining-module-sha256"
+hash_scope = "function-source-sha256"
 
 [[claim]]
 id = "EF-01"
@@ -59,18 +59,17 @@ checklist_ids = ["EF-04"]
 theorem = "Normix.Distributions.gamma_var_eq_mean_div_beta"
 lean_file = "Normix/Distributions/GammaParameters.lean"
 targets = ["normix.distributions.gamma.Gamma.var", "normix.distributions.gamma.Gamma.mean"]
-target_hashes = { "normix.distributions.gamma.Gamma.var" = "PLACEHOLDER:UNREVIEWED", "normix.distributions.gamma.Gamma.mean" = "PLACEHOLDER:UNREVIEWED" }
+target_hashes = { "normix.distributions.gamma.Gamma.var" = "sha256:0d47a8969347ece8708953646ea6492f98e42ecd359518336c84310a64b8c8e3", "normix.distributions.gamma.Gamma.mean" = "sha256:2c8efd06f9785cb554e2c85d1b2590d16ad9f1aa544bff66be3b8e349d6069d5" }
 scope = "exact-real variance equals mean divided by nonzero beta; positive shape/rate for the runtime fallback; no distributional or floating-point claim"
-status = "blocked"
-blocked_reason = "Statement review and target hash baseline pending; hand-written formulas have no program connection."
+status = "proved"
 sync_path = "manual"
-fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gamma_var_formula"
+fallback_hypothesis_test = "tests/test_formal_properties.py::test_gamma_var_formula"
 implementation_status = "merged"
 implementation_pr = 161
 implementation_commit = "80073f3"
-assurance = { math_theorem = "checked; statement review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
-spec_review = "pending"
-source_commit = "d557399905c533b3f15825941be6f04a6e897584"
+assurance = { math_theorem = "checked by lake build and axiom audit; agent formula review complete; human statement-card review pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
+spec_review = "Agent reviewed the unchanged exact-real identity against Gamma.var and Gamma.mean in shape/rate coordinates; full EF-04 human statement-card review remains pending."
+source_commit = "93964233765dff7f0c39270acf948e36ad510dab"
 
 [[claim]]
 id = "EF-04-var-bridge"
@@ -83,7 +82,7 @@ scope = "planned W3 M1: actual Gamma.var with both positive parameters varying e
 status = "blocked"
 blocked_reason = "Planned theorem and module do not exist; trace, translation certificate, application proof, statement review, and hash baseline pending."
 sync_path = "jax-lean"
-fallback_hypothesis_test = "PLANNED: tests/test_formal_properties.py::test_gamma_var_formula"
+fallback_hypothesis_test = "tests/test_formal_properties.py::test_gamma_var_formula"
 implementation_status = "planned"
 assurance = { math_theorem = "pending", program_translation_certificate = "not covered", approximation_error_bound = "not covered", floating_point_guarantee = "not covered" }
 spec_review = "pending"
