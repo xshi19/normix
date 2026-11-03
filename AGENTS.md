@@ -81,6 +81,7 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 | Change class boundaries, abstractions, backend selection, device placement, or transformation guarantees | `.cursor/skills/architect/SKILL.md` |
 | Explain behavior or trace design history | `.cursor/skills/how/SKILL.md` or `.cursor/skills/why/SKILL.md` |
 | Make design, verification, or refactoring decisions | `.cursor/skills/principles/SKILL.md` |
+| Prove a Lean claim, translate with jax-lean, or edit formal coverage | `.cursor/skills/normix-formal-verify/SKILL.md` |
 | Edit prose, docstrings, rules, skills, or PR descriptions | `.cursor/skills/unslop/SKILL.md` |
 | Edit public docs, internal docs, README, or docstring links | `.cursor/rules/docs-cross-links.mdc` |
 | Edit tutorials; build or publish docs | `.cursor/skills/docs-publish/SKILL.md` |
@@ -92,7 +93,6 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 | Request a visual explanation | `.cursor/skills/show-me/SKILL.md` |
 | Explicitly request a custom playbook | `.cursor/skills/figure-it-out/SKILL.md` |
 | Prepare an external design/review package | `.cursor/skills/arena/SKILL.md` (hand-off reference; runner retired) |
-
 ## Codex notes
 
 Cursor frontmatter does not load these files in Codex. Read the selected bodies explicitly.
