@@ -87,28 +87,31 @@ equivalent mathematical domains or justify coupling a specification to its code.
 ## Many-to-many correspondence and partial coverage (2026-10-31)
 
 Accepted documentation policy, authorized by the current task. The schema is in
-[`coverage.toml`](coverage.toml); the checker and bridge remain proposed.
+[`coverage.toml`](coverage.toml). The checker is implemented by the
+[EF-04-var pilot](#ef-04-var-pilot-2026-11-01); the bridge remains proposed.
 Each record names one claim/theorem, its fully qualified Lean name, all qualified
 Python function/method `targets`, a `target_hashes` entry per target, and a
 `fallback_hypothesis_test`. Targets can occur in several records. `checklist_ids`
 link implementation claims such as `EF-04-var` to the existing EF-04 card.
 This map is partial; it does not replace the complete theorem axiom audit.
 
-Hashes initially cover the bytes of each target's defining Python module.
-This conservative choice includes local helpers and avoids importing normix.
+The pilot supersedes the proposed module hashes with normalized function-source
+hashes, as requested for this task. AST lookup avoids importing normix.
+
 `PLACEHOLDER:UNREVIEWED` is not a digest or accepted baseline. `source_commit`
 retains the recorded correspondence reference; advance it and the hashes only
-after review. Changes flag **every** claim referencing an affected target,
-including Python-only edits. Cross-module dependencies, constants, and tool pins
-also require review; module hashes alone do not discover that dependency graph.
+after review. Changes flag every claim with a recorded hash for that target.
+Blocked placeholders are reported and skipped. Helpers, constructors, constants,
+dependencies, and tool pins still require review; function hashes do not track
+those dependencies or prove semantic correspondence.
 
 Coverage `status` is `proved`, `tested`, or `blocked`. `proved` requires a reviewed
 statement, checked proof, and axiom audit for the declared scope. `tested` records
 executed Hypothesis evidence only; it never promotes to `proved`. An unresolved
 proof claim stays `blocked`, with any passing fallback recorded separately.
-The migrated entries remain blocked pending statement review and hash baselining;
-the earlier checked Lean build evidence is retained. All named fallback tests
-are marked `PLANNED`, not executed. Checklist/card states remain separate.
+The other migrated entries remain blocked pending statement review and hash
+baselining; their earlier checked Lean build evidence is retained. Fallbacks
+marked `PLANNED` do not yet exist. Checklist/card states remain separate.
 
 Cover what is feasible now. Partial coverage is acceptable, with no full-coverage
 quota. Missing Mathlib lemmas or jax-lean translation support leave claims blocked.
@@ -124,10 +127,10 @@ Two synchronization paths apply:
 `Gamma.mean`. `EF-04-var-bridge` reserves the planned W3 M1 theorem
 `Normix.Bridge.GammaVar.gamma_var_eq_spec`, linking actual `Gamma.var` to EF-04's
 fixed $\alpha/\beta^2$ formula for $\alpha,\beta>0$. Its module does not yet exist.
-A wrong variance edit flags both claims now; after bridge regeneration it must
+A wrong variance edit flags the reviewed claim; the bridge placeholder remains
+blocked until separately baselined. After bridge regeneration, that edit must
 break the application theorem. A hand-written proof does not automatically see
-Python changes. Revisit the hash granularity when conservative review noise or
-new dependency structure warrants a better checker, without dropping these limits.
+Python changes.
 
 ## Synchronization and Lean failure triage (2026-10-31)
 
@@ -154,3 +157,67 @@ These maintenance outcomes are separate from coverage status and assurance.
 or refresh hashes merely to clear an alert. Passing fallback tests never establish
 a universal theorem. Reopen a blocked result when proof/toolchain repair or new
 counterexample evidence resolves its cause.
+
+## EF-04-var pilot (2026-11-01)
+
+The existing theorem uses `gammaMean` $=\alpha/\beta$ and `gammaVar`
+$=\alpha/\beta^2$ for real shape $\alpha$ and nonzero rate $\beta$.
+These definitions match the current public `Gamma.mean` and `Gamma.var`
+formulas. Python's distribution domain has $\alpha,\beta>0$; its natural
+coordinates are $(\alpha-1,-\beta)$ for statistics $(\log x,x)$.
+The theorem and its independent definitions are unchanged. Agent source review
+covers this identity only; human review of the full EF-04 card remains pending.
+
+`lake build` passed all 2520 jobs with the pinned dependencies built locally.
+The axiom audit passed with only `propext`, `Classical.choice`, and `Quot.sound`.
+As requested for this pilot, `proved` records the checked mathematical identity
+and agent correspondence review; it does not close the full card's human review.
+Program translation, approximation-error bounds, and floating-point guarantees
+remain **not covered**. EF-04-var-bridge remains **blocked**.
+
+[`test_gamma_var_formula`](../../tests/test_formal_properties.py) uses public
+JAX APIs in float64, configured for 20 generated cases and three fixed examples.
+Both shape and rate range over $[10^{-3},10^3]$. The test compares the direct
+formulas and variance versus mean divided by rate. It checks log-partition
+gradient coordinate 1 and Hessian entry (1, 1) via `Gamma.from_natural`.
+It also checks the public expectation and Fisher-information coordinates.
+
+The tolerance is `rtol=1e-12, atol=0`, allowing float64 arithmetic and cancellation
+when recovering shape from its natural coordinate in this bounded domain.
+Overflow, underflow, and float32 are outside this test profile.
+
+Run the checker from the repository root:
+
+```bash
+uv run python formal/lean/check_coverage.py
+git checkout uv.lock
+```
+
+After reviewing a changed formula, update only its claim:
+
+```bash
+uv run python formal/lean/check_coverage.py --update --claim EF-04-var
+git checkout uv.lock
+```
+
+Repeat `--claim` to select several claims. Without `--claim`, `--update` refreshes
+only non-blocked claims. Every invocation then checks the whole map; updating
+one claim does not hide drift in another. Updates change only quoted hash values
+in the existing TOML text, preserving comments and layout. They do not change
+status, review records, or `source_commit`.
+
+The `function-source-sha256` scope includes decorators, the signature, docstrings,
+comments, and the function body. AST lookup extracts that source slice; newline
+normalization, `textwrap.dedent`, and one final newline precede UTF-8 hashing.
+Edits elsewhere in the module do not affect the hash. Proved/tested claims fail
+on missing, placeholder, invalid, or mismatched hashes and planned fallbacks.
+Blocked placeholders are skipped; any real hashes on blocked claims are checked.
+Only EF-04-var's two targets have recorded digests in this pilot.
+
+Python validation: 10 checker tests and 34 existing Gamma tests passed
+sequentially using the available Python 3.13.5 / JAX 0.12.0.1 CPU environment.
+The pinned JAX 0.9.1 environment could not be installed because network access
+was unavailable. The requested combined pytest command failed collection because
+Hypothesis was missing; its new development dependency could not be downloaded.
+A direct 23-case probe of the test body passed and rejected doubled variance;
+this did not run Hypothesis generation or shrinking.
