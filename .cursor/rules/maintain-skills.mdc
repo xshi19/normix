@@ -59,6 +59,7 @@ and reference data. They encode multi-step workflows — recipes, not preference
 | `how` | How the code works now |
 | `interrogate` | Bessel, solvers, EM, custom JVP, or an adversarial review |
 | `no-comments` | Review inline comments; report first |
+| `normix-formal-verify` | Lean proof, jax-lean translation, blocked claim, or coverage map |
 | `principles` | Design, verification, or refactor decisions |
 | `running-tests` | Run, select, or profile tests |
 | `show-me` | A visual explanation |
