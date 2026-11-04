@@ -96,10 +96,10 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 ## Codex notes
 
 Cursor frontmatter does not load these files in Codex. Read the selected bodies explicitly.
-Skills remain canonical under `.cursor/skills/`.
-`.agents/skills/` may symlink those directories, and `.codex/agents/` holds project subagents.
-Use available host tools.
-Cursor tool arguments and model names are not Codex configuration.
+Normix skills stay canonical under `.cursor/skills/`. `.agents/skills/` symlinks those directories for discovery.
+
+`.agents/skills/` also holds pinned copies from `xshi19/xshi-skills`. Change shared skills only by a pull request to that repo. Read `.agents/skills/README.md` for the commit and the skill list. `.codex/agents/` holds project subagents.
+Cursor tool arguments and model names are not Codex configuration. Use available host tools.
 
 Preserve required external hand-offs.
 Report a prepared package separately from a completed external review.

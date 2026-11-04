@@ -83,5 +83,7 @@ and reference data. They encode multi-step workflows — recipes, not preference
 - **Don't re-state coding conventions.** Reference `.cursor/rules/coding-conventions.mdc` instead.
 - **Keep references one level deep.** Link directly from `SKILL.md` to reference files.
   Deeply nested references may not be followed.
-- Codex discovery uses directory symlinks in `.agents/skills/`.
-  Link the whole skill directory. Do not copy the skill.
+- Link each normix skill directory from `.agents/skills/`.
+  Do not copy a normix skill.
+  Pinned shared skills in `.agents/skills/` are copies from `xshi19/xshi-skills`.
+  Change a shared skill only by a pull request to that repo.

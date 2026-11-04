@@ -51,7 +51,7 @@ Layer 1   .cursor/rules/*.mdc        Cursor: glob match, or alwaysApply.
 Layer 2   dev-notes/design/*.md      Read on demand for a design decision.
 Layer 3   dev-notes/tech_notes/*.md  Read on demand for a numerical problem.
 Layer 4   .cursor/skills/            Cursor: description in the skill list; body on selection.
-                                     Codex: description only if .agents/skills/ links the skill.
+                                     Codex: description when .agents/skills/ contains the skill.
 ```
 
 Each layer adds context **only when relevant**. An agent fixing a test never
@@ -142,6 +142,8 @@ principles live in **one** consolidated skill
 2. In Cursor, the `principles` description is in the skill list.
    In Codex, that description is visible only when `.agents/skills/` links the skill.
    This repo does not link `principles` yet. Read the body from the AGENTS.md route.
+   This `principles` skill stays the normix principles catalog.
+   Pinned `principle-*` skills are a separate upstream catalog.
 3. Workflow skills (`architect`, `arena`, `interrogate`, `figure-it-out`,
    `tdd`) cite principle sections by name. That citation is the read trigger.
 
@@ -236,8 +238,8 @@ Git commit conventions for docs and all other changes are codified in the
   Cursor: glob or       design/               canonical bodies
   alwaysApply.          tech_notes/
   Codex: read from      references/           .agents/skills/
-  the AGENTS.md route.  ARCHITECTURE.md       directory symlinks
-                        read on demand        for Codex discovery
+  the AGENTS.md route.  ARCHITECTURE.md       normix symlinks
+                        read on demand        and pinned copies
          |
          v
        docs/
@@ -283,9 +285,13 @@ Cursor and Codex read the same files. They do not load those files the same way.
   This checkout has no nested `AGENTS.md`.
   Codex does not evaluate `.mdc` frontmatter.
 - Read each selected rule or skill body from the route in `AGENTS.md`.
-- `.agents/skills/` holds directory symlinks into `.cursor/skills/`.
+- `.agents/skills/` symlinks normix skill directories into `.cursor/skills/`.
   Codex can match those skills by description.
-- The canonical body stays under `.cursor/skills/`. Do not keep a second copy.
+- The canonical body of a normix skill stays under `.cursor/skills/`.
+  Do not keep a second copy of a normix skill.
+- `.agents/skills/` also holds pinned copies of shared skills from `xshi19/xshi-skills`.
+  The pin and the skill list are in `.agents/skills/README.md`.
+  Change a shared skill only by a pull request to that repo.
 - Do not link `figure-it-out` or `arena` for catalog coverage.
   `figure-it-out` stays explicit-only.
 - `.codex/agents/` holds project custom agents.
@@ -297,6 +303,7 @@ Cursor and Codex read the same files. They do not load those files the same way.
   A "do not edit" line in the toml is not that sandbox.
 - Set `allow_implicit_invocation: false` in `agents/openai.yaml` to block implicit selection.
   It does not hide the file.
+  The startup catalog can omit that skill.
 - Cursor `Task` arguments are not Codex settings.
   `subagent_type`, `readonly`, and model slugs are not Codex settings.
   Use the tools this host has.
@@ -306,19 +313,24 @@ Cursor and Codex read the same files. They do not load those files the same way.
 
 Read-only. Do not add skill links to grow the catalog.
 
-1. Check that each `.agents/skills/*` symlink resolves.
+1. Check that each symlink under `.agents/skills/` resolves.
+   Copied shared-skill directories are not symlinks.
+   Read `.agents/skills/README.md` for that list.
 2. Check that `.agents/skills/figure-it-out` is absent.
 3. Check that `.agents/skills/arena` is absent.
 4. Check that `.codex/agents/comment-sicko.toml` sets `name = "comment_sicko"`.
 5. If `codex` is on `PATH`, run the read-only command below.
 
    ```bash
-   codex exec --sandbox read-only --ask-for-approval never \
+   codex --ask-for-approval never exec --sandbox read-only \
      "List the skill names in your startup catalog. Do not edit files."
    ```
 
-   Expect the linked skill names.
-   Do not expect `figure-it-out`.
+   Expect the linked normix skill names plus the implicit shared skills.
+   The implicit shared skills are `notation-economy`, `decision-records`, `mutation-testing`, and `numerical-review`.
+   `figure-it-out` and `arena` stay unlinked.
+   `benchmarking` and the `principle-*` skills stay out of that catalog.
+   Those eight skills set `allow_implicit_invocation: false`.
 
 ### Normix Engineer hand-off
 
