@@ -80,7 +80,8 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 | Change Bessel, GIG/GH solvers, EM, or custom JVPs | `.cursor/skills/interrogate/SKILL.md` |
 | Change class boundaries, abstractions, backend selection, device placement, or transformation guarantees | `.cursor/skills/architect/SKILL.md` |
 | Explain behavior or trace design history | `.cursor/skills/how/SKILL.md` or `.cursor/skills/why/SKILL.md` |
-| Make design, verification, or refactoring decisions | `.cursor/skills/principles/SKILL.md` |
+| Make design, verification, refactoring, or benchmark decisions; use a shared engineering skill | `dev-notes/skill-overlays/principles.md` and its matching shared skill |
+| Audit numerical tests with mutation testing | `.agents/skills/mutation-testing/SKILL.md` and `dev-notes/skill-overlays/mutation-testing.md` |
 | Prove a Lean claim, translate with jax-lean, or edit formal coverage | `.cursor/skills/normix-formal-verify/SKILL.md` |
 | Edit prose, docstrings, rules, skills, or PR descriptions | `.cursor/skills/unslop/SKILL.md` |
 | Edit public docs, internal docs, README, or docstring links | `.cursor/rules/docs-cross-links.mdc` |
@@ -96,15 +97,14 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 ## Codex notes
 
 Cursor frontmatter does not load these files in Codex. Read the selected bodies explicitly.
-Normix skills stay canonical under `.cursor/skills/`. `.agents/skills/` symlinks those directories for discovery.
+Existing normix workflows stay in `.cursor/skills/`; `.agents/skills/` links selected directories for Codex discovery.
 
 `.agents/skills/` also holds pinned copies from `xshi19/xshi-skills`. Change shared skills only by a pull request to that repo. Read `.agents/skills/README.md` for the commit and the skill list. `.codex/agents/` holds project subagents.
+Keep project additions in `dev-notes/skill-overlays/`, outside skill discovery. Read the routed attachment alongside each relevant shared skill. Use plain Markdown without skill frontmatter. Never edit pinned copies to attach them.
 Cursor tool arguments and model names are not Codex configuration. Use available host tools.
 
-Preserve required external hand-offs.
-Report a prepared package separately from a completed external review.
-Follow the user's task scope.
-A workflow pointer does not authorize publishing or releasing.
+Preserve required external hand-offs. Report a prepared package separately from a completed external review.
+Follow the user's task scope. A workflow pointer does not authorize publishing or releasing.
 Host execution and hand-offs: `dev-notes/design/agent_instructions_design.md` § Host support.
 
 ## Design Philosophy

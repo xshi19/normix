@@ -56,8 +56,9 @@ tradeoffs before committing.
 
 Each unit is an experiment: hypothesis → smallest change → measure against
 the predicate on the real artifact → keep if it advanced, revert if it
-didn't. Verify each unit before starting the next (principles skill
-§ Sequence verifiable units); never batch checks to the end. A verdict is
+didn't. Verify each unit before starting the next; never batch checks to the end.
+Read [verification and refactoring](../../../dev-notes/skill-overlays/principles.md#verification-and-refactoring).
+A verdict is
 VERIFIED, NOT VERIFIED, or INCONCLUSIVE — inconclusive is not a pass.
 
 ## Phase D: Decision trail

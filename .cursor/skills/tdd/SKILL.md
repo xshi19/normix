@@ -30,8 +30,8 @@ focused regression test that fails before the fix and passes after.
    unrelated reason, fix the test or the reproduction first.
 5. **Fix the bug.** Smallest change that satisfies the behavior, at the
    root cause — a NaN traced to a wrong regime boundary is fixed at the
-   boundary, not by flooring the output (principles skill § Fix root
-   causes).
+   boundary, not by flooring the output.
+   Read [validation and root causes](../../../dev-notes/skill-overlays/principles.md#validation-and-root-causes).
 6. **Rerun** the regression test, then nearby validation: the
    distribution's full test file, and `uv run pytest tests/` before
    committing.

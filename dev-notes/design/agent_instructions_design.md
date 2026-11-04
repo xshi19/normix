@@ -50,8 +50,9 @@ Layer 1   .cursor/rules/*.mdc        Cursor: glob match, or alwaysApply.
                                      Codex: read from the AGENTS.md route.
 Layer 2   dev-notes/design/*.md      Read on demand for a design decision.
 Layer 3   dev-notes/tech_notes/*.md  Read on demand for a numerical problem.
-Layer 4   .cursor/skills/            Cursor: description in the skill list; body on selection.
-                                     Codex: description when .agents/skills/ contains the skill.
+Layer 4   .agents/skills/            Shared skills discovered by both hosts; bodies read on demand.
+          .cursor/skills/            Project workflows; Codex uses existing links or AGENTS.md routes.
+          dev-notes/skill-overlays/  Plain project attachments, read through AGENTS.md routes.
 ```
 
 Each layer adds context **only when relevant**. An agent fixing a test never
@@ -113,43 +114,63 @@ Adopting the pstack skill library (survey and verdicts:
 `../archive/references/pstack_skills_review.md`; decision row C4 in
 `design.md`) settled three structural questions worth recording.
 
-### Where do principles live?
+### Shared skills and project attachments
 
-The four priorities (Elegance > Numerical efficiency & robustness >
-Mathematical clarity > Simplicity) stay in `AGENTS.md`; operational
-principles live in **one** consolidated skill
-(`.cursor/skills/principles/`).
+The four priorities stay in `AGENTS.md`.
+Generic engineering guidance lives in the pinned skills under `.agents/skills/`.
+Project additions live in [engineering attachments](../skill-overlays/principles.md) and [mutation-testing attachments](../skill-overlays/mutation-testing.md).
+These plain Markdown files have no skill frontmatter and sit outside every skill discovery directory.
+The engineering attachment maps each topic to its shared skill and project-specific section.
 
-- `AGENTS.md` is in context at startup on both hosts. In Cursor,
-  `alwaysApply` rules are also in context. Moving the value hierarchy
-  into a skill would make it conditional. AGENTS.md carries *what to
-  optimize*; the skill carries *how to execute under it*.
-- One skill, not eighteen leaves. In Cursor, every skill description
-  is listed in the system prompt. Eighteen principle skills would cost
-  eighteen description lines in every Cursor session.
-  One description line, named sections inside (§ Prove it works,
-  § Subtract before you add, …).
-  Detailed leaves stay under that skill's `references/` directory:
-  [Mutation testing](../../.cursor/skills/principles/references/mutation-testing.md).
-- No duplication: a pstack principle that restated an AGENTS.md priority
-  contributed only its operational test (">3 files to trace → flatten",
-  the 30-second reader test) plus normix grounding (design rows, the
-  `compare.py` lever).
+`AGENTS.md` routes both hosts to the relevant attachment and shared skill.
+Workflow references also point directly to attachment sections.
+This is an instruction to read files, not an automatic overlay merge or a second skill catalog.
+The tradeoff is maintaining explicit routes when shared skills or project requirements change.
 
-### How principles stay visible
+### Host discovery and installer ownership
 
-1. `AGENTS.md` holds the four priorities. Both hosts load that file at startup.
-2. In Cursor, the `principles` description is in the skill list.
-   In Codex, that description is visible only when `.agents/skills/` links the skill.
-   This repo does not link `principles` yet. Read the body from the AGENTS.md route.
-   This `principles` skill stays the normix principles catalog.
-   Pinned `principle-*` skills are a separate upstream catalog.
-3. Workflow skills (`architect`, `arena`, `interrogate`, `figure-it-out`,
-   `tdd`) cite principle sections by name. That citation is the read trigger.
+The official documentation establishes these boundaries:
 
-Rule of thumb: a principle that matters *everywhere* goes to AGENTS.md;
-one that matters *at specific moments* goes to the skill and gets cited
-by the workflows that own those moments.
+- Codex reads project instructions through `AGENTS.md`.
+  See [Codex instructions](https://developers.openai.com/codex/guides/agents-md).
+- Codex discovers repository skills under `.agents/skills` and follows skill-directory symlinks.
+  Duplicate skill names do not merge.
+  See [Codex skills](https://developers.openai.com/codex/skills).
+- Cursor discovers both `.agents/skills/` and `.cursor/skills/`.
+  See [Cursor skills](https://cursor.com/docs/skills).
+  That page does not guarantee deduplication of symlinks exposed through both directories.
+- Cursor supports `AGENTS.md` and scoped `.cursor/rules/*.mdc` rules.
+  Referenced files are read with tools; a path does not inline their contents.
+  See [Cursor rules](https://cursor.com/docs/rules).
+
+The pinned skills contain no project-overlay hook.
+A link inside their `SKILL.md` files would require editing vendored content.
+Adding an unreferenced sibling attachment would not establish a read trigger.
+
+At the recorded pin, [install.sh](https://github.com/xshi19/xshi-skills/blob/e1442246b89b13eeee62a8e84fedcc0d41ede361/install.sh) copies selected skill directories.
+It leaves existing non-symlink entries untouched and does not write `.agents/skills/README.md`.
+That README is repository-maintained provenance, so routing there is feasible.
+Neither host documents it as startup instructions; `AGENTS.md` remains the direct route.
+
+### Attachment decision (2026-11-04)
+
+Status: chosen under owner authorization for the PR #168 docs-only migration.
+Authority: current owner instruction, session-reported, no durable source.
+Evidence date and decision date: 2026-11-04.
+The evidence is the official documentation and pinned installer linked above.
+
+This supersedes C4's consolidated `principles` skill and its mutation-testing reference.
+The other fifteen project skills retain their locations and existing discovery links.
+The shared pin, invocation policies, and external hand-off contracts remain in effect.
+
+The owner requires project attachments outside discoverable skill directories and forbids edits to pinned copies.
+`dev-notes/skill-overlays/` meets those constraints within the existing internal documentation tree.
+An equivalent `.agents/overlays/` directory was not selected because this workspace denied writes under `.agents/`.
+README-only routing was not selected because it adds an indirection without a documented startup guarantee.
+Duplicated wrapper skills were rejected because they enlarge the catalog and repeat generic guidance.
+
+Revisit attachment placement if the shared installer gains an explicit overlay hook or host discovery rules change.
+Reassess existing project-skill symlinks separately if Cursor exposes duplicate entries; this migration adds no discovery paths.
 
 ### Workflow skills: narrow triggers, recorded outputs
 
@@ -287,6 +308,8 @@ Cursor and Codex read the same files. They do not load those files the same way.
 - Read each selected rule or skill body from the route in `AGENTS.md`.
 - `.agents/skills/` symlinks normix skill directories into `.cursor/skills/`.
   Codex can match those skills by description.
+- Unlinked project skills remain readable through `AGENTS.md`; discovery and file access are separate.
+- Project additions to shared skills live in `dev-notes/skill-overlays/` and load through the `AGENTS.md` routes.
 - The canonical body of a normix skill stays under `.cursor/skills/`.
   Do not keep a second copy of a normix skill.
 - `.agents/skills/` also holds pinned copies of shared skills from `xshi19/xshi-skills`.

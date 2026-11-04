@@ -30,7 +30,8 @@ Include this rejected-seat rule for the external coordinator:
 
 Prepare that package. Then stop.
 With no returned synthesis, the state is "ready for external review".
-Do not treat the bake-off as a pass (principles skill § Prove it works).
+Do not treat the bake-off as a pass.
+Read [benchmark evidence](../../../dev-notes/skill-overlays/principles.md#benchmark-evidence).
 
 ## Gotchas
 

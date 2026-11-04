@@ -14,6 +14,7 @@ https://xshi19.github.io/normix/ — nothing in this tree is built by Sphinx.
 |---|---|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Module hierarchy, distribution storage, constants table |
 | [`design/`](design/) | Full design rationale (decision table, agent instructions, topical docs) |
+| [`skill-overlays/`](skill-overlays/) | Project attachments to shared skills; routed from `AGENTS.md`, outside skill discovery |
 | [`plans/`](plans/) | Migration and roadmap plans |
 | [`tech_notes/`](tech_notes/) | Deep dives (Bessel, GIG solvers, EM profiling, conversions) |
 | [`research/`](research/) | Working notes for research (subordinator tracking; [formal verification reports](research/formal_verification/README.md)). Published MyST: `docs/research/` |
