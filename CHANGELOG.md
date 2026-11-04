@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.5.0](https://github.com/xshi19/normix/compare/v0.4.5...v0.5.0) (2026-11-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* GIG.from_natural now raises on positive theta[1] or theta[2] instead of silently clamping to 0. Zero is still allowed.
+
+### Features
+
+* **formal:** end-to-end pilot for EF-04-var (Gamma.var) ([#165](https://github.com/xshi19/normix/issues/165)) ([d29f2bf](https://github.com/xshi19/normix/commit/d29f2bf4dba99ae4cc399991d9bd52441448263f))
+
+
+### Bug Fixes
+
+* route mixing-statistic order through one helper; reject invalid GIG theta ([#162](https://github.com/xshi19/normix/issues/162)) ([d557399](https://github.com/xshi19/normix/commit/d557399905c533b3f15825941be6f04a6e897584))
+
+
+### Performance
+
+* **bessel:** search only the two extreme-tilt window edges in one batched loop ([#156](https://github.com/xshi19/normix/issues/156)) ([05b0785](https://github.com/xshi19/normix/commit/05b07857da0b768d58f03c19abf147b9867e9c64))
+
+
+### Documentation
+
+* **dev-notes:** archive finished plans and refresh stale notes ([#153](https://github.com/xshi19/normix/issues/153)) ([51e053c](https://github.com/xshi19/normix/commit/51e053c57237a29c71b56d3a2a86988277477bd9))
+* **dev-notes:** formal verification research reports ([#155](https://github.com/xshi19/normix/issues/155)) ([aa58435](https://github.com/xshi19/normix/commit/aa58435eeafafa63a367e9ec5ee0af3bd4350622))
+* GPU performance guide (XLA command buffers) and rejected window-search options ([#136](https://github.com/xshi19/normix/issues/136)) ([#157](https://github.com/xshi19/normix/issues/157)) ([91a642b](https://github.com/xshi19/normix/commit/91a642bbe5dc592087058ad97844bfd7321c0c86))
+* **skills:** add the Lean formal-verification skill ([#166](https://github.com/xshi19/normix/issues/166)) ([2b9fab5](https://github.com/xshi19/normix/commit/2b9fab5b5b61eb4e156352e48f705f97429ad2aa))
+* **skills:** pin shared skills from xshi-skills ([#168](https://github.com/xshi19/normix/issues/168)) ([3debcfd](https://github.com/xshi19/normix/commit/3debcfd9c10859a5b2df674346b33ffdb2ca0f44))
+* **skills:** sync pstack and ub-mode updates ([#164](https://github.com/xshi19/normix/issues/164)) ([9396423](https://github.com/xshi19/normix/commit/93964233765dff7f0c39270acf948e36ad510dab))
+* update formal verification roadmap after Lean blog review ([#163](https://github.com/xshi19/normix/issues/163)) ([b58da79](https://github.com/xshi19/normix/commit/b58da798046313fd156a539eaacfa8e299062370))
+
 ## [0.4.5](https://github.com/xshi19/normix/compare/v0.4.4...v0.4.5) (2026-10-21)
 
 
