@@ -96,7 +96,7 @@ Completion criterion: checks reject past mistakes, or the record explains why en
 ### New Multi-Step Workflow Identified
 
 1. Check existing skills — does one already cover this?
-2. If repeated >3 times or complex enough → create a skill in `.cursor/skills/`
+2. If repeated >3 times or complex enough → create a skill in `.agents/skills/`
 3. Follow `.cursor/rules/maintain-skills.mdc` for skill structure
 
 ### Rule Growing Beyond ~150 Lines
@@ -148,7 +148,7 @@ Before updating anything, check that you're updating the **canonical location**:
 | Mathematical derivations | `docs/theory/` |
 | Published bibliography keys | `docs/references.md` |
 | Citation / package-link conventions | `.cursor/rules/docs-cross-links.mdc` |
-| Prose style, writing registers, STE-style scope | `.cursor/skills/unslop/` |
+| Prose style, writing registers, STE-style scope | `.agents/skills/unslop/` |
 
 If the fact already exists elsewhere, **add a pointer**, don't duplicate.
 

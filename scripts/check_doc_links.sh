@@ -56,7 +56,7 @@ check_absent 'dev-notes/' README.md 'README.md must not reference dev-notes/'
 
 # Legacy internal paths must not appear in tracked agent-facing files.
 LEGACY_PATTERN='docs/(plans|tech_notes|investigations|reviews|archive|references)/'
-for path in AGENTS.md .cursor/rules .cursor/skills; do
+for path in AGENTS.md .cursor/rules .agents/skills; do
   if [[ -e "$path" ]] && rg -n "$LEGACY_PATTERN" "$path" >/dev/null 2>&1; then
     echo "ERROR: $path still references legacy docs/ internal paths"
     rg -n "$LEGACY_PATTERN" "$path" || true

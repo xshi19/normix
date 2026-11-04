@@ -339,7 +339,7 @@ No hard exit criterion; remaining items as time allows.
   discipline, tutorial content plan).
 - [`../archive/plans/finance_architecture.md`](../archive/plans/finance_architecture.md)
   — Phases D–F shipped; archived 2026-08-09.
-- `.cursor/skills/docs-publish/SKILL.md` — build/publish recipe; updated in
+- `.agents/skills/docs-publish/SKILL.md` — build/publish recipe; updated in
   Phase 4 (`notebooks/` gotcha) and Phase 7 (release publish path).
 - `.cursor/rules/notebook-guidelines.mdc` — rewritten in Phase 4.
 - `notebooks/README.md` — two-tier policy, added in Phase 4.

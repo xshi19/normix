@@ -129,7 +129,7 @@ warnings first.
 4. Publish to the `gh-pages` branch of **this repo**:
 
 ```bash
-.cursor/skills/docs-publish/scripts/publish_gh_pages.sh
+.agents/skills/docs-publish/scripts/publish_gh_pages.sh
 ```
 
 Run it from the repo root after a successful build.
@@ -201,7 +201,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `.github/workflows/asv.yml` — PR tripwire (not the dashboard)
 - `.github/workflows/docs.yml`
 - `.github/workflows/docs-full.yml`
-- `.cursor/skills/docs-publish/scripts/publish_gh_pages.sh`
+- `.agents/skills/docs-publish/scripts/publish_gh_pages.sh`
 - `.cursor/rules/docs-cross-links.mdc` — citations + external package URLs
 - `dev-notes/plans/docs_refactor.md` — migration status
 - `AGENTS.md`

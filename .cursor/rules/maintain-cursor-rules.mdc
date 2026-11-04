@@ -26,7 +26,7 @@ being edited. This is the primary mechanism for progressive disclosure.
 | `maintain-theory-docs.mdc` | `**/docs/theory/**` | Mathematical derivations |
 | `docs-cross-links.mdc` | `docs/**`, `dev-notes/**`, … | Cross-links, `{ref}` citations, package URLs |
 | `maintain-cursor-rules.mdc` | `**/.cursor/rules/*.mdc` | This file — rules about rules |
-| `maintain-skills.mdc` | `**/.cursor/skills/**` | Skills maintenance |
+| `maintain-skills.mdc` | `**/.agents/skills/**` | Skills maintenance |
 
 ## Rule Design Principles
 

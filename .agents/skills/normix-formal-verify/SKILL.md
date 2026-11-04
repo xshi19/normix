@@ -119,7 +119,7 @@ It is not "whatever `Gamma.var` returns."
 - Call the public Python API in that test.
 - Record dtype, domain, and tolerance beside the claim.
 - Do not copy the EF-04-var numbers onto another claim.
-- Follow `.cursor/skills/running-tests/SKILL.md` for pytest.
+- Follow `.agents/skills/running-tests/SKILL.md` for pytest.
 - Follow `.cursor/rules/testing-guidelines.mdc` for tolerances.
 - Run `git checkout uv.lock` after every `uv run`.
 - The step is done when `lake build` passes and the audit lists only the three allowed axioms.

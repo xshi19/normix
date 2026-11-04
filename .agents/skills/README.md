@@ -1,28 +1,34 @@
-# Shared skills
+# Skills
+
+`.agents/skills/` is the only skill discovery directory in this repo.
+Codex and Cursor both scan this directory.
+Do not add a second copy of a normix skill.
+Read each `SKILL.md` for when to use that skill.
+
+## Vendored shared skills
+
+These directories are vendored from `xshi19/xshi-skills`.
+`install.sh --copy --project` wrote them at the commit below.
+Change a vendored skill only by a pull request to that repo.
+Do not edit the copies in this repository.
 
 Source repository: https://github.com/xshi19/xshi-skills
 
 Commit: `e1442246b89b13eeee62a8e84fedcc0d41ede361`
 
-This folder holds copies from that commit.
-`install.sh --copy --project` wrote the copies here.
-Change a shared skill only by a pull request to `xshi19/xshi-skills`.
-Do not edit the copies in this repository.
-
 The upstream license is MIT.
-Normix skill entries here point at `.cursor/skills/`.
-The pin covers only the copied shared skills listed below.
-Read each `SKILL.md` for when to use that skill.
+A later `install.sh` run leaves an existing non-symlink directory untouched.
+That run does not write this README.
 
-## Math writing
+### Math writing
 
 - `notation-economy`
 
-## Decision records
+### Decision records
 
 - `decision-records`
 
-## Science stack
+### Science stack
 
 - `principle-code-mirrors-the-math`
 - `principle-closed-form-over-general-case`
@@ -34,3 +40,24 @@ Read each `SKILL.md` for when to use that skill.
 - `benchmarking`
 - `mutation-testing`
 - `numerical-review`
+
+## Normix-owned skills
+
+These directories are maintained in this repository.
+`install.sh` does not own them.
+
+- `agent-maintenance`
+- `architect`
+- `arena`
+- `docs-publish`
+- `figure-it-out`
+- `git-conventions`
+- `how`
+- `interrogate`
+- `no-comments`
+- `normix-formal-verify`
+- `running-tests`
+- `show-me`
+- `tdd`
+- `unslop`
+- `why`

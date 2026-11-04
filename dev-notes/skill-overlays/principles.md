@@ -59,7 +59,7 @@ Rerun those checks after changing structure, using justified numerical tolerance
 Keep contract and EM-convergence tests green between every refactor or migration phase.
 Planned intermediate breakage does not waive this requirement.
 For GIG or Bessel assertion audits, read [the mutation-testing attachment](mutation-testing.md) with its shared skill.
-For bug fixes, follow [TDD](../../.cursor/skills/tdd/SKILL.md).
+For bug fixes, follow [TDD](../../.agents/skills/tdd/SKILL.md).
 
 Row E4's `BatchEMFitter` and `IncrementalEMFitter` replaced two obsolete fitters; remove obsolete paths as callers migrate.
 Migrate internal API callers and delete legacy APIs in the same wave.
@@ -68,9 +68,9 @@ For public APIs shipped on PyPI, retain one `DeprecationWarning` cycle before de
 
 ## Project workflows
 
-Route structural and execution-contract changes through [architect](../../.cursor/skills/architect/SKILL.md).
+Route structural and execution-contract changes through [architect](../../.agents/skills/architect/SKILL.md).
 Propagate accepted design changes through types, docs, and decision rows.
-Use [agent-maintenance](../../.cursor/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake) for recurring corrections.
+Use [agent-maintenance](../../.agents/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake) for recurring corrections.
 In Cursor, `project-overview.mdc` loads in every session; keep it concise.
 For authorized multi-agent or worktree runs, give each writer its own output path.
 Preserve the [external hand-off contract](../design/agent_instructions_design.md#normix-engineer-hand-off) for external comparisons.

@@ -7,7 +7,7 @@ tables, headings, and front matter are skipped. This is not an
 ASD-STE100 compliance check: there is no STE dictionary here.
 
 Usage:
-    python .cursor/skills/unslop/scripts/ste_check.py PATH... [--summary] [--strict]
+    python .agents/skills/unslop/scripts/ste_check.py PATH... [--summary] [--strict]
 """
 
 from __future__ import annotations

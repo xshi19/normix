@@ -41,7 +41,7 @@ Use the most specific scope that applies:
 | `design` | `docs/design/` or `dev-notes/design/` updates |
 | `tech` | `dev-notes/tech_notes/` updates |
 | `theory` | docs/theory/ updates |
-| `skills` | `.cursor/skills/` updates |
+| `skills` | `.agents/skills/` updates |
 | `notebook` | Notebook changes |
 
 ### Examples
