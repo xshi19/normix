@@ -50,8 +50,8 @@ Layer 1   .cursor/rules/*.mdc        Cursor: glob match, or alwaysApply.
                                      Codex: read from the AGENTS.md route.
 Layer 2   dev-notes/design/*.md      Read on demand for a design decision.
 Layer 3   dev-notes/tech_notes/*.md  Read on demand for a numerical problem.
-Layer 4   .cursor/skills/            Cursor: description in the skill list; body on selection.
-                                     Codex: description only if .agents/skills/ links the skill.
+Layer 4   .agents/skills/            Normix-owned skills and pinned copies. Both hosts read bodies on demand.
+          dev-notes/skill-overlays/  Plain project attachments, read through AGENTS.md routes.
 ```
 
 Each layer adds context **only when relevant**. An agent fixing a test never
@@ -83,7 +83,7 @@ it should reference the rule.
 ### 5. Enforce Mechanically, Not Verbally
 
 Prefer mechanisms that prevent a recurring mistake over reminders that an agent can skip.
-The enforcement order lives in [Agent Makes a Recurring Mistake](../../.cursor/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake).
+The enforcement order lives in [Agent Makes a Recurring Mistake](../../.agents/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake).
 
 Prose rules are fragile. Tests are self-enforcing.
 
@@ -113,41 +113,83 @@ Adopting the pstack skill library (survey and verdicts:
 `../archive/references/pstack_skills_review.md`; decision row C4 in
 `design.md`) settled three structural questions worth recording.
 
-### Where do principles live?
+### Shared skills and project attachments
 
-The four priorities (Elegance > Numerical efficiency & robustness >
-Mathematical clarity > Simplicity) stay in `AGENTS.md`; operational
-principles live in **one** consolidated skill
-(`.cursor/skills/principles/`).
+The four priorities stay in `AGENTS.md`.
+Generic engineering guidance lives in the pinned skills under `.agents/skills/`.
+Project additions live in [engineering attachments](../skill-overlays/principles.md) and [mutation-testing attachments](../skill-overlays/mutation-testing.md).
+These plain Markdown files have no skill frontmatter and sit outside every skill discovery directory.
+The engineering attachment maps each topic to its shared skill and project-specific section.
 
-- `AGENTS.md` is in context at startup on both hosts. In Cursor,
-  `alwaysApply` rules are also in context. Moving the value hierarchy
-  into a skill would make it conditional. AGENTS.md carries *what to
-  optimize*; the skill carries *how to execute under it*.
-- One skill, not eighteen leaves. In Cursor, every skill description
-  is listed in the system prompt. Eighteen principle skills would cost
-  eighteen description lines in every Cursor session.
-  One description line, named sections inside (§ Prove it works,
-  § Subtract before you add, …).
-  Detailed leaves stay under that skill's `references/` directory:
-  [Mutation testing](../../.cursor/skills/principles/references/mutation-testing.md).
-- No duplication: a pstack principle that restated an AGENTS.md priority
-  contributed only its operational test (">3 files to trace → flatten",
-  the 30-second reader test) plus normix grounding (design rows, the
-  `compare.py` lever).
+`AGENTS.md` routes both hosts to the relevant attachment and shared skill.
+Workflow references also point directly to attachment sections.
+This is an instruction to read files, not an automatic overlay merge or a second skill catalog.
+The tradeoff is maintaining explicit routes when shared skills or project requirements change.
 
-### How principles stay visible
+### Host discovery and installer ownership
 
-1. `AGENTS.md` holds the four priorities. Both hosts load that file at startup.
-2. In Cursor, the `principles` description is in the skill list.
-   In Codex, that description is visible only when `.agents/skills/` links the skill.
-   This repo does not link `principles` yet. Read the body from the AGENTS.md route.
-3. Workflow skills (`architect`, `arena`, `interrogate`, `figure-it-out`,
-   `tdd`) cite principle sections by name. That citation is the read trigger.
+The official documentation establishes these boundaries:
 
-Rule of thumb: a principle that matters *everywhere* goes to AGENTS.md;
-one that matters *at specific moments* goes to the skill and gets cited
-by the workflows that own those moments.
+- Codex reads project instructions through `AGENTS.md`.
+  See [Codex instructions](https://developers.openai.com/codex/guides/agents-md).
+- Codex discovers repository skills under `.agents/skills` and follows skill-directory symlinks.
+  Duplicate skill names do not merge.
+  See [Codex skills](https://developers.openai.com/codex/skills).
+- Cursor discovers `.agents/skills/`.
+  See [Cursor skills](https://cursor.com/docs/skills).
+  That page also names a second project skills directory.
+  This repo does not use that second directory.
+  Each normix skill is listed once.
+- Cursor supports `AGENTS.md` and scoped `.cursor/rules/*.mdc` rules.
+  Referenced files are read with tools; a path does not inline their contents.
+  See [Cursor rules](https://cursor.com/docs/rules).
+
+The pinned skills contain no project-overlay hook.
+A link inside their `SKILL.md` files would require editing vendored content.
+Adding an unreferenced sibling attachment would not establish a read trigger.
+
+At the recorded pin, [install.sh](https://github.com/xshi19/xshi-skills/blob/e1442246b89b13eeee62a8e84fedcc0d41ede361/install.sh) copies selected skill directories.
+It leaves existing non-symlink entries untouched and does not write `.agents/skills/README.md`.
+That README is repository-maintained provenance, so routing there is feasible.
+Neither host documents it as startup instructions; `AGENTS.md` remains the direct route.
+
+### Attachment decision (2026-11-04)
+
+Status: chosen under owner authorization for the PR #168 docs-only migration.
+Authority: current owner instruction, session-reported, no durable source.
+Evidence date and decision date: 2026-11-04.
+The evidence is the official documentation and pinned installer linked above.
+
+This supersedes C4's consolidated `principles` skill and its mutation-testing reference.
+Project-skill directories from this step are superseded by § Single skill directory.
+The shared pin, invocation policies, and external hand-off contracts remain in effect.
+
+The owner requires project attachments outside discoverable skill directories and forbids edits to pinned copies.
+`dev-notes/skill-overlays/` meets those constraints within the existing internal documentation tree.
+An equivalent `.agents/overlays/` directory was not selected because this workspace denied writes under `.agents/`.
+README-only routing was not selected because it adds an indirection without a documented startup guarantee.
+Duplicated wrapper skills were rejected because they enlarge the catalog and repeat generic guidance.
+
+Revisit attachment placement if the shared installer gains an explicit overlay hook or host discovery rules change.
+The symlink layout from this step is superseded by § Single skill directory.
+
+### Single skill directory (2026-11-04)
+
+Status: chosen under owner authorization for this docs-only move.
+Authority: current owner instruction, session-reported, no durable source.
+Evidence date and decision date: 2026-11-04.
+This supersedes the project-skill locations in the attachment decision above.
+
+Normix-owned skills are real directories under `.agents/skills/`.
+Do not add a second copy of a normix skill.
+Do not add symlinks under `.agents/skills/`.
+Symlinks into a second skills directory were rejected.
+Pinned copies stay the directories that `install.sh` wrote.
+
+Keep each skill's invocation flags unchanged.
+`figure-it-out` keeps `allow_implicit_invocation: false`.
+`arena` keeps `disable-model-invocation: true`.
+Reopen this choice if either host stops scanning `.agents/skills/`.
 
 ### Workflow skills: narrow triggers, recorded outputs
 
@@ -179,7 +221,7 @@ is the last resort, matching `docs/_static/normix.css` tokens.
 
 HTML is not a third documentation system. Durable notes still land in
 `docs/` or `dev-notes/`. The desktop menu and the cloud screenshot path
-are Cursor-only. Delivery steps are in `.cursor/skills/show-me/SKILL.md`.
+are Cursor-only. Delivery steps are in `.agents/skills/show-me/SKILL.md`.
 
 On Codex, write HTML outside the git tree.
 Give an ordinary link to that file.
@@ -209,17 +251,17 @@ This avoids loading every maintenance rule for one edit.
 | Design docs (this dir), `../tech_notes/`, `../references/` | `.cursor/rules/maintain-design-docs.mdc` |
 | `../../docs/theory/` | `.cursor/rules/maintain-theory-docs.mdc` |
 | `.cursor/rules/*.mdc` | `.cursor/rules/maintain-cursor-rules.mdc` |
-| `.cursor/skills/` | `.cursor/rules/maintain-skills.mdc` |
+| `.agents/skills/` | `.cursor/rules/maintain-skills.mdc` |
 
 ### Maintenance Workflows
 
 Maintenance triggers and periodic reviews are codified in the
-`agent-maintenance` skill (`.cursor/skills/agent-maintenance/`).
+`agent-maintenance` skill (`.agents/skills/agent-maintenance/`).
 
 ### Commit Conventions
 
 Git commit conventions for docs and all other changes are codified in the
-`git-conventions` skill (`.cursor/skills/git-conventions/`).
+`git-conventions` skill (`.agents/skills/git-conventions/`).
 
 ---
 
@@ -232,12 +274,12 @@ Git commit conventions for docs and all other changes are codified in the
          +---------------------+---------------------+
          |                     |                     |
          v                     v                     v
-  .cursor/rules/        dev-notes/            .cursor/skills/
-  Cursor: glob or       design/               canonical bodies
-  alwaysApply.          tech_notes/
-  Codex: read from      references/           .agents/skills/
-  the AGENTS.md route.  ARCHITECTURE.md       directory symlinks
-                        read on demand        for Codex discovery
+  .cursor/rules/        dev-notes/            .agents/skills/
+  Cursor: glob or       design/               normix-owned skills
+  alwaysApply.          tech_notes/           and pinned copies
+  Codex: read from      references/
+  the AGENTS.md route.  ARCHITECTURE.md
+                        read on demand
          |
          v
        docs/
@@ -283,11 +325,17 @@ Cursor and Codex read the same files. They do not load those files the same way.
   This checkout has no nested `AGENTS.md`.
   Codex does not evaluate `.mdc` frontmatter.
 - Read each selected rule or skill body from the route in `AGENTS.md`.
-- `.agents/skills/` holds directory symlinks into `.cursor/skills/`.
-  Codex can match those skills by description.
-- The canonical body stays under `.cursor/skills/`. Do not keep a second copy.
-- Do not link `figure-it-out` or `arena` for catalog coverage.
-  `figure-it-out` stays explicit-only.
+- Normix-owned skills are real directories under `.agents/skills/`.
+  Codex matches those skills by description.
+  Do not keep a second copy of a normix skill.
+- Project additions to shared skills live in `dev-notes/skill-overlays/` and load through the `AGENTS.md` routes.
+- `.agents/skills/` also holds pinned copies of shared skills from `xshi19/xshi-skills`.
+  The pin, the vendored list, and the normix-owned list are in `.agents/skills/README.md`.
+  Change a shared skill only by a pull request to that repo.
+- `figure-it-out` stays explicit-only.
+  Its `agents/openai.yaml` sets `allow_implicit_invocation: false`.
+- `arena` sets `disable-model-invocation: true`.
+  Codex discovers that directory with the other normix skills.
 - `.codex/agents/` holds project custom agents.
   `comment-sicko.toml` names `comment_sicko` and sets no `model`.
   The agent inherits the parent model.
@@ -297,6 +345,7 @@ Cursor and Codex read the same files. They do not load those files the same way.
   A "do not edit" line in the toml is not that sandbox.
 - Set `allow_implicit_invocation: false` in `agents/openai.yaml` to block implicit selection.
   It does not hide the file.
+  The startup catalog can omit that skill.
 - Cursor `Task` arguments are not Codex settings.
   `subagent_type`, `readonly`, and model slugs are not Codex settings.
   Use the tools this host has.
@@ -304,21 +353,29 @@ Cursor and Codex read the same files. They do not load those files the same way.
 
 ### Discovery smoke
 
-Read-only. Do not add skill links to grow the catalog.
+Read-only. Do not add a second copy of a normix skill.
 
-1. Check that each `.agents/skills/*` symlink resolves.
-2. Check that `.agents/skills/figure-it-out` is absent.
-3. Check that `.agents/skills/arena` is absent.
+1. Check that `.agents/skills/` contains no symlinks.
+   Vendored names are listed in `.agents/skills/README.md`.
+   Every other directory there is normix-owned.
+2. Check that `.agents/skills/figure-it-out/agents/openai.yaml` sets `allow_implicit_invocation: false`.
+3. Check that `.agents/skills/arena/SKILL.md` sets `disable-model-invocation: true`.
 4. Check that `.codex/agents/comment-sicko.toml` sets `name = "comment_sicko"`.
 5. If `codex` is on `PATH`, run the read-only command below.
 
    ```bash
-   codex exec --sandbox read-only --ask-for-approval never \
+   codex --ask-for-approval never exec --sandbox read-only \
      "List the skill names in your startup catalog. Do not edit files."
    ```
 
-   Expect the linked skill names.
-   Do not expect `figure-it-out`.
+   Expect the normix-owned names, except skills that set `allow_implicit_invocation: false`.
+   `figure-it-out` sets that flag.
+   The implicit shared skills are `notation-economy`, `decision-records`, `mutation-testing`, and `numerical-review`.
+
+   `benchmarking` and the `principle-*` skills stay out of that catalog.
+   Those eight skills set `allow_implicit_invocation: false`.
+   `arena` has no `agents/openai.yaml`.
+   Codex may list `arena`.
 
 ### Normix Engineer hand-off
 
@@ -327,7 +384,7 @@ Normix Engineer is an external assistant. This repo has no call, endpoint, or im
 Build the package the calling skill names. Then stop.
 
 **Architect Phase B.** Include the design task and the Phase A grounding.
-Include `.cursor/skills/architect/references/runner-prompt.md` and `.cursor/skills/architect/references/rationale-template.md`.
+Include `.agents/skills/architect/references/runner-prompt.md` and `.agents/skills/architect/references/rationale-template.md`.
 Include a rubric of 3–6 gradeable criteria.
 
 Candidates do not see the rubric.

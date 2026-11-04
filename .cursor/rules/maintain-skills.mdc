@@ -1,10 +1,10 @@
 ---
-description: Rules for maintaining .cursor/skills/
-globs: "**/.cursor/skills/**"
+description: Rules for maintaining .agents/skills/
+globs: "**/.agents/skills/**"
 alwaysApply: false
 ---
 
-# Maintaining .cursor/skills/
+# Maintaining .agents/skills/
 
 > High-level principles: `dev-notes/design/agent_instructions_design.md`
 
@@ -14,7 +14,7 @@ and reference data. They encode multi-step workflows — recipes, not preference
 ## Skill Structure
 
 ```
-.cursor/skills/
+.agents/skills/
 └── skill-name/
     ├── SKILL.md              # Main instructions (required)
     ├── references/           # Detailed docs read on demand
@@ -60,7 +60,6 @@ and reference data. They encode multi-step workflows — recipes, not preference
 | `interrogate` | Bessel, solvers, EM, custom JVP, or an adversarial review |
 | `no-comments` | Review inline comments; report first |
 | `normix-formal-verify` | Lean proof, jax-lean translation, blocked claim, or coverage map |
-| `principles` | Design, verification, or refactor decisions |
 | `running-tests` | Run, select, or profile tests |
 | `show-me` | A visual explanation |
 | `tdd` | A reproducible bug with a cheap test |
@@ -69,7 +68,7 @@ and reference data. They encode multi-step workflows — recipes, not preference
 
 ## Before Creating a New Skill
 
-1. **Check existing skills** in `.cursor/skills/` — does one already cover this workflow?
+1. **Check existing skills** in `.agents/skills/` — does one already cover this workflow?
 2. **Check existing rules** — is this really a multi-step workflow (→ skill) or
    a preference/constraint (→ rule)?
 3. **Check existing docs** — is this really a recipe (→ skill) or rationale (→ design doc)?
@@ -83,5 +82,10 @@ and reference data. They encode multi-step workflows — recipes, not preference
 - **Don't re-state coding conventions.** Reference `.cursor/rules/coding-conventions.mdc` instead.
 - **Keep references one level deep.** Link directly from `SKILL.md` to reference files.
   Deeply nested references may not be followed.
-- Codex discovery uses directory symlinks in `.agents/skills/`.
-  Link the whole skill directory. Do not copy the skill.
+- Put each new normix skill under `.agents/skills/<name>/`.
+  Do not add a second copy of a normix skill.
+  Pinned shared skills in `.agents/skills/` are copies from `xshi19/xshi-skills`.
+  Change a shared skill only by a pull request to that repo.
+- Keep project additions to shared skills in `dev-notes/skill-overlays/`.
+  Use plain Markdown attachments without `SKILL.md` or skill frontmatter.
+  Route attachments from `AGENTS.md`; never add attachment links inside pinned files.

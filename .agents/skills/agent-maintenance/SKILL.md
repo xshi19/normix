@@ -1,0 +1,170 @@
+---
+name: agent-maintenance
+description: >-
+  Maintain agent-facing knowledge: rules, docs, AGENTS.md, ARCHITECTURE.md,
+  skills. Use when adding new modules, distributions, constants, or design
+  decisions. Use when docs may be stale or rules may contradict. Use when
+  the user asks to update or audit documentation, rules, or skills. Also
+  use to reflect after a long or corrective session ("reflect") and route
+  lessons into rules and skills.
+---
+
+# Agent Maintenance
+
+> High-level principles: `dev-notes/design/agent_instructions_design.md`
+
+This skill codifies **when and how** to update the agent-facing knowledge
+system. Each trigger below tells you what to update and where.
+
+## Triggers
+
+### New Module or File Added Under `normix/`
+
+1. `dev-notes/ARCHITECTURE.md` — update module hierarchy tree
+2. If it's a distribution → also follow "New Distribution Added" below
+3. If it adds a new area of work → add a row to the context map in `AGENTS.md`
+
+### New Distribution Added
+
+1. Add the distribution to `.cursor/rules/project-overview.mdc`.
+2. Update the module tree and the storage table in `dev-notes/ARCHITECTURE.md`.
+3. If you made a design decision, add a row in `dev-notes/design/design.md`.
+4. Add tests under `tests/`. Follow `.cursor/rules/testing-guidelines.mdc`.
+5. Add a page under `docs/distributions/`. Link it from `docs/distributions/index.md`.
+6. Add an `automodule` block in `docs/api/distributions.rst`.
+7. Extend a page under `docs/tutorials/` when a public worked example is needed.
+8. Add a derivation under `docs/theory/` when the math is not already there.
+9. If prose names a paper or algorithm, cite it from `docs/references.md`.
+   Follow `.cursor/rules/docs-cross-links.mdc`.
+10. Add a notebook under `notebooks/` only for a private study.
+    Follow `.cursor/rules/notebook-guidelines.mdc`.
+
+### Editing Published Docs (Tutorials / Theory / Design / User Guide)
+
+When prose names asymptotics, algorithms, samplers, risk measures, or external
+packages:
+
+1. Cite via `{ref}`Key <key>`` from `docs/references.md`; add a `(key)=` entry
+   if missing
+2. Link the first prose mention of JAX / Equinox / JAXopt / NumPy / SciPy /
+   matplotlib to the canonical docs URL
+3. Keep wording faithful to the code (Devroye = TDR; MCECM = Multi-Cycle ECM)
+4. Follow `.cursor/rules/docs-cross-links.mdc` (citations + package URLs) and the
+   relevant `maintain-theory-docs.mdc` / `maintain-design-docs.mdc` rule
+
+### New Numerical Constant
+
+1. Define in `normix/utils/constants.py` (canonical location)
+2. `dev-notes/ARCHITECTURE.md` — update numerical constants table
+3. `.cursor/rules/coding-conventions.mdc` — update constants table if commonly used
+
+### Design Decision Made
+
+1. Update the governing `design.md` row and its existing topical rationale.
+   Follow the decision-record fields in `.cursor/rules/maintain-design-docs.mdc`.
+   Record rejected or inconclusive alternatives even when no implementation lands.
+   Preserve accepted constraints while a replacement remains proposed.
+2. If architecturally significant → update `dev-notes/ARCHITECTURE.md`
+3. If user-facing rationale → also update the relevant file under `docs/design/`
+4. If it changes how code should be written → update relevant `.cursor/rules/` file
+
+### Agent Makes a Recurring Mistake
+
+Group observed corrections by the mistake they reveal.
+Keep evidence from at least two occurrences before treating a mistake as recurring.
+An existing rule that fails to prevent another occurrence needs stronger enforcement.
+
+Prefer the first mechanism that prevents the mistake:
+
+- **Architecture.** Remove the invalid path through ownership, boundaries, or one source of truth.
+- **Types, then lint.** Make the invalid state unrepresentable where possible.
+  Otherwise, add a lint check whose error names the supported alternative.
+- **Behavior tests.** Check the observable contract so a broken behavior fails while an internal refactor still passes.
+- **Docs last.** Reserve rule gotchas or skill guidance for judgment that mechanical checks cannot enforce.
+  Update the existing canonical location.
+
+Prove each new check rejects a real past mistake and accepts the corrected behavior.
+Record the evidence, chosen mechanism, and why stronger mechanisms did not fit.
+Completion criterion: checks reject past mistakes, or the record explains why enforcement requires judgment.
+
+### Advancing a Plan Phase
+
+1. Update the relevant plan under `dev-notes/plans/` (e.g. `docs_refactor.md`).
+   Completed plans live in `dev-notes/archive/plans/`.
+2. If modules were restructured → update `dev-notes/ARCHITECTURE.md`
+
+### New Multi-Step Workflow Identified
+
+1. Check existing skills — does one already cover this?
+2. If repeated >3 times or complex enough → create a skill in `.agents/skills/`
+3. Follow `.cursor/rules/maintain-skills.mdc` for skill structure
+
+### Rule Growing Beyond ~150 Lines
+
+1. Split into sub-rules or move detail to `dev-notes/`
+2. Update `.cursor/rules/maintain-cursor-rules.mdc` current rules table
+
+### Rules May Be Contradicting
+
+1. Read all rules in `.cursor/rules/`
+2. Identify contradictions
+3. Resolve against explicit user decisions and accepted design records.
+   Check dates and supersession links; recency alone does not establish authority.
+   Keep unresolved conflicts visible instead of selecting the convenient statement.
+4. Remove duplicated content — each fact lives in one place
+
+### After a Long or Corrective Session (Reflect)
+
+Run a reflection pass when the user says "reflect", when a complex task
+just landed and the recipe is worth keeping, when the user corrected your
+approach mid-task, or when you hit dead ends before finding the working
+path. Skip for trivial sessions — one-offs are not lessons.
+
+1. Review the session for three kinds of signal: recurring corrections,
+   the dead-end → working-path pattern, and rules/skills that were
+   missing, stale, or failed to trigger when they should have.
+   Separate observed failures from inferred causes and reviews whose execution is unverified.
+2. Choose enforcement through "Agent Makes a Recurring Mistake" above before adding prose.
+3. Route each surviving lesson through the triggers above (recurring
+   mistake → enforcement; new multi-step workflow → skill; design insight
+   → `design.md` row).
+4. Present the proposed edits as an Accepted / Rejected list and wait for
+   approval before applying — rule and skill edits affect every future
+   session. Note dropped findings with a one-line reason.
+
+## Single Source of Truth
+
+Before updating anything, check that you're updating the **canonical location**:
+
+| Fact | Canonical Location |
+|---|---|
+| Module hierarchy, distribution storage | `dev-notes/ARCHITECTURE.md` |
+| Distribution catalog | `.cursor/rules/project-overview.mdc` |
+| Coding conventions | `.cursor/rules/coding-conventions.mdc` |
+| Numerical constants (values) | `normix/utils/constants.py` |
+| Design rationale, decision table | `dev-notes/design/design.md` |
+| Published design rationale | `docs/design/` |
+| Commands, context map | `AGENTS.md` |
+| Mathematical derivations | `docs/theory/` |
+| Published bibliography keys | `docs/references.md` |
+| Citation / package-link conventions | `.cursor/rules/docs-cross-links.mdc` |
+| Prose style, writing registers, STE-style scope | `.agents/skills/unslop/` |
+
+If the fact already exists elsewhere, **add a pointer**, don't duplicate.
+
+## Pre-Update Checklist
+
+Before making any documentation update:
+
+- [ ] Read the target file first — is the content already there?
+- [ ] Check related files — will this addition contradict something?
+- [ ] Verify existing entries are still accurate — fix stale entries while you're there
+- [ ] Follow the appropriate `maintain-*.mdc` rule for the file you're editing
+
+## Gotchas
+
+- **Don't update AGENTS.md for every change.** Only when the map needs a new entry.
+- **Don't add implementation details to rules.** Rules say *what* and *what not*.
+- Keep `.cursor/rules/project-overview.mdc` short. Cursor applies it in every session.
+- **Check before creating.** The most common maintenance mistake is adding something that already exists in a different file.
+- **Never link `dev-notes/` from `docs/` or normix docstrings** — promote content to `docs/` first.

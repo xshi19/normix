@@ -72,39 +72,39 @@ Read `.cursor/rules/project-overview.mdc` once for the project catalog. For inst
 | When | Read |
 |---|---|
 | Python code, including tests and scripts | `.cursor/rules/coding-conventions.mdc` |
-| Comment Python, or review comments | `.cursor/skills/no-comments/SKILL.md` |
+| Comment Python, or review comments | `.agents/skills/no-comments/SKILL.md` |
 | Add or change tests | `.cursor/rules/testing-guidelines.mdc` |
-| Run, select, or profile tests | `.cursor/skills/running-tests/SKILL.md` |
-| Add a distribution, module, constant, or design decision | `.cursor/skills/agent-maintenance/SKILL.md` |
-| Fix a reproducible bug | `.cursor/skills/tdd/SKILL.md` |
-| Change Bessel, GIG/GH solvers, EM, or custom JVPs | `.cursor/skills/interrogate/SKILL.md` |
-| Change class boundaries, abstractions, backend selection, device placement, or transformation guarantees | `.cursor/skills/architect/SKILL.md` |
-| Explain behavior or trace design history | `.cursor/skills/how/SKILL.md` or `.cursor/skills/why/SKILL.md` |
-| Make design, verification, or refactoring decisions | `.cursor/skills/principles/SKILL.md` |
-| Prove a Lean claim, translate with jax-lean, or edit formal coverage | `.cursor/skills/normix-formal-verify/SKILL.md` |
-| Edit prose, docstrings, rules, skills, or PR descriptions | `.cursor/skills/unslop/SKILL.md` |
+| Run, select, or profile tests | `.agents/skills/running-tests/SKILL.md` |
+| Add a distribution, module, constant, or design decision | `.agents/skills/agent-maintenance/SKILL.md` |
+| Fix a reproducible bug | `.agents/skills/tdd/SKILL.md` |
+| Change Bessel, GIG/GH solvers, EM, or custom JVPs | `.agents/skills/interrogate/SKILL.md` |
+| Change class boundaries, abstractions, backend selection, device placement, or transformation guarantees | `.agents/skills/architect/SKILL.md` |
+| Explain behavior or trace design history | `.agents/skills/how/SKILL.md` or `.agents/skills/why/SKILL.md` |
+| Make design, verification, refactoring, or benchmark decisions; use a shared engineering skill | `dev-notes/skill-overlays/principles.md` and its matching shared skill |
+| Audit numerical tests with mutation testing | `.agents/skills/mutation-testing/SKILL.md` and `dev-notes/skill-overlays/mutation-testing.md` |
+| Prove a Lean claim, translate with jax-lean, or edit formal coverage | `.agents/skills/normix-formal-verify/SKILL.md` |
+| Edit prose, docstrings, rules, skills, or PR descriptions | `.agents/skills/unslop/SKILL.md` |
 | Edit public docs, internal docs, README, or docstring links | `.cursor/rules/docs-cross-links.mdc` |
-| Edit tutorials; build or publish docs | `.cursor/skills/docs-publish/SKILL.md` |
+| Edit tutorials; build or publish docs | `.agents/skills/docs-publish/SKILL.md` |
 | Work in notebooks/ | `.cursor/rules/notebook-guidelines.mdc` |
-| Commit, prepare a PR, or release | `.cursor/skills/git-conventions/SKILL.md` |
+| Commit, prepare a PR, or release | `.agents/skills/git-conventions/SKILL.md` |
 | Edit AGENTS.md or ARCHITECTURE.md | `.cursor/rules/maintain-agents-md.mdc` or `.cursor/rules/maintain-architecture-md.mdc`, respectively |
 | Edit theory or design/technical/reference notes | `.cursor/rules/maintain-theory-docs.mdc` or `.cursor/rules/maintain-design-docs.mdc`, as applicable |
 | Edit rules or skills | `.cursor/rules/maintain-cursor-rules.mdc` or `.cursor/rules/maintain-skills.mdc`, respectively |
-| Request a visual explanation | `.cursor/skills/show-me/SKILL.md` |
-| Explicitly request a custom playbook | `.cursor/skills/figure-it-out/SKILL.md` |
-| Prepare an external design/review package | `.cursor/skills/arena/SKILL.md` (hand-off reference; runner retired) |
+| Request a visual explanation | `.agents/skills/show-me/SKILL.md` |
+| Explicitly request a custom playbook | `.agents/skills/figure-it-out/SKILL.md` |
+| Prepare an external design/review package | `.agents/skills/arena/SKILL.md` (hand-off reference; runner retired) |
 ## Codex notes
 
 Cursor frontmatter does not load these files in Codex. Read the selected bodies explicitly.
-Skills remain canonical under `.cursor/skills/`.
-`.agents/skills/` may symlink those directories, and `.codex/agents/` holds project subagents.
-Use available host tools.
-Cursor tool arguments and model names are not Codex configuration.
+Normix-owned skills and pinned copies both live under `.agents/skills/`. Do not add a second copy of a normix skill.
 
-Preserve required external hand-offs.
-Report a prepared package separately from a completed external review.
-Follow the user's task scope.
-A workflow pointer does not authorize publishing or releasing.
+Read `.agents/skills/README.md` for the vendored list and the normix-owned list. Change a shared skill only by a pull request to `xshi19/xshi-skills`. `.codex/agents/` holds project subagents.
+Keep project additions in `dev-notes/skill-overlays/`, outside skill discovery. Read the routed attachment alongside each relevant shared skill. Use plain Markdown without skill frontmatter. Never edit pinned copies to attach them.
+Cursor tool arguments and model names are not Codex configuration. Use available host tools.
+
+Preserve required external hand-offs. Report a prepared package separately from a completed external review.
+Follow the user's task scope. A workflow pointer does not authorize publishing or releasing.
 Host execution and hand-offs: `dev-notes/design/agent_instructions_design.md` § Host support.
 
 ## Design Philosophy
