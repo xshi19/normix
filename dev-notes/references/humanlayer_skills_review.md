@@ -1,7 +1,7 @@
 # humanlayer/skills: Survey and Fit for normix
 
 **Date:** 2026-08-12
-**Source:** [`humanlayer/skills`](https://github.com/humanlayer/skills) (Claude Code plugin marketplace; SKILL.md format, same spec as `.cursor/skills/`)
+**Source:** [`humanlayer/skills`](https://github.com/humanlayer/skills) (Claude Code plugin marketplace; SKILL.md format, same spec as `.agents/skills/`)
 **Trigger:** review whether any of the five skills improve the agent framework in `../design/agent_instructions_design.md`, with particular interest in `show-me` HTML review artifacts on Cursor desktop and iOS.
 
 Unrelated to pstack's on-hold `show-me-your-work` (decision-log TSVs). Durable learnings promoted to `../design/agent_instructions_design.md` (row C5 in `design.md`); remaining loop mechanics live in `../plans/loops_and_orchestration.md`.
@@ -10,7 +10,7 @@ Unrelated to pstack's on-hold `show-me-your-work` (decision-log TSVs). Durable l
 
 | Skill | Verdict | Why |
 |---|---|---|
-| `show-me` | **Adapt** | Smallest-view hierarchy + last-resort HTML. Needs a Cursor-aware delivery section (desktop Open in Browser, cloud screenshot bridge, no iOS HTML). Implemented as `.cursor/skills/show-me/`. |
+| `show-me` | **Adapt** | Smallest-view hierarchy + last-resort HTML. Needs a Cursor-aware delivery section (desktop Open in Browser, cloud screenshot bridge, no iOS HTML). Implemented as `.agents/skills/show-me/`. |
 | `design-control-loop` | **Harvest** | Sensor / controller / actuator / set-point vocabulary, per-loop memory file, PR bounding, optional dampener. Concepts only — Cursor automations stay the runner. Folded into `../plans/loops_and_orchestration.md`. |
 | `build-iterated-agentic-loop` | **Reference** | GH Actions + headless-CLI scaffold. Checklist ideas (one-PR bound, memory file, response template as PR body) overlap the harvest above. Don't install the workflow. |
 | `improve-claude-md` | **Skip** | Compensates for Claude Code's "this context may or may not be relevant" disclaimer via `<important if>` blocks. Cursor glob-scoped `.mdc` rules are the mechanical version of the same idea; we already use them. Don't wrap `AGENTS.md` in XML. |

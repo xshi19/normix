@@ -25,7 +25,7 @@ not *everything it needs to know*. Length caps are in `.cursor/rules/rule-author
 - Full API reference → belongs in code docstrings
 - Detailed derivations → `dev-notes/tech_notes/`
 - Implementation patterns → `.cursor/rules/`
-- Step-by-step workflows → `.cursor/skills/`
+- Step-by-step workflows → `.agents/skills/`
 - Mathematical theory → `docs/theory/`
 
 ## When to Update
