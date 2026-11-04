@@ -733,7 +733,7 @@ Repository links are relative to this report. Source and test references support
 - [AGENTS.md](../../../AGENTS.md), [dev-notes/README.md](../../README.md), and [ARCHITECTURE.md](../../ARCHITECTURE.md).
 - Earlier background material dated 2026-10-19 included social-media posts, industry statistics, and remote papers. These were not verified and are not independent evidence for this report's conclusions.
 - [Design decision table](../../design/design.md): E3, E9–E11, E16–E17, S4–S12, and FIN-1–FIN-5; [design index](../../design/index.md).
-- [Test-running guidance](../../../.cursor/skills/running-tests/SKILL.md), [testing guidelines](../../../.cursor/rules/testing-guidelines.mdc), [coding conventions](../../../.cursor/rules/coding-conventions.mdc), and [design-record rules](../../../.cursor/rules/maintain-design-docs.mdc).
+- [Test-running guidance](../../../.agents/skills/running-tests/SKILL.md), [testing guidelines](../../../.cursor/rules/testing-guidelines.mdc), [coding conventions](../../../.cursor/rules/coding-conventions.mdc), and [design-record rules](../../../.cursor/rules/maintain-design-docs.mdc).
 - [pyproject.toml](../../../pyproject.toml) and [tests/conftest.py](../../../tests/conftest.py): dependencies, JAX constraints, markers, and x64. The reported full CPU-suite time of about 71 minutes was not remeasured.
 
 **normix source and existing tests**

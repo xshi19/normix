@@ -20,7 +20,7 @@ the vocabulary is a guess.
 
 | Text | Pass | Why |
 |---|---|---|
-| `.cursor/rules/`, `.cursor/skills/`, `AGENTS.md` | Full | Instructions for an agent; 20% imperative sentences, 2% with math |
+| `.cursor/rules/`, `.agents/skills/`, `AGENTS.md` | Full | Instructions for an agent; 20% imperative sentences, 2% with math |
 | Procedures anywhere: install, commands, how-to steps, PR "how verified" | Full | One action per step is the STE core |
 | Chat explanations the user asked to be simple; show-me captions | Full | The use case in Karpathy's tip |
 | `docs/design/`, `dev-notes/design/`, `docs/user_guide/` prose, changelog, PR summary | Descriptive rules only | Rationale, not steps; about 1 in 3 published sentences has math |
@@ -78,7 +78,7 @@ aligned between the two sides.
 ## Check
 
 ```bash
-python3 .cursor/skills/unslop/scripts/ste_check.py <files or dirs>
+python3 .agents/skills/unslop/scripts/ste_check.py <files or dirs>
 ```
 
 The checker skips code, math, tables, and headings. It prints
