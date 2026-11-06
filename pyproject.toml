@@ -112,6 +112,46 @@ markers = [
     "gpu: tests that require or specifically exercise GPU behavior",
 ]
 
+[tool.mutmut]
+# Reproducible GIG/Bessel mutation baseline; see docs/reports/mutmut-gig-bessel.md.
+# Run through scripts/run_mutmut.sh, which sets the JAX/BLAS environment.
+source_paths = [
+    "normix/distributions/generalized_inverse_gaussian.py",
+    "normix/utils/bessel.py",
+]
+also_copy = ["normix", "tests"]
+pytest_add_cli_args = [
+    "-p", "no:xdist",
+    "-p", "no:cacheprovider",
+    "-p", "tests.mutmut_jax_memory",  # bounds RSS; see that module
+    "-q",
+]
+pytest_add_cli_args_test_selection = [
+    "tests/test_bessel_contract.py",
+    "tests/test_cpu_bessel_backend.py",
+    "tests/test_jax_bessel.py",
+    "tests/test_gig_expectation_domain.py",
+    "tests/test_gig_log_partition.py",
+    "tests/test_gig_properties.py",
+    "tests/test_gig_rvs.py",
+    "tests/test_gig_special_cases.py",
+    # Out-of-scope paths that the 2026 report attributes 23 mutants to.
+    "tests/test_cdf_ppf.py",
+    "tests/finance/test_quadrature.py",
+    "tests/test_distribution_conversions.py",
+    "tests/test_mixture_moments.py",
+    "tests/test_solvers.py::TestSolveBregmanGIG::test_from_expectation_cold_start",
+    "tests/test_em_regression.py::TestConjugacyMeanLogLik::test_estep_log_lik_matches_marginal",
+    "tests/test_expectation_autodiff.py",
+    "tests/test_no_host_callbacks.py::test_gig_jax_solve_jaxpr_has_no_callback",
+]
+# JAX must not be initialised before fork: start workers from a clean forkserver
+# and skip the import-time warm-up.
+process_isolation = "forkserver"
+forkserver_warmup = "none"
+timeout_multiplier = 15.0
+timeout_constant = 10.0
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true

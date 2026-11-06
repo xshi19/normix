@@ -4,27 +4,53 @@ mutmut 3.8.1 mutated two modules.
 The modules are `normix/distributions/generalized_inverse_gaussian.py` and `normix/utils/bessel.py`.
 The first file is the Generalized Inverse Gaussian (GIG) law.
 The second file is the Bessel kernel `log_kv`.
-The run made 3251 mutants.
+Each campaign made 3251 mutants.
 The score is `(killed + timeout) / total`.
 
 A timeout counts in the numerator.
 A survivor, a mutant with no test, and a segfault stay in the denominator.
-The first run scored 83.24%, which is 2706/3251.
-New behavior tests then killed 110 of the 522 survivors.
-The score after those tests is 86.62%, which is 2816/3251.
 No library logic was changed.
 
 | Run | Killed | Timeout | Survived | No test | Segfault | Score |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Before the new tests | 2698 | 8 | 522 | 22 | 1 | 83.24% (2706/3251) |
-| After the new tests | 2808 | 8 | 412 | 22 | 1 | 86.62% (2816/3251) |
+| Before the new tests (historical) | 2698 | 8 | 522 | 22 | 1 | 83.24% (2706/3251) |
+| After the new tests (historical, unverified raw) | 2808 | 8 | 412 | 22 | 1 | 86.62% (2816/3251) |
+| Verified full re-run on `c79dda8` | 2856 | 45 | 350 | 0 | 0 | 89.23% (2901/3251) |
+
+## Verified full re-run (2026-11-05)
+
+A full mutmut 3.8.1 re-run finished on git SHA `c79dda8` (`cursor/mutmut-gig-bessel-6335`).
+Wall clock was 73112 s (about 20.3 h), exit code 0.
+Python 3.12.15, JAX 0.9.1, `max_children=3`.
+Config is `[tool.mutmut]` in `pyproject.toml`; the entry point is `scripts/run_mutmut.sh`.
+
+| Metric | Historical after new tests | Verified full re-run | Delta |
+| --- | ---: | ---: | ---: |
+| Killed | 2808 | 2856 | +48 |
+| Timeout | 8 | 45 | +37 |
+| Survived | 412 | 350 | −62 |
+| No test | 22 | 0 | −22 |
+| Segfault | 1 | 0 | −1 |
+| Score numerator | 2816 | 2901 | +85 |
+| Score | 86.62% | 89.23% | +2.61 pp |
+
+The verified score is `(2856 + 45) / 3251` = 2901/3251 ≈ 89.23%.
+Per-mutant results are under `docs/reports/mutmut-gig-bessel-full-20261105/` (`status.tsv`, `summary.txt`, `mutmut-cicd-stats.json`, `run-info.txt`).
+
+The earlier 86.62% figure and the 412-survivor class counts below are historical.
+They came from a prior campaign classification, not from this verified re-run.
+There is no mutant-ID list on disk for those 412 survivors, so the old buckets cannot be remapped 1:1 onto the 350 new survivors.
+Do not treat the class table as a classification of the verified run.
 
 ## How each original survivor was classed
 
-The first run left 522 survivors.
+This section is historical context for the first campaign.
+It classifies the 522 survivors from the run before the new behavior tests.
+It does not classify the 350 survivors from the verified full re-run above.
+
 A survivor is a mutant the selected tests did not kill.
 Each one is a real gap, an equivalent edit, or a numerical no-show.
-Twenty-three more sit on a path this run did not execute.
+Twenty-three more sit on a path that campaign did not execute.
 Those 23 are not a weak assertion in the selected tests.
 
 | Class | Mutants |
@@ -186,5 +212,9 @@ Do not add it to the project dependencies.
 Point the run at the two modules and at the behavioral tests.
 Run pytest in one process.
 After every `uv run`, restore `uv.lock`.
+
+The verified full re-run uses `[tool.mutmut]` in `pyproject.toml` and `scripts/run_mutmut.sh`.
+That config selects the same behavioral files plus the out-of-scope paths named in the historical class table.
+`tests/mutmut_jax_memory.py` is a pytest plugin that clears JAX caches between modules so long-lived mutmut workers stay bounded.
 
 Sphinx ignores `docs/reports`, so this note is not a page on the documentation site.
