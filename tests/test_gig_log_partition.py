@@ -136,16 +136,21 @@ class TestGIGOffDomain:
         assert np.isinf(psi_jax) and psi_jax > 0.0
         assert np.isinf(psi_cpu) and psi_cpu > 0.0
 
-    def test_valid_gamma_boundary_is_finite(self):
-        gig = GIG(2.0, 3.0, 0.0)
-        psi = float(gig.log_partition())
-        psi_gamma = float(gammaln(2.0) - 2.0 * math.log(1.5))
-        assert np.isfinite(psi)
-        assert_allclose(psi, psi_gamma, rtol=RTOL, atol=ATOL)
+    @pytest.mark.parametrize("p,a", [(0.5, 2.0), (1.0, 4.0), (2.0, 3.0)])
+    def test_valid_gamma_boundary_is_finite(self, p, a):
+        psi_jax, psi_cpu = _jax_cpu_psi(p, a, 0.0)
+        beta = a / 2.0
+        psi_gamma = float(gammaln(p) - p * math.log(beta))
+        assert np.isfinite(psi_jax) and np.isfinite(psi_cpu)
+        assert_allclose(psi_jax, psi_gamma, rtol=RTOL, atol=ATOL)
+        assert_allclose(psi_cpu, psi_gamma, rtol=RTOL, atol=ATOL)
 
-    def test_valid_invgamma_boundary_is_finite(self):
-        gig = GIG(-2.0, 0.0, 3.0)
-        psi = float(gig.log_partition())
-        psi_ig = float(gammaln(2.0) - 2.0 * math.log(1.5))
-        assert np.isfinite(psi)
-        assert_allclose(psi, psi_ig, rtol=RTOL, atol=ATOL)
+    @pytest.mark.parametrize("p,b", [(-0.5, 2.0), (-1.0, 4.0), (-2.0, 3.0)])
+    def test_valid_invgamma_boundary_is_finite(self, p, b):
+        psi_jax, psi_cpu = _jax_cpu_psi(p, 0.0, b)
+        alpha = -p
+        beta = b / 2.0
+        psi_ig = float(gammaln(alpha) - alpha * math.log(beta))
+        assert np.isfinite(psi_jax) and np.isfinite(psi_cpu)
+        assert_allclose(psi_jax, psi_ig, rtol=RTOL, atol=ATOL)
+        assert_allclose(psi_cpu, psi_ig, rtol=RTOL, atol=ATOL)

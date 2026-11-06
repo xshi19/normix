@@ -97,3 +97,7 @@ notebooks_numpy/
 # Scratch outputs
 *.png
 gig_roundtrip_errors.png
+
+# mutmut working tree and run artifacts
+mutants/
+mutmut-artifacts/

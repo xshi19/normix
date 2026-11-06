@@ -105,3 +105,40 @@ def test_gig_nonpoint_boundary_moments_are_not_rejected(dist):
     eta = eta_fin + moment * direction
     recovered = GIG.from_expectation(eta, theta0=gig.natural_params(), backend='cpu', method='lbfgs')
     np.testing.assert_allclose(recovered.natural_params(), gig.natural_params(), atol=2e-5)
+
+
+@pytest.mark.contract
+def test_cpu_cold_start_recovers_classical_parameters():
+    model = GIG(0.5, 1.0, 1.0)
+    recovered = GIG.from_expectation(model.expectation_params(), backend='cpu')
+    np.testing.assert_allclose(
+        recovered.natural_params(), model.natural_params(), rtol=1e-4, atol=1e-6,
+    )
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize('alpha', [0.5, 1.0, 1.5, 3.0])
+def test_gamma_boundary_kl_matches_gamma(alpha):
+    source = Gamma(alpha, 2.0)
+    target = GIG(1.0, 2.0, 1.0)
+    kl_source = source.kl_divergence(target)
+    kl_boundary = source.to_gig().kl_divergence(target)
+    if alpha <= 1.0:
+        assert bool(jnp.isinf(kl_source)) and float(kl_source) > 0.0
+        assert bool(jnp.isinf(kl_boundary)) and float(kl_boundary) > 0.0
+        return
+    np.testing.assert_allclose(kl_boundary, kl_source, rtol=1e-8, atol=1e-10)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize('alpha', [0.5, 1.0, 1.5, 3.0])
+def test_invgamma_boundary_kl_matches_inverse_gamma(alpha):
+    source = InverseGamma(alpha, 2.0)
+    target = GIG(1.0, 1.0, 2.0)
+    kl_source = source.kl_divergence(target)
+    kl_boundary = source.to_gig().kl_divergence(target)
+    if alpha <= 1.0:
+        assert bool(jnp.isinf(kl_source)) and float(kl_source) > 0.0
+        assert bool(jnp.isinf(kl_boundary)) and float(kl_boundary) > 0.0
+        return
+    np.testing.assert_allclose(kl_boundary, kl_source, rtol=1e-8, atol=1e-10)
