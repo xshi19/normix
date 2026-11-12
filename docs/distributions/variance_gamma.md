@@ -66,8 +66,8 @@ Built from the shared location/shape block and the Gamma subordinator:
 | $\beta$ | `beta` | Gamma rate |
 
 The marginal $f(x)$ is not itself an exponential family, but the joint
-$(X, Y)$ is — its natural parametrization $\theta$ and the EM machinery are
-derived in {doc}`../theory/gh`.
+$(X, Y)$ is. Its natural parameters are stated in {doc}`../theory/gh`.
+EM is derived in {doc}`../theory/em_algorithm`.
 
 ## Quick usage
 
