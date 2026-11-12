@@ -81,7 +81,7 @@ the class as `@classmethod` or `@staticmethod`.
 | F8 | Precision | float64 throughout | Bessel + EM convergence require it |
 | F9 | Numerical constants | Centralised in `utils/constants.py` | No scattered magic numbers |
 | F10 | Module-level functions | **forbidden**; classmethods or staticmethods | Keeps the interface on the class |
-| F11 | Concentration $\sqrt{ab}$ | $\omega$, not $\eta$ | Scale is $\delta=\sqrt{b/a}$. $\eta$ stays $\nabla\psi$. Docs and notes only; no code identifier. xshi-math and `gradient_fitting_comparison.md` already use $\omega$. Authority: match that page in the docs split. Reopen if xshi-math changes the symbol. `tech_notes/gig_concentration_symbol.md`. |
+| F11 | Concentration $\sqrt{ab}$ | $\omega$, not $\eta$ | Scale is $\delta=\sqrt{b/a}$. $\eta$ stays $\nabla\psi$. Docs and notes only; no code identifier. xshi-math and `gradient_fitting_comparison.md` already use $\omega$. Rejected: keep $\eta$ for $\sqrt{ab}$; rename varentropy's $z$ to $\omega$. Authority: match the xshi-math page. Reopen if that page changes the symbol. `tech_notes/gig_concentration_symbol.md`. |
 
 ### Moment and density-power domains
 
