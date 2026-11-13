@@ -67,8 +67,9 @@ statistic $t(x) = [\log x,\; 1/x,\; x]$:
 | Expectation $\eta = \nabla\psi$ | $[\,\mathbb{E}[\log X],\; \mathbb{E}[1/X],\; \mathbb{E}[X]\,]$ |
 
 Inverting $\eta \mapsto \theta$ is a strictly convex but stiff Bessel problem,
-solved by an $\eta$-rescaled multi-start Newton iteration. See {doc}`../theory/gig`
-for the derivation.
+solved by an $\eta$-rescaled multi-start Newton iteration. See
+{doc}`../theory/gig` for the exponential-family contract. The solver is
+described in {doc}`../design/solvers_and_bessel`.
 
 ## Quick usage
 

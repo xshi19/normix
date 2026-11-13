@@ -251,10 +251,8 @@ They are not fixes delivered by this roadmap.
 
 ### Known doc issues
 
-Record only; leave these pages unchanged in this update:
-
-- `docs/theory/gig.md` uses $\delta^p$ where $\delta=\sqrt{b/a}$ implies $\delta^{-p}$ for GIG parameters $a,b>0$ and shape $p$.
-- `docs/theory/em_algorithm.md` claims convergence to the MLE. Separate likelihood nondecrease, likelihood-value convergence, stationary accumulation points, and parameter convergence; global MLE convergence needs stronger assumptions.
+- Resolved: `docs/theory/gig.md` no longer writes $\delta^p$. The corrected $(p, \delta, \omega)$ density is on xshi-math. See `dev-notes/tech_notes/gig_concentration_symbol.md`.
+- Open, and left unchanged: `docs/theory/em_algorithm.md` claims convergence to the MLE. Separate likelihood nondecrease, likelihood-value convergence, stationary accumulation points, and parameter convergence; global MLE convergence needs stronger assumptions.
 
 ## W3: jaxpr-to-Lean bridge
 

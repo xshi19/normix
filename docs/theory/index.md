@@ -1,8 +1,11 @@
 # Mathematical Background
 
-Formal derivations for the distributions and algorithms in `normix`, based on
-{ref}`Shi2016 <shi2016>`. Pages are grouped by topic. Bibliographic entries live
-in {doc}`../references`.
+`gig`, `gh`, and `varentropy` state the formulas normix computes.
+Derivations of those three topics are on the
+[Normix theory](https://xshi19.github.io/math/normix-theory/) site.
+Fitting and portfolio pages still carry their derivations here.
+Bibliographic entries live in {doc}`../references`.
+The distribution notes follow {ref}`Shi2016 <shi2016>`.
 
 ```{toctree}
 :maxdepth: 1

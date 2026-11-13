@@ -71,9 +71,9 @@ Built from the shared location/shape block and the GIG subordinator:
 | $a$ | `a` | GIG rate ($> 0$) |
 | $b$ | `b` | GIG rate ($> 0$) |
 
-The marginal is not an exponential family, but the joint $(X, Y)$ is — its
-natural parametrization $\theta$, the closed-form Bessel log-density, and the
-EM/MCECM algorithms are derived in {doc}`../theory/gh` and
+The marginal is not an exponential family, but the joint $(X, Y)$ is.
+Its natural parameters and marginal log-density are stated in
+{doc}`../theory/gh`. EM and MCECM are derived in
 {doc}`../theory/em_algorithm`.
 
 ## Quick usage

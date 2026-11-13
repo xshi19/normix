@@ -37,15 +37,17 @@
 | How is the PINV quantile table reused? | `solvers_and_bessel.md` § 5.1 |
 | Where do rules vs skills vs docs belong? | `agent_instructions_design.md` |
 | How do Cursor and Codex load instructions, and what is the Normix Engineer hand-off? | `agent_instructions_design.md` § Host support |
+| What symbol is $\sqrt{ab}$? | `../tech_notes/gig_concentration_symbol.md`; row F11 |
 | Visual explanation artifacts (show-me HTML)? | `agent_instructions_design.md` § Visual artifacts; skill `.agents/skills/show-me/` |
 
 ## See also
 
 - `../ARCHITECTURE.md` — module hierarchy, distribution storage table,
   numerical constants table.
-- `../../docs/theory/` — mathematical derivations (MyST `.md`).
+- `../../docs/theory/` — GIG, GH, and varentropy library contracts (derivations on xshi-math); other pages are mathematical derivations.
 - `../tech_notes/` — deep dives (Bessel survey, GIG benchmarks,
-  EM profiling, JAX overhead, gradient-fitting vs EM/MLE).
+  EM profiling, JAX overhead, gradient-fitting vs EM/MLE, GIG
+  concentration symbol).
 - `../plans/` — work not yet done or in progress.
 - `../archive/plans/` — completed plans (JAX migration, review roadmap,
   `finance_architecture.md`).

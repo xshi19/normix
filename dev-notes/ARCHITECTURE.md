@@ -322,8 +322,8 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
 | `design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
 | `design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
-| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch, gradient-fitting vs EM/MLE comparison |
-| `docs/theory/` | Mathematical derivations (MyST `.md`), including `quadrature_scenarios.md` |
+| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch, gradient-fitting vs EM/MLE comparison, GIG concentration symbol $\omega$ |
+| `docs/theory/` | Library contracts for `gig`, `gh`, and `varentropy`; derivations for the other theory pages, including `quadrature_scenarios.md` |
 | `docs/research/` | Published research notes (subordinator tracking); working notes in `research/` |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `references/gpjax_review.md` | GPJax survey: design, JAX usage, lessons for normix |
