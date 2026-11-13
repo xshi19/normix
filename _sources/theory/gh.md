@@ -1,14 +1,20 @@
 # The Generalized Hyperbolic Distribution
 
-In this section we briefly review the basic properties of the Generalized
-Hyperbolic (GH) distribution, introduced by
+This page states the generalized hyperbolic (GH) formulas that normix
+computes. The marginal integral, the scale orbit, the natural-parameter
+expansion, and the Bessel form of the joint Hellinger distance are
+derived in the
+[GH note](https://xshi19.github.io/math/normix-theory/normix-generalized-hyperbolic/).
+The family was introduced by
 {ref}`BarndorffNielsen1977 <barndorffnielsen1977>`.
 
-## Definition as Normal Mixture
+normix writes a density as $f(x\mid\theta)$. On that site the same
+function is $p_\theta(x)$.
 
-Let $Y$ be a GIG random variable with parameters $(p, a, b)$, and
-$Z$ be an independent Gaussian random vector with zero mean and covariance
-$\Sigma$. Then the random vector:
+## Definition
+
+Let $Y$ be GIG with parameters $(p, a, b)$, and let $Z$ be an
+independent Gaussian vector with mean zero and covariance $\Sigma$. Then
 
 ```{math}
 :label: gh-def
@@ -16,38 +22,35 @@ $\Sigma$. Then the random vector:
 X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y} Z
 ```
 
-follows the **generalized hyperbolic distribution** with parameters
-$(\mu, \gamma, \Sigma, p, a, b)$, where $\mu, \gamma \in \mathbb{R}^d$
-and $\Sigma \in \mathbb{R}^{d \times d}$ is a positive definite matrix.
+is generalized hyperbolic with parameters $(\mu, \gamma, \Sigma, p, a, b)$.
+Here $\mu, \gamma \in \mathbb{R}^d$ and $\Sigma$ is positive definite.
+$\Sigma$ is the covariance of $Z$. The constructor
+{meth}`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.from_classical`
+takes $(\mu, \gamma, \Sigma, p, a, b)$ and stores the Cholesky factor of
+$\Sigma$.
 
-### Parameter Interpretation
+- $\mu$: location
+- $\gamma$: skewness
+- $\Sigma$: dispersion
+- $(p, a, b)$: GIG parameters of $Y$
 
-- $\mu$: location parameter
-- $\gamma$: skewness parameter
-- $\Sigma$: models the dependency structure of the multivariate distribution
-- $(p, a, b)$: GIG parameters controlling the heavy-tailedness
-
-In general, many multivariate heavy-tailed distributions can be defined by
-{eq}`gh-def` given some non-negative random variable $Y$. These distributions
-are usually called **normal mixture** or **Gaussian mixture** distributions.
+Any law of the form {eq}`gh-def`, for a nonnegative $Y$, is a **normal
+mixture** in normix.
 
 ```{note}
-
-In many references, "normal mixture" refers to a discrete mixture of normal
-densities. In ``normix``, we use "normal mixture" to refer to any random variable
-that can be expressed by {eq}`gh-def`.
+In many references, "normal mixture" means a discrete mixture of normal
+densities. In normix it means a random vector that can be written as
+{eq}`gh-def`.
 ```
 
-## Joint GH Distribution
+## Joint density
 
-The joint distribution of $X$ and $Y$ is crucial in analyzing the GH
-distribution. We call the distribution of $(X, Y)$ the **joint-GH distribution**.
-Its density function is:
+The joint law of $(X, Y)$ is the joint GH distribution:
 
 ```{math}
 :label: gh-joint
 
-f(x, y | \mu, \gamma, \Sigma, p, a, b) &= \frac{1}{\sqrt{(2\pi)^d |\Sigma|}}
+f(x, y \mid \mu, \gamma, \Sigma, p, a, b) &= \frac{1}{\sqrt{(2\pi)^d |\Sigma|}}
 \frac{(a/b)^{p/2}}{2 K_p(\sqrt{ab})} y^{p - 1 - d/2} \\
 &\quad \times \exp\left( -\frac{1}{2}(x - \mu - \gamma y)^\top \Sigma^{-1}
 (x - \mu - \gamma y) y^{-1} - \frac{1}{2}(b y^{-1} + a y) \right),
@@ -55,73 +58,71 @@ f(x, y | \mu, \gamma, \Sigma, p, a, b) &= \frac{1}{\sqrt{(2\pi)^d |\Sigma|}}
 
 for $y > 0$.
 
-## Marginal GH Density
+## Marginal density
 
-Integrating out $y$ from {eq}`gh-joint`, we obtain the marginal distribution
-of $x$, which is the GH density function:
+Integrating out $y$ gives the marginal density. The calculation is in
+the GH note. The density that
+{meth}`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.log_prob`
+evaluates is
 
 ```{math}
 :label: gh-marginal
 
-f(x | \mu, \gamma, \Sigma, p, a, b) &= \int_0^\infty f(x, y | \mu, \gamma, \Sigma, p, a, b) \, dy \\
-&= c \frac{K_{p - d/2}\left(\sqrt{(b + q(x))(a + \gamma^\top \Sigma^{-1} \gamma)}\right)}
-{\left(\sqrt{(b + q(x))(a + \gamma^\top \Sigma^{-1} \gamma)}\right)^{d/2 - p}}
-e^{(x - \mu)^\top \Sigma^{-1} \gamma},
+\begin{aligned}
+f(x \mid \mu, \gamma, \Sigma, p, a, b)
+&= (2\pi)^{-d/2}\,|\Sigma|^{-1/2}\,
+\frac{(a/b)^{p/2}}{K_p(\sqrt{ab})}
+\left(\frac{A}{Q+b}\right)^{(d/2-p)/2} \\
+&\quad \times
+K_{p-d/2}\!\left(\sqrt{A(Q+b)}\right)
+\exp\!\left(\gamma^\top\Sigma^{-1}(x-\mu)\right).
+\end{aligned}
 ```
 
-where $q(x) = (x - \mu)^\top \Sigma^{-1} (x - \mu)$ is the Mahalanobis distance, and
+where $Q = (x-\mu)^\top\Sigma^{-1}(x-\mu)$ and
+$A = a + \gamma^\top\Sigma^{-1}\gamma$.
+
+The conditional law used by the E-step is
 
 ```{math}
-c = \frac{(a/b)^{p/2} (a + \gamma^\top \Sigma^{-1} \gamma)^{d/2 - p}}
-{(2\pi)^{d/2} |\Sigma|^{1/2} K_p(\sqrt{ab})}.
+Y \mid X = x \sim \mathrm{GIG}\!\left(p - \tfrac{d}{2},\;
+a + \gamma^\top\Sigma^{-1}\gamma,\;
+b + Q\right).
 ```
 
-## Alternative Parameterization
+## Parameters and scale
 
-Similar to the GIG distribution, one can use another parameterization with
-$\delta = \sqrt{b/a}$ and $\eta = \sqrt{ab}$:
+For every $c > 0$ the parameter sets
 
 ```{math}
-f(x | \mu, \gamma, \Sigma, p, \delta, \eta) = c
-\frac{K_{p - d/2}\left(\sqrt{(\eta + q_\delta(x))(\eta + \tilde{q}_\delta)}\right)}
-{\left(\sqrt{(\eta + q_\delta(x))(\eta + \tilde{q}_\delta)}\right)^{d/2 - p}}
-e^{(x - \mu)^\top (\delta \Sigma)^{-1} \delta \gamma},
+(\mu,\; \gamma,\; \Sigma,\; p,\; a,\; b)
+\quad\text{and}\quad
+(\mu,\; \gamma/c,\; \Sigma/c,\; p,\; a/c,\; bc)
 ```
 
-where $q_\delta(x) = (x - \mu)^\top (\delta \Sigma)^{-1} (x - \mu)$,
-$\tilde{q}_\delta = (\delta \gamma)^\top (\delta \Sigma)^{-1} (\delta \gamma)$, and
+give the same marginal law of $X$. The product $ab$ is invariant, so
+the concentration $\omega = \sqrt{ab}$ is invariant, while the scale
+$\delta = \sqrt{b/a}$ is multiplied by $c$. The Fisher information of
+the unrestricted parameter is singular. The derivation of the orbit is
+in the GH note.
 
-```{math}
-c = \frac{(\eta + \tilde{q}_\delta)^{d/2 - p}}{(2\pi)^{d/2} |\delta \Sigma|^{1/2} K_p(\eta)}.
-```
+Two representatives are implemented:
 
-## Model Identifiability
+- {meth}`~normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.regularize_a_eq_b`
+  sets $a = b = \omega$.
+- {meth}`~normix.mixtures.marginal.NormalMixture.regularize_det_sigma_one`
+  sets $|\Sigma| = 1$, the constraint in
+  {ref}`McNeil2010 <mcneil2010>`.
+  {meth}`~normix.mixtures.marginal.NormalMixture.regularize_det_sigma`
+  sets $\log|\Sigma|$ to a chosen target.
 
-From the above representation, one can observe that the GH model is **not regular**
-since the parameter sets $(\mu, \gamma/c, \Sigma/c, p, c\delta, \eta)$ give the
-same distribution for any $c > 0$. Therefore, the Fisher information matrix of
-the GH distribution is singular.
+Since $|\Sigma/c| = |\Sigma|/c^d$, a small change in the matrix scale
+moves $|\Sigma|$ sharply when $d$ is large. Fixing $|\Sigma| = 1$ does
+not control the condition number of $\Sigma$. The mechanisms are
+described in {doc}`../design/em_framework`. Other normalizations used
+in the literature are in the GH note.
 
-There are several ways to regularize the GH family:
-
-1. **Set** $\delta = 1$ (simplest approach)
-2. **Set** $b = 1$ in the EM algorithm {ref}`Protassov2004 <protassov2004>`
-3. **Fix** $b$ when $p > -1$ and fix $a$ when $p < 1$ {ref}`Hu2005 <hu2005>`
-4. **Fix the determinant** $|\Sigma| = 1$ {ref}`McNeil2010 <mcneil2010>`
-
-```{note}
-
-When the dimension $d$ is high, fixing $|\Sigma| = 1$ is recommended.
-Since $|\Sigma/c| = |\Sigma|/c^d$, any small perturbation of the matrix scale
-will make $|\Sigma|$ change dramatically when $d$ is large. The matrix
-inversion would be intractable if $|\Sigma|$ is too large or too small.
-```
-
-## Moments, skewness, and kurtosis
-
-Write $X \stackrel{d}{=} \mu + \gamma Y + \sqrt{Y}\,Z$ with
-$Z\sim\mathcal{N}(0,\Sigma)$ independent of the subordinator $Y$. The first
-two moments are immediate from the law of total expectation:
+## Moments
 
 ```{math}
 :label: gh-mean-cov
@@ -130,25 +131,21 @@ E[X] &= \mu + \gamma\,E[Y], \\
 \mathrm{Cov}[X] &= E[Y]\,\Sigma + \mathrm{Var}[Y]\,\gamma\gamma^\top.
 ```
 
-These identities require the moments of $Y$ that they display. When a
-coordinate has $\gamma_i = 0$ the drift terms vanish, so
-$E[X_i]=\mu_i$ as soon as $E[\sqrt{Y}]<\infty$ and
-$\mathrm{Cov}[X]=E[Y]\,\Sigma$ needs only $E[Y]<\infty$. For InverseGamma
-(the Student-$t$ case $\nu=2\alpha$) that is $\alpha>1/2$ for the mean and
-$\alpha>1$ for the covariance. When $\gamma_i\neq 0$ the mean needs $E[Y]$
-and the covariance needs $\mathrm{Var}[Y]$. Cauchy ($\alpha=1/2$,
-$\gamma=0$) therefore has no mean: the Lebesgue integral is $+\infty$, not
-$\mu$. Gamma subordinators have every positive moment, so VarianceGamma does
-not inherit the InverseGamma table. In code, a zero factor of $\gamma$ is
-never multiplied by an infinite moment of $Y$.
+These identities use the moments of $Y$ that they display. When
+$\gamma_i = 0$, the drift terms vanish, so $E[X_i] = \mu_i$ as soon as
+$E[\sqrt{Y}] < \infty$, and $\mathrm{Cov}[X] = E[Y]\,\Sigma$ needs only
+$E[Y] < \infty$. For an inverse-gamma subordinator (the Student-$t$
+case $\nu = 2\alpha$) that is $\alpha > 1/2$ for the mean and
+$\alpha > 1$ for the covariance. When $\gamma_i \ne 0$ the mean needs
+$E[Y]$ and the covariance needs $\mathrm{Var}[Y]$. Cauchy
+($\alpha = 1/2$, $\gamma = 0$) has no mean: the integral is $+\infty$,
+not $\mu$. A gamma subordinator has every positive moment, so
+variance-gamma does not inherit the inverse-gamma table. A zero
+coordinate of $\gamma$ is not multiplied by an infinite moment of $Y$.
 
-Higher central moments follow by conditioning on $Y$. For each coordinate
-$X_i = \mu_i + \gamma_i Y + \sqrt{Y}\,Z_i$ with $Z_i\sim\mathcal{N}(0,\Sigma_{ii})$,
-the centred variable $W = X_i - E[X_i]$ satisfies
-$W\mid Y \sim \mathcal{N}\bigl(\gamma_i(Y-m_1),\; \Sigma_{ii} Y\bigr)$
-where $m_k = E[Y^k]$. The Gaussian moment formulae
-$E[W^3\mid Y] = a^3 + 3av$ and $E[W^4\mid Y] = a^4 + 6a^2 v + 3v^2$
-with $a = \gamma_i(Y-m_1)$ and $v = \Sigma_{ii} Y$ then give
+Conditioning on $Y$ gives the third and fourth central moments. The
+expansion is in the GH note. For coordinate $i$, with
+$m_k = E[Y^k]$ from {eq}`gig-moments` or from the boundary law,
 
 ```{math}
 :label: gh-skew-kurt
@@ -156,118 +153,85 @@ with $a = \gamma_i(Y-m_1)$ and $v = \Sigma_{ii} Y$ then give
 \mu_3(X_i) &= \gamma_i^3\,\mu_3(Y) + 3\,\gamma_i\,\Sigma_{ii}\,\mathrm{Var}[Y], \\
 \mu_4(X_i) &= \gamma_i^4\,\mu_4(Y)
   + 6\,\gamma_i^2\,\Sigma_{ii}\,E[(Y-m_1)^2 Y]
-  + 3\,\Sigma_{ii}^2\,E[Y^2],
+  + 3\,\Sigma_{ii}^2\,E[Y^2].
 ```
 
-and the standardised moments are the usual
-$\gamma_1 = \mu_3/\sigma^3$ (skewness) and
-$\gamma_2 = \mu_4/\sigma^4 - 3$ (excess kurtosis). The subordinator raw
-moments $m_k$ are closed form for every member of the GIG tree
-(Gamma / InverseGamma rising factorials; GIG Bessel ratios
-{eq}`gig-moments`; InverseGaussian via its GIG embedding).
+Skewness is $\mu_3/\sigma^3$ and excess kurtosis is
+$\mu_4/\sigma^4 - 3$. When $\gamma = 0$ the skewness is $0$ and the
+excess kurtosis is $3\,E[Y^2]/E[Y]^2 - 3$, which equals $3/\alpha$ for
+variance-gamma and $3/(\alpha-2)$ for normal-inverse gamma
+($\alpha > 2$). The $t_3$ law (normal-inverse gamma, $\gamma = 0$,
+$\alpha = 1.5$) has no fourth moment, so the excess kurtosis is
+$+\infty$. When $\gamma \ne 0$, the term $\gamma_i^4\mu_4(Y)$ requires
+$E[Y^4] < \infty$ (inverse-gamma shape $\alpha > 4$).
 
-Special cases check the algebra: when $\gamma = 0$ one has $\gamma_1 = 0$ and
-$\gamma_2 = 3\,E[Y^2]/E[Y]^2 - 3$, which reduces to $3/\alpha$ for
-VarianceGamma and to $3/(\alpha-2)$ for NormalInverseGamma ($\alpha > 2$).
-The $t_3$ law (NInvG, $\gamma=0$, $\alpha=1.5$) has no fourth moment, so
-excess kurtosis is $+\infty$. When $\gamma \ne 0$, the $\gamma_i^4\mu_4(Y)$
-term requires a finite fourth moment of $Y$ (InverseGamma shape
-$\alpha > 4$).
-
-In ``normix`` these formulae are
 {meth}`~normix.mixtures.marginal.NormalMixture.skewness` and
-{meth}`~normix.mixtures.marginal.NormalMixture.kurtosis`
-(component-wise for $d>1$; scalars on `Univariate*`).
+{meth}`~normix.mixtures.marginal.NormalMixture.kurtosis` return these
+values, component-wise for $d > 1$.
 
-## Exponential Family Form
+## Exponential family
 
-The joint-GH distribution {eq}`gh-joint` belongs to the exponential family with density:
-
-```{math}
-f(x, y|\theta) = h(x, y) \exp\left(\theta^\top t(x, y) - \psi(\theta)\right)
-```
-
-**Sufficient Statistics:**
+The joint law {eq}`gh-joint` is an exponential family
 
 ```{math}
-t(x, y) = \begin{pmatrix} \log y \\ y^{-1} \\ y \\ x \\ x y^{-1} \\ x x^\top y^{-1} \end{pmatrix}
+f(x, y\mid\theta) = h(x, y) \exp\left(\theta^\top t(x, y) - \psi(\theta)\right).
 ```
 
-where $t_1, t_2, t_3 \in \mathbb{R}$, $t_4, t_5 \in \mathbb{R}^d$, and
-$t_6 \in \mathbb{R}^{d \times d}$.
-
-**Natural Parameters:**
-
-The natural parameters are derived from the classical parameters
-$(\mu, \gamma, \Sigma, p, a, b)$. By expanding the exponent in {eq}`gh-joint`:
+Expanding the joint exponent produces the coordinates below. The
+expansion is in the GH note.
 
 ```{math}
-&-\frac{1}{2}(x - \mu - \gamma y)^\top \Sigma^{-1} (x - \mu - \gamma y) y^{-1}
-- \frac{1}{2}(b y^{-1} + a y) \\
-&= -\frac{1}{2} x^\top \Sigma^{-1} x \, y^{-1}
-+ x^\top \Sigma^{-1} \mu \, y^{-1}
-+ x^\top \Sigma^{-1} \gamma \\
-&\quad - \frac{1}{2} \mu^\top \Sigma^{-1} \mu \, y^{-1}
-- \mu^\top \Sigma^{-1} \gamma
-- \frac{1}{2} \gamma^\top \Sigma^{-1} \gamma \, y \\
-&\quad - \frac{1}{2} b \, y^{-1} - \frac{1}{2} a \, y
+t(x, y) = \begin{pmatrix} \log y \\ y^{-1} \\ y \\ x \\ x y^{-1} \\ x x^\top y^{-1} \end{pmatrix},
+\qquad
+h(x, y) = (2\pi)^{-d/2}\,\mathbf{1}_{y > 0}.
 ```
 
-we identify the natural parameters:
+The blocks have sizes $1$, $1$, $1$, $d$, $d$, and $d \times d$. In the
+parameter array the last block is stored as a vector of length $d^2$:
+the coefficient of $\mathrm{vec}(xx^\top y^{-1})$ is
+$-\tfrac12\mathrm{vec}(\Sigma^{-1})$.
 
 ```{math}
 :label: gh-natural-params
 
-\theta_1 &= p - 1 - \frac{d}{2} \quad \text{(coefficient of } \log y \text{)} \\
-\theta_2 &= -\frac{1}{2}\left(b + \mu^\top \Sigma^{-1} \mu\right) \quad \text{(coefficient of } y^{-1} \text{)} \\
-\theta_3 &= -\frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right) \quad \text{(coefficient of } y \text{)} \\
-\theta_4 &= \Sigma^{-1} \gamma \quad \text{(coefficient of } x \text{)} \\
-\theta_5 &= \Sigma^{-1} \mu \quad \text{(coefficient of } x y^{-1} \text{)} \\
-\theta_6 &= -\frac{1}{2} \Sigma^{-1} \quad \text{(coefficient of } x x^\top y^{-1} \text{)}
+\theta_1 &= p - 1 - \frac{d}{2}, \\
+\theta_2 &= -\frac{1}{2}\left(b + \mu^\top \Sigma^{-1} \mu\right), \\
+\theta_3 &= -\frac{1}{2}\left(a + \gamma^\top \Sigma^{-1} \gamma\right), \\
+\theta_4 &= \Sigma^{-1} \gamma, \\
+\theta_5 &= \Sigma^{-1} \mu, \\
+\theta_6 &= -\frac{1}{2} \Sigma^{-1}.
 ```
-
-**Base Measure:**
-
-```{math}
-h(x, y) = \frac{1}{(2\pi)^{d/2}} \mathbf{1}_{y > 0}
-```
-
-**Log Partition Function:**
 
 ```{math}
 :label: gh-log-partition
 
 \psi(\theta) = \frac{1}{2} \log|\Sigma| + \log 2 + \log K_p(\sqrt{ab})
-+ \frac{p}{2} \log\left(\frac{b}{a}\right) + \mu^\top \Sigma^{-1} \gamma
++ \frac{p}{2} \log\left(\frac{b}{a}\right) + \mu^\top \Sigma^{-1} \gamma.
 ```
-
-**Expectation Parameters:**
-
-The expectation parameters $\eta = \nabla\psi(\theta) = E[t(X, Y)]$ are:
 
 ```{math}
 :label: gh-expectation
 
-\eta_1 &:= E[\log Y] = \left.\frac{\partial}{\partial \alpha}
-\left(\sqrt{\frac{b}{a}}\right)^\alpha \frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
-\right|_{\alpha=0} \\
-\eta_2 &:= E[Y^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
-\eta_3 &:= E[Y] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
-\eta_4 &:= E[X] = \mu + \gamma \eta_3 \\
-\eta_5 &:= E[X Y^{-1}] = \mu \eta_2 + \gamma \\
+\eta_1 &:= E[\log Y] = \left.\frac{\partial}{\partial r}
+\left(\sqrt{\frac{b}{a}}\right)^r \frac{K_{p+r}(\sqrt{ab})}{K_p(\sqrt{ab})}
+\right|_{r=0}, \\
+\eta_2 &:= E[Y^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})}, \\
+\eta_3 &:= E[Y] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}, \\
+\eta_4 &:= E[X] = \mu + \gamma \eta_3, \\
+\eta_5 &:= E[X Y^{-1}] = \mu \eta_2 + \gamma, \\
 \eta_6 &:= E[X X^\top Y^{-1}] = \Sigma + \mu \mu^\top \eta_2 + \gamma \gamma^\top \eta_3
-+ \mu \gamma^\top + \gamma \mu^\top
++ \mu \gamma^\top + \gamma \mu^\top.
 ```
 
-where $\eta_1, \eta_2, \eta_3 \in \mathbb{R}$, $\eta_4, \eta_5 \in \mathbb{R}^d$, and
-$\eta_6 \in \mathbb{R}^{d \times d}$.
+Here $\eta = \nabla\psi(\theta) = E[t(X, Y)]$. The first three coordinates
+are the GIG expectation parameters of $Y$. On a variance-gamma,
+normal-inverse-gamma, or normal-inverse-Gaussian joint, the same block
+is returned with the gamma, inverse-gamma, or inverse-Gaussian moments
+of $Y$. Those entries are not the partial derivatives of $\psi$ after the
+frozen coordinate ($b = 0$, $a = 0$, or $p = -1/2$) has been removed.
+Where a moment of $Y$ does not exist, the entry is $+\infty$.
 
-Note that $\eta_1, \eta_2, \eta_3$ are exactly the expectation parameters of the GIG
-random variable $Y$.
-
-## Recovering Parameters from Expectations
-
-Given all the expectation parameters, we can recover the original parameters as follows:
+## M-step
 
 ```{math}
 :label: gh-m-step
@@ -275,82 +239,45 @@ Given all the expectation parameters, we can recover the original parameters as 
 \mu &= \frac{\eta_4 - \eta_3 \eta_5}{1 - \eta_2 \eta_3}, \\
 \gamma &= \frac{\eta_5 - \eta_2 \eta_4}{1 - \eta_2 \eta_3}, \\
 \Sigma &= \eta_6 - \eta_5 \mu^\top - \mu \eta_5^\top + \eta_2 \mu \mu^\top - \eta_3 \gamma \gamma^\top, \\
-(p, a, b) &= \arg\max_{p,a,b} L_{\text{GIG}}(p, a, b | \eta_1, \eta_2, \eta_3),
+(p, a, b) &= \arg\max_{p,a,b} L_{\text{GIG}}(p, a, b \mid \eta_1, \eta_2, \eta_3),
 ```
 
-where $L_{\text{GIG}}$ is the GIG log-likelihood function given in
-{eq}`gig-loglik`.
+where $L_{\text{GIG}}$ is {eq}`gig-loglik`. These are the updates
+{meth}`~normix.mixtures.marginal.MarginalMixture.m_step` applies, with
+the expectations in {eq}`gh-expectation` replaced by conditional
+expectations. The derivation is in the GH note. The EM write-up is
+{doc}`em_algorithm`.
 
-These equations form the **M-step** in the EM algorithm, where the expectations in
-{eq}`gh-expectation` are replaced by conditional expectations.
+## Hellinger distance
 
-## Hellinger Distance
-
-While there is no analytical formulation of the Hellinger distance between two GH
-distributions, the Hellinger distance of the joint-GH distributions is tractable
-({ref}`Shi2016 <shi2016>`).
-
-**Proposition.** Let $\theta_1 = (\mu_1, \gamma_1, \Sigma_1, p_1, a_1, b_1)$ and
-$\theta_2 = (\mu_2, \gamma_2, \Sigma_2, p_2, a_2, b_2)$ be the parameters of two
-joint-GH distributions. The squared Hellinger distance between the two distributions is:
+There is no closed form asserted here for the Hellinger distance
+between two marginal GH laws. For two joint laws with natural
+parameters $\theta$ and $\varphi$,
+{meth}`~normix.exponential_family.ExponentialFamily.squared_hellinger`
+evaluates
 
 ```{math}
-H_{\text{JGH}}^2(\theta_1 \| \theta_2) = 1 -
-\frac{|\Sigma_1 \Sigma_2|^{1/4}}{|\bar{\Sigma}|^{1/2}}
-\frac{(a_1/b_1)^{p_1/4} (a_2/b_2)^{p_2/4}}
-{\sqrt{K_{p_1}(\sqrt{a_1 b_1}) K_{p_2}(\sqrt{a_2 b_2})}}
-\frac{K_{\bar{p}}(\sqrt{\bar{b}' \bar{a}'})}{(\bar{a}'/\bar{b}')^{\bar{p}/2}}
-e^{-\frac{1}{4} \Delta\mu^\top \bar{\Sigma}^{-1} \Delta\gamma},
+H_{\mathrm{JGH}}^2 = 1 - \exp\left(
+\psi\left(\frac{\theta+\varphi}{2}\right)
+- \frac{\psi(\theta)+\psi(\varphi)}{2}
+\right).
 ```
 
-where:
+The average is in natural coordinates. When the normal parameters
+agree, this reduces to the GIG Hellinger distance. Marginalization
+gives $H_X^2 \le H_{\mathrm{JGH}}^2$. The marginal method returns the
+joint distance, which is an upper bound on the marginal distance. The
+Bessel-ratio expansion and the comparison are derived in the GH note
+({ref}`Shi2016 <shi2016>`).
 
-- $\Delta\mu = \mu_1 - \mu_2$, $\Delta\gamma = \gamma_1 - \gamma_2$
-- $\bar{\Sigma} = (\Sigma_1 + \Sigma_2)/2$
-- $\bar{p} = (p_1 + p_2)/2$, $\bar{a} = (a_1 + a_2)/2$, $\bar{b} = (b_1 + b_2)/2$
-- $\bar{b}' = \bar{b} + \frac{1}{4} \Delta\mu^\top \bar{\Sigma}^{-1} \Delta\mu$
-- $\bar{a}' = \bar{a} + \frac{1}{4} \Delta\gamma^\top \bar{\Sigma}^{-1} \Delta\gamma$
+## Special cases
 
-If $\mu_1 = \mu_2$, $\gamma_1 = \gamma_2$, and $\Sigma_1 = \Sigma_2$,
-then $H_{\text{JGH}}(\theta_1 \| \theta_2) = H_{\text{GIG}}(p_1, a_1, b_1 \| p_2, a_2, b_2)$.
-
-Although $H_{\text{JGH}}$ differs from the Hellinger distance of the marginal GH,
-it provides an upper bound, so we can use it to measure how close two GH distributions are.
-
-## Numerical Stability
-
-The computation of {eq}`gh-m-step` is not stable in terms of relative error under
-certain conditions. However, it is relatively stable in terms of the Hellinger distance.
-
-Numerical experiments show that:
-
-- The relative errors of $\mu$ and $\gamma$ are around machine epsilon
-- The relative error of some GIG parameters (especially when $|p|$ is large) can be large
-- However, the Hellinger distance between true and estimated parameters remains small
-
-This behavior is consistent with the ill-conditioning of the GIG optimization problem
-discussed in the {doc}`gig` section.
-
-## Special Cases
-
-Several important distributions are special cases of the GH family:
-
-- **Normal-Inverse Gaussian (NIG)** ({ref}`BarndorffNielsen1997 <barndorffnielsen1997>`): $p = -1/2$
-- **Variance-Gamma (VG)** ({ref}`MadanSeneta1990 <madan1990>`): $b \to 0$ (Gamma mixing)
-- **Normal-Inverse Gamma (NInvG)**: $a \to 0$ (Inverse-Gamma mixing)
-- **Student-t**: $p < 0$, $a = 0$, $\gamma = 0$
-- **Hyperbolic**: $p = 1$
-
-These are implemented as separate classes in ``normix``:
-
-- {class}`~normix.distributions.normal_inverse_gaussian.NormalInverseGaussian`
-- {class}`~normix.distributions.variance_gamma.VarianceGamma`
-- {class}`~normix.distributions.normal_inverse_gamma.NormalInverseGamma`
-
-The ambient expectation parameters of the joint special cases are
-{eq}`gh-expectation`, with $(\eta_1, \eta_2, \eta_3)$ the Gamma,
-inverse-gamma, or inverse-Gaussian moments of $Y$. They are not the
-partial derivatives of $\psi$ after the frozen coordinate ($b = 0$,
-$a = 0$, or $p = -1/2$) has been removed. The Fisher information is the
-covariance of the same statistic. Where a moment of $Y$ does not exist,
-the corresponding entry is $+\infty$.
+- Normal-inverse Gaussian ({ref}`BarndorffNielsen1997 <barndorffnielsen1997>`):
+  $p = -1/2$, class
+  {class}`~normix.distributions.normal_inverse_gaussian.NormalInverseGaussian`.
+- Variance-gamma ({ref}`MadanSeneta1990 <madan1990>`): $b \to 0$, class
+  {class}`~normix.distributions.variance_gamma.VarianceGamma`.
+- Normal-inverse gamma: $a \to 0$, class
+  {class}`~normix.distributions.normal_inverse_gamma.NormalInverseGamma`.
+- Student-$t$: $p < 0$, $a = 0$, $\gamma = 0$.
+- Hyperbolic: order $p = 1$. This is not a separate class.

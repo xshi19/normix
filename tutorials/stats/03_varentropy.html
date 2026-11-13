@@ -499,8 +499,9 @@ methods are just automatic differentiation of the log-partition <span class="mat
 scaling ray <span class="math notranslate nohighlight">\(\alpha\theta\)</span>. The first-order expansion
 <span class="math notranslate nohighlight">\(H_\alpha = H - \tfrac12 V_H(\alpha-1) + \mathcal{O}((\alpha-1)^2)\)</span> shows that
 varentropy is (twice the negative of) the slope of the Rényi spectrum at
-<span class="math notranslate nohighlight">\(\alpha = 1\)</span>. Full derivations — including the joint-mixture formulas — are in
-<a class="reference internal" href="../../theory/varentropy.html"><span class="doc">Entropy, Varentropy, and Rényi Entropy</span></a>.</p>
+<span class="math notranslate nohighlight">\(\alpha = 1\)</span>. The formulas, including the joint-mixture identities, are in
+<a class="reference internal" href="../../theory/varentropy.html"><span class="doc">Entropy, Varentropy, and Rényi Entropy</span></a>. Derivations are in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-varentropy/">varentropy note</a>.</p>
 <p>This tutorial validates the formulas against Monte Carlo, uses JAX to confirm the
 Rényi ↔ varentropy relationship, and shows why varentropy is an attractive
 measure of tail-heaviness — it stays finite where the kurtosis diverges.</p>
@@ -832,7 +833,7 @@ for an <em>efficient frontier</em> — the smallest variance attainable at each 
 return. It is tempting to ask the same of the entropy–varentropy plane: is there
 a curve bounding the smallest varentropy at each entropy? For the GIG the answer
 is <strong>no</strong>, and the reason is structural. Compare the closed forms
-<a class="reference internal" href="../../theory/varentropy.html#equation-ve-gig-entropy">(10)</a> and <a class="reference internal" href="../../theory/varentropy.html#equation-ve-gig">(9)</a>:</p>
+<a class="reference internal" href="../../theory/varentropy.html#equation-ve-gig-entropy">(9)</a> and <a class="reference internal" href="../../theory/varentropy.html#equation-ve-gig">(8)</a>:</p>
 <div class="math notranslate nohighlight">
 \[
 H = \log\{2 K_p(z)\} + \tfrac12\log\tfrac{b}{a} - L\log K_p(z),
@@ -920,7 +921,7 @@ Gamma/inverse-Gamma boundaries (large <span class="math notranslate nohighlight"
 substantially larger varentropy — the tail is thinner in the argument of <span class="math notranslate nohighlight">\(K_p\)</span>,
 so the surprisal fluctuates more.</p>
 <p>The same picture carries over to the <strong>GH joint</strong> <span class="math notranslate nohighlight">\((X, Y)\)</span>, where the Gaussian
-block contributes a rigid <span class="math notranslate nohighlight">\(d/2\)</span> (formula <a class="reference internal" href="../../theory/varentropy.html#equation-ve-joint-gig">(12)</a>). The location and
+block contributes a rigid <span class="math notranslate nohighlight">\(d/2\)</span> (formula <a class="reference internal" href="../../theory/varentropy.html#equation-ve-joint-gig">(11)</a>). The location and
 scale parameters <span class="math notranslate nohighlight">\(\mu,\gamma,\Sigma\)</span> translate the joint entropy but leave the
 joint varentropy untouched, so raising the dimension <span class="math notranslate nohighlight">\(d\)</span> simply lifts an entire
 band by <span class="math notranslate nohighlight">\(d/2\)</span> — again with no sloping frontier, only stacked floors:</p>
@@ -977,8 +978,8 @@ a horizontal band floored at the Gaussian value <span class="math notranslate no
 informative object is the shape locus obtained by fixing the scale.</p></li>
 </ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
-Next: the {doc}`../../theory/varentropy` derivations, or revisit
-{doc}`../distributions/02_gig` for the GIG tail behavior.
+Next: the formulas in {doc}`../../theory/varentropy`, or the
+[GIG tail derivation](https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/).
 </pre></div>
 </div>
 </section>

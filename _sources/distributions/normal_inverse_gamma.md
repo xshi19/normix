@@ -64,8 +64,9 @@ Built from the shared location/shape block and the InverseGamma subordinator:
 | $\alpha$ | `alpha` | InverseGamma shape |
 | $\beta$ | `beta` | InverseGamma rate |
 
-The marginal is not an exponential family, but the joint $(X, Y)$ is — its
-natural parametrization and the EM machinery are in {doc}`../theory/gh`.
+The marginal is not an exponential family, but the joint $(X, Y)$ is.
+Its natural parameters are stated in {doc}`../theory/gh`. EM is derived
+in {doc}`../theory/em_algorithm`.
 
 ## Quick usage
 

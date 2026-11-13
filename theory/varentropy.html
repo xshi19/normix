@@ -460,10 +460,10 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definitions">Definitions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power-route">Density-Power Route</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power">Density power</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gig">GIG</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-law">Joint law</a></li>
 </ul>
             </nav>
         </div>
@@ -477,186 +477,158 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="entropy-varentropy-and-renyi-entropy">
 <h1>Entropy, Varentropy, and Rényi Entropy<a class="headerlink" href="#entropy-varentropy-and-renyi-entropy" title="Link to this heading">#</a></h1>
-<p>This section derives the key information-theoretic quantities implemented in
-<code class="docutils literal notranslate"><span class="pre">normix</span></code> — the differential entropy, the <strong>varentropy</strong>, and the Rényi
-entropy — for the exponential-family components and for the joint normal
-variance-mean mixtures. We derive only the formulas used by the code; for the
-general structural decomposition of varentropy and its properties we refer to
+<p>This page states the entropy, varentropy, and Rényi formulas that
+normix computes for exponential families and for joint normal
+variance-mean mixtures. The escort differentiation, the
+<span class="math notranslate nohighlight">\(\chi^2\)</span> decomposition, and the general base-measure covariance formula
+are derived in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-varentropy/">varentropy note</a>.
+For the structural properties of varentropy see
 <a class="reference internal" href="../references.html#stankyavichyus2026"><span class="std std-ref">Stankyavichyus2026</span></a>.</p>
-<p><strong>See also:</strong> Monte Carlo validation and fat-tail comparisons in
+<p>normix writes a density as <span class="math notranslate nohighlight">\(f(x\mid\theta)\)</span>. On that site the same
+function is <span class="math notranslate nohighlight">\(p_\theta(x)\)</span>.</p>
+<p>The surprisal is <span class="math notranslate nohighlight">\(\mathcal{I}(X) = -\log f(X\mid\theta)\)</span>. The Fisher
+information is <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span>. These are different
+objects: <span class="math notranslate nohighlight">\(\mathcal{I}(X)\)</span> is a random variable, and <span class="math notranslate nohighlight">\(I(\theta)\)</span> is a
+matrix.</p>
+<p><strong>See also:</strong> Monte Carlo checks in
 <a class="reference internal" href="../tutorials/stats/03_varentropy.html"><span class="doc">Entropy, varentropy, and fat tails</span></a>.</p>
 <section id="definitions">
 <h2>Definitions<a class="headerlink" href="#definitions" title="Link to this heading">#</a></h2>
-<p>Let <span class="math notranslate nohighlight">\(X\)</span> have density <span class="math notranslate nohighlight">\(p(x)\)</span> with respect to a reference measure
-<span class="math notranslate nohighlight">\(\mu(dx)\)</span>. The <strong>information content</strong> (surprisal) is
-<span class="math notranslate nohighlight">\(\mathcal{I}(X) = -\log p(X)\)</span>. Its mean is the <strong>differential entropy</strong>
-and its variance is the <strong>varentropy</strong>:</p>
+<p>Let <span class="math notranslate nohighlight">\(X\)</span> have density <span class="math notranslate nohighlight">\(f\)</span> with respect to a reference measure <span class="math notranslate nohighlight">\(\mu(dx)\)</span>.</p>
 <div class="math notranslate nohighlight" id="equation-ve-defs">
-<span class="eqno">(1)<a class="headerlink" href="#equation-ve-defs" title="Link to this equation">#</a></span>\[H = \mathbb{E}[-\log p(X)], \qquad
-V_H = \operatorname{Var}[-\log p(X)].\]</div>
-<p>Entropy measures the average surprisal; varentropy measures how much the
-surprisal fluctuates around that average. Unlike the kurtosis, the varentropy
-requires only <span class="math notranslate nohighlight">\(\mathcal{I}(X) \in L^2\)</span>, so it stays finite for many
-heavy-tailed laws whose fourth moment diverges.</p>
-<p>The <strong>Rényi entropy</strong> of order <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>, <span class="math notranslate nohighlight">\(\alpha \neq 1\)</span>
+<span class="eqno">(1)<a class="headerlink" href="#equation-ve-defs" title="Link to this equation">#</a></span>\[H = \mathbb{E}[-\log f(X)], \qquad
+V_H = \operatorname{Var}[-\log f(X)].\]</div>
+<p><span class="math notranslate nohighlight">\(H\)</span> is the differential entropy and <span class="math notranslate nohighlight">\(V_H\)</span> is the varentropy. The
+varentropy needs only <span class="math notranslate nohighlight">\(\mathcal{I}(X) \in L^2\)</span>, so it stays finite for
+laws whose fourth moment diverges.</p>
+<p>The Rényi entropy of order <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>, <span class="math notranslate nohighlight">\(\alpha \ne 1\)</span>
 (<a class="reference internal" href="../references.html#renyi1961"><span class="std std-ref">Renyi1961</span></a>), is</p>
 <div class="math notranslate nohighlight" id="equation-ve-renyi">
-<span class="eqno">(2)<a class="headerlink" href="#equation-ve-renyi" title="Link to this equation">#</a></span>\[H_\alpha = \frac{1}{1-\alpha} \log \int p(x)^\alpha \, \mu(dx),\]</div>
+<span class="eqno">(2)<a class="headerlink" href="#equation-ve-renyi" title="Link to this equation">#</a></span>\[H_\alpha = \frac{1}{1-\alpha} \log \int f(x)^\alpha \, \mu(dx),\]</div>
 <p>and <span class="math notranslate nohighlight">\(H_\alpha \to H\)</span> as <span class="math notranslate nohighlight">\(\alpha \to 1\)</span>.</p>
 </section>
-<section id="density-power-route">
-<h2>Density-Power Route<a class="headerlink" href="#density-power-route" title="Link to this heading">#</a></h2>
-<p>All three quantities are governed by the <strong>log density-power integral</strong></p>
+<section id="density-power">
+<h2>Density power<a class="headerlink" href="#density-power" title="Link to this heading">#</a></h2>
 <div class="math notranslate nohighlight" id="equation-ve-r">
-<span class="eqno">(3)<a class="headerlink" href="#equation-ve-r" title="Link to this equation">#</a></span>\[R(\alpha) = \log \int p(x)^\alpha \, \mu(dx), \qquad R(1) = 0.\]</div>
-<p>Writing <span class="math notranslate nohighlight">\(\mathcal{I} = -\log p(X)\)</span>, the function <span class="math notranslate nohighlight">\(R(1-s)\)</span> is the
-cumulant-generating function of <span class="math notranslate nohighlight">\(\mathcal{I}\)</span>, so differentiating at
-<span class="math notranslate nohighlight">\(\alpha = 1\)</span> gives</p>
+<span class="eqno">(3)<a class="headerlink" href="#equation-ve-r" title="Link to this equation">#</a></span>\[R(\alpha) = \log \int f(x)^\alpha \, \mu(dx), \qquad R(1) = 0.\]</div>
+<p>After the reflection <span class="math notranslate nohighlight">\(\alpha \mapsto 1-\alpha\)</span>, <span class="math notranslate nohighlight">\(R\)</span> is the cumulant-generating function of the surprisal, so</p>
 <div class="math notranslate nohighlight" id="equation-ve-cumulants">
 <span class="eqno">(4)<a class="headerlink" href="#equation-ve-cumulants" title="Link to this equation">#</a></span>\[H = -R'(1), \qquad V_H = R''(1),\]</div>
-<p>while the Rényi entropy is <span class="math notranslate nohighlight">\(H_\alpha = R(\alpha)/(1-\alpha)\)</span>. The
-first-order expansion</p>
+<p>and <span class="math notranslate nohighlight">\(H_\alpha = R(\alpha)/(1-\alpha)\)</span>. The expansion</p>
 <div class="math notranslate nohighlight">
 \[H_\alpha = H - \tfrac{1}{2} V_H\,(\alpha - 1) + \mathcal{O}\!\left((\alpha-1)^2\right)\]</div>
-<p>shows that the varentropy is (twice the negative of) the slope of the Rényi
-spectrum at <span class="math notranslate nohighlight">\(\alpha = 1\)</span>.</p>
+<p>is the slope of the Rényi spectrum at <span class="math notranslate nohighlight">\(\alpha = 1\)</span>. The
+cumulant-generator identification is in the varentropy note.
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.entropy" title="normix.exponential_family.ExponentialFamily.entropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">entropy()</span></code></a>,
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.varentropy" title="normix.exponential_family.ExponentialFamily.varentropy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">varentropy()</span></code></a>, and
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.renyi" title="normix.exponential_family.ExponentialFamily.renyi"><code class="xref py py-meth docutils literal notranslate"><span class="pre">renyi()</span></code></a>
+differentiate
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.log_density_power" title="normix.exponential_family.ExponentialFamily.log_density_power"><code class="xref py py-meth docutils literal notranslate"><span class="pre">log_density_power()</span></code></a>.</p>
 </section>
 <section id="exponential-family">
-<h2>Exponential Family<a class="headerlink" href="#exponential-family" title="Link to this heading">#</a></h2>
-<p>For a <code class="docutils literal notranslate"><span class="pre">normix</span></code> exponential family
-<span class="math notranslate nohighlight">\(p(x\mid\theta) = h(x)\exp\{\theta^\top t(x) - \psi(\theta)\}\)</span>
-whose base measure is <strong>constant on its support</strong>, <span class="math notranslate nohighlight">\(\log h(x) \equiv b_0\)</span>,
-the density power stays in the family with natural parameter
-<span class="math notranslate nohighlight">\(\alpha\theta\)</span>:</p>
+<h2>Exponential family<a class="headerlink" href="#exponential-family" title="Link to this heading">#</a></h2>
+<p>For</p>
+<div class="math notranslate nohighlight">
+\[f(x\mid\theta) = h(x)\exp\{\theta^\top t(x) - \psi(\theta)\}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\log h \equiv b_0\)</span> on the support,</p>
 <div class="math notranslate nohighlight" id="equation-ve-r-ef">
-<span class="eqno">(5)<a class="headerlink" href="#equation-ve-r-ef" title="Link to this equation">#</a></span>\[R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta).\]</div>
-<p>This equals <span class="math notranslate nohighlight">\(\log\int p^\alpha\)</span> only when <span class="math notranslate nohighlight">\(\alpha\theta\)</span> lies in the
-natural domain <span class="math notranslate nohighlight">\(\Theta\)</span>. For Gamma with shape <span class="math notranslate nohighlight">\(a\)</span> the condition is
-<span class="math notranslate nohighlight">\(\alpha&gt;0\)</span> and <span class="math notranslate nohighlight">\(\alpha(a-1)+1&gt;0\)</span>; for InverseGamma it is
-<span class="math notranslate nohighlight">\(\alpha(a+1)-1&gt;0\)</span> (which already forces <span class="math notranslate nohighlight">\(\alpha&gt;0\)</span>). Outside
-<span class="math notranslate nohighlight">\(\Theta\)</span> one has <span class="math notranslate nohighlight">\(\int p^\alpha=+\infty\)</span>, hence <span class="math notranslate nohighlight">\(R(\alpha)=+\infty\)</span>, and
-the Rényi entropy <span class="math notranslate nohighlight">\(H_\alpha=R(\alpha)/(1-\alpha)\)</span> inherits the sign of
-<span class="math notranslate nohighlight">\(1-\alpha\)</span>.</p>
-<p>Substituting into <a class="reference internal" href="#equation-ve-cumulants">(4)</a> and using <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>
-and the Fisher information <span class="math notranslate nohighlight">\(I(\theta) = \nabla^2\psi(\theta)\)</span> gives closed
-forms in terms of the log-partition triad:</p>
+<span class="eqno">(5)<a class="headerlink" href="#equation-ve-r-ef" title="Link to this equation">#</a></span>\[R(\alpha) = (\alpha - 1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta),\]</div>
+<p>when <span class="math notranslate nohighlight">\(\alpha\theta\)</span> lies in the natural domain. Otherwise
+<span class="math notranslate nohighlight">\(R(\alpha) = +\infty\)</span>, and <span class="math notranslate nohighlight">\(H_\alpha = R(\alpha)/(1-\alpha)\)</span> inherits
+the sign of <span class="math notranslate nohighlight">\(1-\alpha\)</span>. For a gamma law of shape <span class="math notranslate nohighlight">\(s\)</span> the condition is
+<span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span> and <span class="math notranslate nohighlight">\(\alpha(s-1)+1 &gt; 0\)</span>. For an inverse-gamma law of
+shape <span class="math notranslate nohighlight">\(s\)</span> it is <span class="math notranslate nohighlight">\(\alpha(s+1)-1 &gt; 0\)</span>, which already forces <span class="math notranslate nohighlight">\(\alpha &gt; 0\)</span>.</p>
+<p>With <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>,</p>
 <div class="math notranslate nohighlight" id="equation-ve-ef-formulas">
 <span class="eqno">(6)<a class="headerlink" href="#equation-ve-ef-formulas" title="Link to this equation">#</a></span>\[H = \psi(\theta) - \theta^\top \eta - b_0, \qquad
 V_H = \theta^\top I(\theta)\,\theta, \qquad
 H_\alpha = \frac{(\alpha-1)\,b_0 + \psi(\alpha\theta) - \alpha\,\psi(\theta)}{1-\alpha}.\]</div>
-<p>The varentropy identity <span class="math notranslate nohighlight">\(V_H = \theta^\top I(\theta)\,\theta\)</span> holds because
-the centered information content
-<span class="math notranslate nohighlight">\(\mathcal{I}(X) - H = -\theta^\top\{t(X) - \eta\}\)</span> lies exactly in the
-span of the score. This covers <a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a>,
-<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a>,
+<p>The quadratic form holds because
+<span class="math notranslate nohighlight">\(\mathcal{I}(X) - H = -\theta^\top\{t(X) - \eta\}\)</span>. This covers
+<a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a>,
+<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a>, and
 <a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeneralizedInverseGaussian</span></code></a>
-(all with <span class="math notranslate nohighlight">\(b_0 = 0\)</span>) and
-<a class="reference internal" href="../api/distributions.html#normix.distributions.normal.MultivariateNormal" title="normix.distributions.normal.MultivariateNormal"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></a> (with
-<span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and <span class="math notranslate nohighlight">\(V_H = d/2\)</span>).</p>
+(<span class="math notranslate nohighlight">\(b_0 = 0\)</span>), and
+<a class="reference internal" href="../api/distributions.html#normix.distributions.normal.MultivariateNormal" title="normix.distributions.normal.MultivariateNormal"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></a>
+(<span class="math notranslate nohighlight">\(\log h \equiv 0\)</span>, <span class="math notranslate nohighlight">\(V_H = d/2\)</span>).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>When <span class="math notranslate nohighlight">\(\log h(x)\)</span> is <strong>not</strong> constant on the support — as for
-<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a>, whose
-<span class="math notranslate nohighlight">\(\log h(x) = -\tfrac12\log(2\pi) - \tfrac32\log x\)</span> — formula
-<a class="reference internal" href="#equation-ve-ef-formulas">(6)</a> acquires base-measure covariance terms (see
-<a class="reference internal" href="../references.html#stankyavichyus2026"><span class="std std-ref">Stankyavichyus2026</span></a>). <code class="docutils literal notranslate"><span class="pre">normix</span></code> avoids them by evaluating the quantities
-on the exact GIG embedding <span class="math notranslate nohighlight">\(\mathrm{GIG}(-\tfrac12, \lambda/\mu^2,
-\lambda)\)</span>, where <span class="math notranslate nohighlight">\(\log h \equiv 0\)</span> and the <span class="math notranslate nohighlight">\(\log x\)</span> term becomes
-a sufficient statistic.</p>
+<p><a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a>
+has <span class="math notranslate nohighlight">\(\log h(x) = -\tfrac12\log(2\pi) - \tfrac32\log x\)</span>, which is not
+constant. The general covariance correction is in the varentropy note.
+normix evaluates the inverse-Gaussian quantities on the embedding
+<span class="math notranslate nohighlight">\(\mathrm{GIG}(-\tfrac12, \lambda/\mu^2, \lambda)\)</span>, where <span class="math notranslate nohighlight">\(\log h \equiv 0\)</span>
+and <span class="math notranslate nohighlight">\(\log x\)</span> is a sufficient statistic.</p>
 </div>
 </section>
-<section id="varentropy-of-the-gig-distribution">
-<h2>Varentropy of the GIG Distribution<a class="headerlink" href="#varentropy-of-the-gig-distribution" title="Link to this heading">#</a></h2>
-<p>Let <span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span> with density <a class="reference internal" href="gig.html#equation-gig-pdf">(1)</a> and natural
-parameters <span class="math notranslate nohighlight">\(\theta = [p-1,\,-b/2,\,-a/2]\)</span>. Raising the density to the
-power <span class="math notranslate nohighlight">\(\alpha\)</span> keeps it proportional to a GIG density with parameters
-<span class="math notranslate nohighlight">\((1 + \alpha(p-1),\, \alpha a,\, \alpha b)\)</span> — the escort-closure property.
-Using the Bessel integral
-<span class="math notranslate nohighlight">\(\int_0^\infty y^{q-1} e^{-(uy + v/y)/2}\,dy = 2\,(v/u)^{q/2} K_q(\sqrt{uv})\)</span>
-(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> <a class="reference external" href="https://dlmf.nist.gov/10.32#E10">10.32.10</a>)
-gives, with <span class="math notranslate nohighlight">\(z = \sqrt{ab}\)</span>,</p>
+<section id="gig">
+<h2>GIG<a class="headerlink" href="#gig" title="Link to this heading">#</a></h2>
+<p>Let <span class="math notranslate nohighlight">\(Y \sim \mathrm{GIG}(p, a, b)\)</span> with density <a class="reference internal" href="gig.html#equation-gig-pdf">(1)</a> and
+<span class="math notranslate nohighlight">\(\theta = (p-1,\,-b/2,\,-a/2)\)</span>. Substituting the GIG log-partition into
+<a class="reference internal" href="#equation-ve-r-ef">(5)</a> gives, with <span class="math notranslate nohighlight">\(z = \sqrt{ab}\)</span>,</p>
 <div class="math notranslate nohighlight" id="equation-ve-gig-r">
 <span class="eqno">(7)<a class="headerlink" href="#equation-ve-gig-r" title="Link to this equation">#</a></span>\[R(\alpha) = (1-\alpha)\log 2 + \frac{1-\alpha}{2}\log\!\frac{b}{a}
 + \log K_{1 + \alpha(p-1)}(\alpha z) - \alpha \log K_p(z).\]</div>
-<p>Define <span class="math notranslate nohighlight">\(F(p, z) = \log K_p(z)\)</span> and the first-order differential operator</p>
-<div class="math notranslate nohighlight" id="equation-ve-l">
-<span class="eqno">(8)<a class="headerlink" href="#equation-ve-l" title="Link to this equation">#</a></span>\[L = (p-1)\,\partial_p + z\,\partial_z.\]</div>
-<p>Along the escort path <span class="math notranslate nohighlight">\(\alpha \mapsto (1 + \alpha(p-1),\, \alpha z)\)</span> we have
-<span class="math notranslate nohighlight">\(\frac{d}{d\alpha}F = LF\)</span> and, because <span class="math notranslate nohighlight">\(L\)</span> has variable coefficients,
-<span class="math notranslate nohighlight">\(\frac{d^2}{d\alpha^2}F = (L^2 - L)F\)</span> at <span class="math notranslate nohighlight">\(\alpha = 1\)</span>. All remaining
-terms of <a class="reference internal" href="#equation-ve-gig-r">(7)</a> are linear in <span class="math notranslate nohighlight">\(\alpha\)</span>, so from
-<a class="reference internal" href="#equation-ve-cumulants">(4)</a>,</p>
+<p>On the math site <span class="math notranslate nohighlight">\(\sqrt{ab}\)</span> is the concentration <span class="math notranslate nohighlight">\(\omega\)</span>, and the
+operator below is written <span class="math notranslate nohighlight">\(\mathcal{L}\)</span>. Here <span class="math notranslate nohighlight">\(z = \omega\)</span> and</p>
+<div class="math notranslate nohighlight">
+\[L = (p-1)\,\partial_p + z\,\partial_z.\]</div>
+<p>Differentiating along the escort path produces</p>
 <div class="math notranslate nohighlight" id="equation-ve-gig">
-<span class="eqno">(9)<a class="headerlink" href="#equation-ve-gig" title="Link to this equation">#</a></span>\[\boxed{\;
+<span class="eqno">(8)<a class="headerlink" href="#equation-ve-gig" title="Link to this equation">#</a></span>\[\boxed{\;
 V_H\{\mathrm{GIG}(p,a,b)\} = (L^2 - L)\log K_p(z),
 \qquad z = \sqrt{ab}.
 \;}\]</div>
-<p>Expanded, this is the pure second-order form</p>
+<p>Expanded, this is</p>
 <div class="math notranslate nohighlight">
-\[V_H = (p-1)^2 F_{pp} + 2(p-1)\,z\,F_{pz} + z^2 F_{zz},\]</div>
-<p>which coincides with the Fisher quadratic form
-<span class="math notranslate nohighlight">\(\theta^\top I(\theta)\,\theta\)</span> of <a class="reference internal" href="#equation-ve-ef-formulas">(6)</a>. The entropy
-follows from <span class="math notranslate nohighlight">\(H = -R'(1)\)</span>:</p>
+\[V_H = (p-1)^2 \partial_p^2 \log K_p(z)
++ 2(p-1)\,z\,\partial_p\partial_z \log K_p(z)
++ z^2 \partial_z^2 \log K_p(z),\]</div>
+<p>which equals <span class="math notranslate nohighlight">\(\theta^\top I(\theta)\,\theta\)</span>. The entropy is</p>
 <div class="math notranslate nohighlight" id="equation-ve-gig-entropy">
-<span class="eqno">(10)<a class="headerlink" href="#equation-ve-gig-entropy" title="Link to this equation">#</a></span>\[H\{\mathrm{GIG}(p,a,b)\} = \log\{2 K_p(z)\} + \tfrac12\log\!\frac{b}{a}
+<span class="eqno">(9)<a class="headerlink" href="#equation-ve-gig-entropy" title="Link to this equation">#</a></span>\[H\{\mathrm{GIG}(p,a,b)\} = \log\{2 K_p(z)\} + \tfrac12\log\!\frac{b}{a}
 - L\log K_p(z).\]</div>
-<p>Because the fixed argument of <span class="math notranslate nohighlight">\(K_p\)</span> is exponentially thin in both tails
-whenever <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> (see <a class="reference internal" href="gig.html"><span class="doc">The Generalized Inverse Gaussian Distribution</span></a>), <span class="math notranslate nohighlight">\(V_H\)</span> remains finite over the
-entire parameter range, including the inverse-gamma limit <span class="math notranslate nohighlight">\(a \to 0\)</span> where
-the kurtosis diverges.</p>
+<p>For <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> every moment of <span class="math notranslate nohighlight">\(Y\)</span> is finite, and <span class="math notranslate nohighlight">\(V_H\)</span> stays finite,
+including in the inverse-gamma limit <span class="math notranslate nohighlight">\(a \to 0\)</span> where the kurtosis
+diverges. The tail comparison is in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/">GIG note</a>.</p>
 </section>
-<section id="joint-varentropy-of-normal-variance-mean-mixtures">
-<h2>Joint Varentropy of Normal Variance-Mean Mixtures<a class="headerlink" href="#joint-varentropy-of-normal-variance-mean-mixtures" title="Link to this heading">#</a></h2>
-<p>Consider the joint law of <a class="reference internal" href="gh.html#equation-gh-joint">(2)</a> for a general subordinator,</p>
-<div class="math notranslate nohighlight">
-\[X \mid Y = y \sim \mathcal{N}_d(\mu + \gamma y,\ \Sigma y), \qquad
-Y \sim g_\vartheta.\]</div>
-<p>Conditionally on <span class="math notranslate nohighlight">\(Y\)</span>, the quadratic form
-<span class="math notranslate nohighlight">\(Q = (X - \mu - \gamma Y)^\top \Sigma^{-1}(X - \mu - \gamma Y)/Y\)</span> is
-<span class="math notranslate nohighlight">\(\chi^2_d\)</span> and independent of <span class="math notranslate nohighlight">\(Y\)</span>, so</p>
-<div class="math notranslate nohighlight">
-\[-\log p(X \mid Y) = C_\Sigma + \tfrac{d}{2}\log Y + \tfrac12 Q, \qquad
-C_\Sigma = \tfrac{d}{2}\log(2\pi) + \tfrac12\log|\Sigma|.\]</div>
-<p>Writing <span class="math notranslate nohighlight">\(\mathcal{I}_Y = -\log g_\vartheta(Y)\)</span> for the subordinator
-surprisal, the joint information content is
-<span class="math notranslate nohighlight">\(\mathcal{I}_{X,Y} = C_\Sigma + \mathcal{I}_Y + \tfrac{d}{2}\log Y +
-\tfrac12 Q\)</span>. Since <span class="math notranslate nohighlight">\(\operatorname{Var}(\tfrac12 Q) = d/2\)</span> and
-<span class="math notranslate nohighlight">\(Q \perp Y\)</span>,</p>
+<section id="joint-law">
+<h2>Joint law<a class="headerlink" href="#joint-law" title="Link to this heading">#</a></h2>
+<p>For the joint law <a class="reference internal" href="gh.html#equation-gh-joint">(2)</a>, conditionally on <span class="math notranslate nohighlight">\(Y\)</span>, the quadratic
+form in the Gaussian exponent is <span class="math notranslate nohighlight">\(\chi^2_d\)</span> and independent of <span class="math notranslate nohighlight">\(Y\)</span>.
+That decomposition is in the varentropy note. It gives</p>
 <div class="math notranslate nohighlight" id="equation-ve-joint">
-<span class="eqno">(11)<a class="headerlink" href="#equation-ve-joint" title="Link to this equation">#</a></span>\[\boxed{\;
+<span class="eqno">(10)<a class="headerlink" href="#equation-ve-joint" title="Link to this equation">#</a></span>\[\boxed{\;
 V_H(X, Y) = \frac{d}{2}
-+ \operatorname{Var}\!\left[\mathcal{I}_Y + \frac{d}{2}\log Y\right].
++ \operatorname{Var}\!\left[\mathcal{I}_Y + \frac{d}{2}\log Y\right],
 \;}\]</div>
-<p>The Gaussian layer contributes exactly <span class="math notranslate nohighlight">\(d/2\)</span>; the parameters
-<span class="math notranslate nohighlight">\(\mu, \gamma, \Sigma\)</span> enter the joint entropy only through constants and
-means, and drop out of the varentropy entirely (they affect it only through the
-dimension <span class="math notranslate nohighlight">\(d\)</span>).</p>
-<p>For a GIG subordinator, <span class="math notranslate nohighlight">\(\mathcal{I}_Y = \psi_{\mathrm{GIG}}(\theta) -
-\theta^\top t(Y)\)</span> with <span class="math notranslate nohighlight">\(t(Y) = [\log Y,\, Y^{-1},\, Y]\)</span>, so adding
-<span class="math notranslate nohighlight">\(\tfrac{d}{2}\log Y\)</span> shifts only the coefficient of <span class="math notranslate nohighlight">\(\log Y\)</span>:</p>
+<p>where <span class="math notranslate nohighlight">\(\mathcal{I}_Y = -\log f_Y(Y)\)</span> is the subordinator surprisal.
+The Gaussian layer contributes <span class="math notranslate nohighlight">\(d/2\)</span>. The parameters <span class="math notranslate nohighlight">\(\mu\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>,
+and <span class="math notranslate nohighlight">\(\Sigma\)</span> change the joint entropy only through constants and
+means. They drop out of <span class="math notranslate nohighlight">\(V_H\)</span> except through the dimension <span class="math notranslate nohighlight">\(d\)</span>.</p>
+<p>For a GIG subordinator, <span class="math notranslate nohighlight">\(t(Y) = (\log Y,\, Y^{-1},\, Y)\)</span> and
+<span class="math notranslate nohighlight">\(\mathcal{I}_Y = \psi_{\mathrm{GIG}}(\theta) - \theta^\top t(Y)\)</span>, so</p>
 <div class="math notranslate nohighlight">
 \[\mathcal{I}_Y + \tfrac{d}{2}\log Y
-= \psi_{\mathrm{GIG}}(\theta) - (\theta - \delta_d)^\top t(Y),
-\qquad \delta_d = (\tfrac{d}{2},\, 0,\, 0)^\top.\]</div>
-<p>Its variance is the shifted Fisher quadratic form, and translating to classical
-coordinates gives the operator <span class="math notranslate nohighlight">\(L_d\)</span> of <a class="reference internal" href="#equation-ve-l">(8)</a> with the order
-shifted by <span class="math notranslate nohighlight">\(-d/2\)</span>:</p>
+= \psi_{\mathrm{GIG}}(\theta)
+- \left(\theta - \left(\tfrac{d}{2},\, 0,\, 0\right)^\top\right)^\top t(Y).\]</div>
+<p>The variance of this shifted statistic is</p>
 <div class="math notranslate nohighlight" id="equation-ve-joint-gig">
-<span class="eqno">(12)<a class="headerlink" href="#equation-ve-joint-gig" title="Link to this equation">#</a></span>\[\boxed{\;
+<span class="eqno">(11)<a class="headerlink" href="#equation-ve-joint-gig" title="Link to this equation">#</a></span>\[\boxed{\;
 V_H(X, Y) = \frac{d}{2} + (L_d^2 - L_d)\log K_p(z),
 \qquad
-L_d = \left(p - 1 - \tfrac{d}{2}\right)\partial_p + z\,\partial_z.
+L_d = \left(p - 1 - \tfrac{d}{2}\right)\partial_p + z\,\partial_z,
+\qquad z = \sqrt{ab}.
 \;}\]</div>
-<p>For <span class="math notranslate nohighlight">\(d = 0\)</span> this reduces to the GIG varentropy <a class="reference internal" href="#equation-ve-gig">(9)</a>. The
-operator shift <span class="math notranslate nohighlight">\(p - 1 \mapsto p - 1 - d/2\)</span> is exactly the effect of the
-conditional Gaussian volume factor <span class="math notranslate nohighlight">\(Y^{-d/2}\)</span>, and mirrors the natural
-parameter <span class="math notranslate nohighlight">\(\theta_1 = p - 1 - d/2\)</span> of the joint exponential family
-<a class="reference internal" href="gh.html#equation-gh-natural-params">(6)</a>. The Variance-Gamma, Normal-Inverse Gamma, and
-Normal-Inverse Gaussian joints are the <span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(a \to 0\)</span>, and
-<span class="math notranslate nohighlight">\(p = -1/2\)</span> cases; each is computed on its own subordinator’s
-log-partition, with the Normal-Inverse Gaussian evaluated through its GH
-embedding so that the order <span class="math notranslate nohighlight">\(p\)</span> varies faithfully along the density-power
-path.</p>
+<p>For <span class="math notranslate nohighlight">\(d = 0\)</span> this is <a class="reference internal" href="#equation-ve-gig">(8)</a>. The shift
+<span class="math notranslate nohighlight">\(p - 1 \mapsto p - 1 - d/2\)</span> is the natural coordinate <span class="math notranslate nohighlight">\(\theta_1\)</span> in
+<a class="reference internal" href="gh.html#equation-gh-natural-params">(6)</a>. Variance-gamma (<span class="math notranslate nohighlight">\(b \to 0\)</span>) and normal-inverse
+gamma (<span class="math notranslate nohighlight">\(a \to 0\)</span>) evaluate <span class="math notranslate nohighlight">\(R(\alpha)\)</span> from their own subordinator
+log-partitions. The normal-inverse Gaussian joint fixes <span class="math notranslate nohighlight">\(p = -1/2\)</span> in
+its log-partition, so the density-power integral is evaluated on the
+GH embedding, where <span class="math notranslate nohighlight">\(p\)</span> moves with <span class="math notranslate nohighlight">\(\alpha\)</span>.</p>
 </section>
 </section>
 
@@ -708,10 +680,10 @@ path.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definitions">Definitions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power-route">Density-Power Route</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential Family</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#varentropy-of-the-gig-distribution">Varentropy of the GIG Distribution</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-varentropy-of-normal-variance-mean-mixtures">Joint Varentropy of Normal Variance-Mean Mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density-power">Density power</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gig">GIG</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-law">Joint law</a></li>
 </ul>
   </nav></div>
 

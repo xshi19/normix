@@ -1,226 +1,145 @@
 # The Generalized Inverse Gaussian Distribution
 
-In this section we review the definition and statistical properties of the
-generalized inverse Gaussian (GIG) distribution; a standard reference is
+This page states the generalized inverse Gaussian (GIG) formulas that
+normix computes. The moment generating function, the tail expansion, the
+density in scale-concentration coordinates, and the Bessel form of the
+Hellinger distance are derived in the
+[GIG note](https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/).
+A standard reference for the distribution is
 {ref}`Jorgensen2012 <jorgensen2012>`.
+
+normix writes a density as $f(x\mid\theta)$. On that site the same
+function is $p_\theta(x)$.
 
 **See also:** executable walkthrough in
 {doc}`../tutorials/distributions/02_gig`.
 
-## Definition
+## Parameters
 
-The generalized inverse Gaussian distribution is a continuous probability
-distribution with the density function:
+normix stores $(p, a, b)$. The parameter domain is
+
+```{math}
+\begin{cases}
+b > 0,\; a \ge 0 & \text{if } p < 0, \\
+b > 0,\; a > 0 & \text{if } p = 0, \\
+b \ge 0,\; a > 0 & \text{if } p > 0.
+\end{cases}
+```
+
+The open interior $a > 0$, $b > 0$ is the Bessel case. The edges
+$a = 0$ and $b = 0$ are the inverse-gamma and gamma laws below.
+
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural`
+rejects a positive rate coordinate. Zero rates are the boundary
+embeddings below. The constructors are `__init__(p, a, b)`,
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural`,
+and
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation`.
+They do not take a scale-concentration pair.
+
+For $a > 0$ and $b > 0$, the scale and the concentration are
+$\delta = \sqrt{b/a}$ and $\omega = \sqrt{ab}$, so $a = \omega/\delta$
+and $b = \omega\delta$.
+Here $\eta$ is reserved for the expectation parameter $\nabla\psi$.
+The [GIG note](https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/)
+uses the same $\delta$ and $\omega$.
+
+## Density
 
 ```{math}
 :label: gig-pdf
 
-f(x|p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
+f(x\mid p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
 \exp\left(-\frac{1}{2}(b x^{-1} + a x)\right), \quad x > 0,
 ```
 
-where $K_p(\cdot)$ is the modified Bessel function of the second kind
-({ref}`DLMF <dlmf>` §10) and the parameters $(p, a, b)$ satisfy:
-
-```{math}
-\begin{cases}
-b > 0, \, a \geq 0 & \text{if } p < 0 \\
-b > 0, \, a > 0 & \text{if } p = 0 \\
-b \geq 0, \, a > 0 & \text{if } p > 0
-\end{cases}
-```
-
-Throughout this package we assume that $a > 0$ and $b > 0$ for simplicity.
-
-## Alternative Parameterization
-
-Another useful way to parameterize the GIG distribution is to set
-$\delta = \sqrt{b/a}$ and $\eta = \sqrt{ab}$. In that case the
-density function can be written as:
-
-```{math}
-:label: gig-pdf-alt
-
-f(x|p, \delta, \eta) = \frac{\delta^p}{2K_p(\eta)} x^{p-1}
-\exp\left(-\frac{\eta}{2}(\delta x^{-1} + \delta^{-1} x)\right), \quad x > 0.
-```
-
-Note that $\delta$ serves as a scale parameter of the GIG distribution.
-
-## Moment Generating Function
-
-The moment generating function of a GIG distributed random variable $X$ is given by:
-
-```{math}
-E[e^{uX}] = \left(\sqrt{\frac{a}{a-2u}}\right)^p
-\frac{K_p(\sqrt{b(a-2u)})}{K_p(\sqrt{ab})}
-= \left(\sqrt{\frac{\eta}{\eta-2\delta u}}\right)^p
-\frac{K_p(\sqrt{\eta^2-2\delta u})}{K_p(\eta)}.
-```
+where $K_p$ is the modified Bessel function of the second kind
+({ref}`DLMF <dlmf>` §10.32). On a boundary, read {eq}`gig-pdf` as the
+limit named above. Do not substitute $a = 0$ or $b = 0$ into the
+Bessel ratio.
 
 ## Moments
 
-The moments of the GIG distribution have a particularly elegant form:
+For $a > 0$ and $b > 0$,
 
 ```{math}
 :label: gig-moments
 
-E[X^\alpha] = \left(\sqrt{\frac{b}{a}}\right)^\alpha
-\frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
-= \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.
+E[X^r] = \left(\sqrt{\frac{b}{a}}\right)^r
+\frac{K_{p+r}(\sqrt{ab})}{K_p(\sqrt{ab})}.
 ```
 
-The same Bessel-ratio form is used for
+The ratio is finite for every real $r$, so every moment exists.
 {meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean`
 and
-{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var`.
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var`
+use this formula, with $\mathrm{Var}[X] = E[X^2] - E[X]^2$.
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moment`
+returns the same ratio and requires $a, b > 0$.
 
-## Tail Behavior
+At a boundary the moment domain changes.
 
-The GIG density combines the power-law factor $x^{p-1}$ with a two-sided
-exponential factor. For $a > 0$ and $b > 0$ the tail asymptotics are
+- Gamma, $p > 0$ and $b \to 0$: $E[X^r] < \infty$ if and only if
+  $r > -p$.
+- Inverse gamma, $p < 0$ and $a \to 0$: $E[X^r] < \infty$ if and only
+  if $r < -p$.
 
-```{math}
-:label: gig-tails
+The tail expansion that produces these domains is in the GIG note.
 
-f(x) &\sim C\, x^{p-1}\, e^{-a x / 2}, \qquad x \to \infty, \\
-f(x) &\sim C\, x^{p-1}\, e^{-b / (2x)}, \qquad x \to 0^+,
-```
-
-where $C$ collects the normalising constants. The right tail decays
-**exponentially** (a *semi-heavy* tail), while the left tail is suppressed
-*super-exponentially* by the factor $e^{-b/(2x)}$. Consequently, whenever
-$a, b > 0$, **every moment is finite**,
+## Exponential family
 
 ```{math}
-E[X^\alpha] < \infty \quad \text{for all } \alpha \in \mathbb{R},
+f(x\mid\theta) = h(x) \exp\left(\theta^\top t(x) - \psi(\theta)\right)
 ```
-
-in agreement with the closed form {eq}`gig-moments`, which is well defined for
-every real order $\alpha$.
-
-The order $p$ controls only the polynomial prefactor; the exponential
-factors dominate both tails. Genuine power-law (Pareto-type) heaviness therefore
-appears only at the boundary of the parameter space, where one of the two
-exponential factors degenerates:
-
-- **Inverse-gamma limit** ($a \to 0$, $p < 0$): the right cutoff
-  $e^{-a x / 2}$ vanishes and $f(x) \sim C\, x^{p-1}$, a power law
-  with tail index $-p$. Positive moments then satisfy
-  $E[X^\alpha] < \infty$ if and only if $\alpha < -p$.
-- **Gamma limit** ($b \to 0$, $p > 0$): the origin factor
-  $e^{-b / (2x)}$ vanishes, $f(x) \sim C\, x^{p-1}$ as
-  $x \to 0^+$, and the right tail stays exponential. All positive moments
-  remain finite, while inverse moments $E[X^{-\alpha}]$ are finite if and
-  only if $\alpha < p$.
-
-## Skewness and Kurtosis
-
-Because {eq}`gig-moments` supplies every raw moment $m_k = E[X^k]$ in
-closed form, the standardised moments follow directly. With $\mu = m_1$
-and $\sigma^2 = m_2 - m_1^2$, the third and fourth central moments are
 
 ```{math}
-\mu_3 &= m_3 - 3 m_1 m_2 + 2 m_1^3, \\
-\mu_4 &= m_4 - 4 m_1 m_3 + 6 m_1^2 m_2 - 3 m_1^4,
+t(x) = \begin{pmatrix} \log x \\ x^{-1} \\ x \end{pmatrix},
+\qquad
+h(x) = \mathbf{1}_{x > 0}.
 ```
-
-and the skewness and excess kurtosis are
-
-```{math}
-:label: gig-kurtosis
-
-\gamma_1 = \frac{\mu_3}{\sigma^3}, \qquad
-\gamma_2 = \frac{\mu_4}{\sigma^4} - 3 .
-```
-
-For $a, b > 0$ both are finite (all four moments exist), and the GIG is
-right-skewed and leptokurtic over the usual parameter range.
-
-The kurtosis, however, requires a finite fourth moment, so it becomes unbounded
-precisely in the heavy-tailed inverse-gamma limit. As $a \to 0$ one has
-$X \to \text{InvGamma}(\alpha, b/2)$ with $\alpha = -p$, and
-
-```{math}
-\gamma_2 = \frac{6(5\alpha - 11)}{(\alpha - 3)(\alpha - 4)}, \qquad \alpha > 4,
-```
-
-which diverges as $\alpha \to 4^+$ and is undefined for
-$\alpha \le 4$. The kurtosis therefore fails exactly where the right tail
-is heaviest, which motivates tail diagnostics that remain finite without a
-fourth moment (for example the *varentropy* $\operatorname{Var}[-\log f(X)]$,
-which stays finite throughout this limit).
-
-## Exponential Family Form
-
-The GIG distribution belongs to the exponential family with density:
-
-```{math}
-f(x|\theta) = h(x) \exp\left(\theta^\top t(x) - \psi(\theta)\right)
-```
-
-**Sufficient Statistics:**
-
-```{math}
-t(x) = \begin{pmatrix} \log x \\ x^{-1} \\ x \end{pmatrix}
-```
-
-**Natural Parameters:**
-
-The natural parameters $\theta = (\theta_1, \theta_2, \theta_3)$ are derived from
-the classical parameters $(p, a, b)$:
 
 ```{math}
 :label: gig-natural-params
 
-\theta_1 &= p - 1 \quad \text{(unbounded)} \\
-\theta_2 &= -\frac{b}{2} < 0 \\
-\theta_3 &= -\frac{a}{2} < 0
+\theta_1 &= p - 1, \\
+\theta_2 &= -\frac{b}{2} \le 0, \\
+\theta_3 &= -\frac{a}{2} \le 0.
 ```
 
-The inverse transformation is:
-
-```{math}
-p = \theta_1 + 1, \quad b = -2\theta_2, \quad a = -2\theta_3
-```
-
-**Base Measure:**
-
-```{math}
-h(x) = \mathbf{1}_{x > 0}
-```
-
-**Log Partition Function:**
+Strict inequality is the interior. The inverse map is
+$p = \theta_1 + 1$, $b = -2\theta_2$, $a = -2\theta_3$.
 
 ```{math}
 :label: gig-log-partition
 
-\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right)
+\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right),
 ```
 
-where $p = \theta_1 + 1$, $a = -2\theta_3$, and $b = -2\theta_2$.
-
-**Expectation Parameters:**
-
-The expectation parameters $\eta = \nabla\psi(\theta) = E[t(X)]$ are:
+with $p$, $a$, and $b$ as above. This display is the interior formula.
+On a gamma or inverse-gamma boundary, $\psi$ is the log-partition of that
+boundary law. The expectation parameter
+$\eta = \nabla\psi(\theta) = E[t(X)]$ is
 
 ```{math}
 :label: gig-expectation-params
 
-\eta_1 &= E[\log X] = \frac{\partial \psi}{\partial \theta_1} \\
-\eta_2 &= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
-\eta_3 &= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}
+\eta_1 &= E[\log X] = \frac{\partial \psi}{\partial \theta_1}
+= \frac12\log\frac{b}{a}
++ \left.\partial_\nu \log K_\nu(\sqrt{ab})\right|_{\nu=p}, \\
+\eta_2 &= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})}, \\
+\eta_3 &= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}.
 ```
 
-Unfortunately we do not have an analytical formula for $\eta_1 = E[\log X]$.
-In practice it can only be approximated numerically.
+The order derivative is not an elementary expression. Its equality with
+$\partial\psi/\partial\theta_1$ is derived in the GIG note.
+{meth}`~normix.exponential_family.ExponentialFamily.expectation_params`
+returns $(\eta_1, \eta_2, \eta_3)$ in that order.
 
-## Maximum Likelihood Estimation
+## Likelihood
 
-Given the expectation parameters $(\eta_1, \eta_2, \eta_3)$, computing the
-classical parameters $(p, a, b)$ by solving the above equations is a challenging
-problem. Let $x_1, x_2, \ldots, x_n$ be a sequence of sample data, then the
-maximum likelihood estimator (MLE) of GIG is given by:
+Given $(\eta_1, \eta_2, \eta_3)$, the classical parameters solve
+{eq}`gig-expectation-params`. For a sample $x_1,\ldots,x_n$ the maximum
+likelihood estimator is
 
 ```{math}
 :label: gig-mle
@@ -228,65 +147,59 @@ maximum likelihood estimator (MLE) of GIG is given by:
 (\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),
 ```
 
-where $L_{GIG}$ is the log-likelihood function (excluding constants):
+where the log-likelihood, up to an additive constant, is
 
 ```{math}
 :label: gig-loglik
 
 L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3) =
 (p-1) \hat{\eta}_1 - \frac{1}{2} b \hat{\eta}_2 - \frac{1}{2} a \hat{\eta}_3
-+ \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),
++ \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})).
 ```
 
-and the empirical sufficient statistics retain the order $(\log X, X^{-1}, X)$:
+The arguments stay in the order $(\log X, X^{-1}, X)$:
 
 - $\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n \log(x_k)$
 - $\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}$
 - $\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n x_k$
 
-One can verify that the optimal solution $(\hat{p}, \hat{a}, \hat{b})$ must
-satisfy {eq}`gig-expectation-params` where $(\eta_1, \eta_2, \eta_3)$ are
-replaced by $(\hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3)$.
+An interior critical point satisfies {eq}`gig-expectation-params` at the
+empirical moments. There is no closed form for $\hat{p}$
+({ref}`Jorgensen2012 <jorgensen2012>`).
+{ref}`Hu2005 <hu2005>` reports that the moment equations for $\eta_2$ and
+$\eta_3$ can fail to have a solution when $|p|$ is large.
+{meth}`~normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation`
+is the numerical inversion.
 
-## Numerical Challenges
+## Hellinger distance
 
-As discussed in {ref}`Jorgensen2012 <jorgensen2012>`, there is no analytical expression for
-$\hat{p}$ or even its partial derivatives. Most literature suggests fixing
-$p$ when maximizing the log-likelihood function.
-
-Even when $p$ is fixed, {ref}`Hu2005 <hu2005>` reports that when $|p|$ is large
-(say, above 10), there might be no solution for the first two equations in
-{eq}`gig-expectation-params`.
-
-## Hellinger Distance
-
-To measure estimation errors, one good choice is the Hellinger distance between
-the true and estimated parameters ({ref}`Shi2016 <shi2016>`).
-
-**Proposition.** Let $(p_1, a_1, b_1)$ and $(p_2, a_2, b_2)$ be the
-parameters of two GIG distributions. The squared Hellinger distance between the
-two distributions is given by:
+For two GIG laws with natural parameters $\theta$ and $\varphi$, the
+squared Hellinger distance that
+{meth}`~normix.exponential_family.ExponentialFamily.squared_hellinger`
+evaluates is
 
 ```{math}
-H_{GIG}^2(p_1, a_1, b_1 \| p_2, a_2, b_2) = 1 -
-\frac{(a_1/b_1)^{p_1/4} (a_2/b_2)^{p_2/4}}
-     {\sqrt{K_{p_1}(\sqrt{a_1 b_1}) K_{p_2}(\sqrt{a_2 b_2})}}
-\frac{K_{\bar{p}}(\sqrt{\bar{a}\bar{b}})}{(\bar{a}/\bar{b})^{\bar{p}/2}},
+H^2 = 1 - \exp\left(
+\psi\left(\frac{\theta+\varphi}{2}\right)
+- \frac{\psi(\theta)+\psi(\varphi)}{2}
+\right).
 ```
 
-where $\bar{p} = (p_1 + p_2)/2$, $\bar{a} = (a_1 + a_2)/2$, and
-$\bar{b} = (b_1 + b_2)/2$.
+The Bessel-ratio form of the same affinity is derived in the GIG note
+({ref}`Shi2016 <shi2016>`).
 
-## Special Cases
+## Boundary laws
 
-There are several important special cases of the GIG distribution:
-
-- **Inverse Gaussian (IG)**: when $p = -1/2$
-- **Gamma**: when $p > 0$ and $b \to 0$, giving $\text{Gamma}(p, a/2)$
-- **Inverse Gamma**: when $p < 0$ and $a \to 0$, giving $\text{InvGamma}(-p, b/2)$
-
-These special cases are implemented as separate classes in ``normix``:
-
-- {class}`~normix.distributions.inverse_gaussian.InverseGaussian`
-- {class}`~normix.distributions.gamma.Gamma`
-- {class}`~normix.distributions.inverse_gamma.InverseGamma`
+- Inverse Gaussian: $p = -1/2$, stored as
+  {class}`~normix.distributions.inverse_gaussian.InverseGaussian`.
+  {meth}`~normix.distributions.inverse_gaussian.InverseGaussian.to_gig`
+  maps $(\mu, \lambda)$ to $\mathrm{GIG}(-1/2,\, \lambda/\mu^2,\, \lambda)$.
+- Gamma: $p > 0$ and $b \to 0$, giving $\mathrm{Gamma}(p, a/2)$, stored as
+  {class}`~normix.distributions.gamma.Gamma`.
+  {meth}`~normix.distributions.gamma.Gamma.to_gig`
+  maps $(\alpha, \beta)$ to $\mathrm{GIG}(\alpha,\, 2\beta,\, 0)$.
+- Inverse gamma: $p < 0$ and $a \to 0$, giving $\mathrm{InvGamma}(-p, b/2)$,
+  stored as
+  {class}`~normix.distributions.inverse_gamma.InverseGamma`.
+  {meth}`~normix.distributions.inverse_gamma.InverseGamma.to_gig`
+  maps $(\alpha, \beta)$ to $\mathrm{GIG}(-\alpha,\, 0,\, 2\beta)$.

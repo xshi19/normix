@@ -459,17 +459,13 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definition">Definition</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moment-generating-function">Moment Generating Function</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density">Density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments">Moments</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-behavior">Tail Behavior</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#skewness-and-kurtosis">Skewness and Kurtosis</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#likelihood">Likelihood</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger distance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-laws">Boundary laws</a></li>
 </ul>
             </nav>
         </div>
@@ -483,209 +479,161 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="the-generalized-inverse-gaussian-distribution">
 <h1>The Generalized Inverse Gaussian Distribution<a class="headerlink" href="#the-generalized-inverse-gaussian-distribution" title="Link to this heading">#</a></h1>
-<p>In this section we review the definition and statistical properties of the
-generalized inverse Gaussian (GIG) distribution; a standard reference is
+<p>This page states the generalized inverse Gaussian (GIG) formulas that
+normix computes. The moment generating function, the tail expansion, the
+density in scale-concentration coordinates, and the Bessel form of the
+Hellinger distance are derived in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/">GIG note</a>.
+A standard reference for the distribution is
 <a class="reference internal" href="../references.html#jorgensen2012"><span class="std std-ref">Jorgensen2012</span></a>.</p>
+<p>normix writes a density as <span class="math notranslate nohighlight">\(f(x\mid\theta)\)</span>. On that site the same
+function is <span class="math notranslate nohighlight">\(p_\theta(x)\)</span>.</p>
 <p><strong>See also:</strong> executable walkthrough in
 <a class="reference internal" href="../tutorials/distributions/02_gig.html"><span class="doc">The Generalized Inverse Gaussian</span></a>.</p>
-<section id="definition">
-<h2>Definition<a class="headerlink" href="#definition" title="Link to this heading">#</a></h2>
-<p>The generalized inverse Gaussian distribution is a continuous probability
-distribution with the density function:</p>
-<div class="math notranslate nohighlight" id="equation-gig-pdf">
-<span class="eqno">(1)<a class="headerlink" href="#equation-gig-pdf" title="Link to this equation">#</a></span>\[f(x|p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
-\exp\left(-\frac{1}{2}(b x^{-1} + a x)\right), \quad x &gt; 0,\]</div>
-<p>where <span class="math notranslate nohighlight">\(K_p(\cdot)\)</span> is the modified Bessel function of the second kind
-(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> §10) and the parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> satisfy:</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">#</a></h2>
+<p>normix stores <span class="math notranslate nohighlight">\((p, a, b)\)</span>. The parameter domain is</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{cases}
-b &gt; 0, \, a \geq 0 &amp; \text{if } p &lt; 0 \\
-b &gt; 0, \, a &gt; 0 &amp; \text{if } p = 0 \\
-b \geq 0, \, a &gt; 0 &amp; \text{if } p &gt; 0
+b &gt; 0,\; a \ge 0 &amp; \text{if } p &lt; 0, \\
+b &gt; 0,\; a &gt; 0 &amp; \text{if } p = 0, \\
+b \ge 0,\; a &gt; 0 &amp; \text{if } p &gt; 0.
 \end{cases}\end{split}\]</div>
-<p>Throughout this package we assume that <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span> for simplicity.</p>
+<p>The open interior <span class="math notranslate nohighlight">\(a &gt; 0\)</span>, <span class="math notranslate nohighlight">\(b &gt; 0\)</span> is the Bessel case. The edges
+<span class="math notranslate nohighlight">\(a = 0\)</span> and <span class="math notranslate nohighlight">\(b = 0\)</span> are the inverse-gamma and gamma laws below.</p>
+<p><a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_natural()</span></code></a>
+rejects a positive rate coordinate. Zero rates are the boundary
+embeddings below. The constructors are <code class="docutils literal notranslate"><span class="pre">__init__(p,</span> <span class="pre">a,</span> <span class="pre">b)</span></code>,
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_natural"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_natural()</span></code></a>,
+and
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_expectation()</span></code></a>.
+They do not take a scale-concentration pair.</p>
+<p>For <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span>, the scale and the concentration are
+<span class="math notranslate nohighlight">\(\delta = \sqrt{b/a}\)</span> and <span class="math notranslate nohighlight">\(\omega = \sqrt{ab}\)</span>, so <span class="math notranslate nohighlight">\(a = \omega/\delta\)</span>
+and <span class="math notranslate nohighlight">\(b = \omega\delta\)</span>.
+Here <span class="math notranslate nohighlight">\(\eta\)</span> is reserved for the expectation parameter <span class="math notranslate nohighlight">\(\nabla\psi\)</span>.
+The <a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/">GIG note</a>
+uses the same <span class="math notranslate nohighlight">\(\delta\)</span> and <span class="math notranslate nohighlight">\(\omega\)</span>.</p>
 </section>
-<section id="alternative-parameterization">
-<h2>Alternative Parameterization<a class="headerlink" href="#alternative-parameterization" title="Link to this heading">#</a></h2>
-<p>Another useful way to parameterize the GIG distribution is to set
-<span class="math notranslate nohighlight">\(\delta = \sqrt{b/a}\)</span> and <span class="math notranslate nohighlight">\(\eta = \sqrt{ab}\)</span>. In that case the
-density function can be written as:</p>
-<div class="math notranslate nohighlight" id="equation-gig-pdf-alt">
-<span class="eqno">(2)<a class="headerlink" href="#equation-gig-pdf-alt" title="Link to this equation">#</a></span>\[f(x|p, \delta, \eta) = \frac{\delta^p}{2K_p(\eta)} x^{p-1}
-\exp\left(-\frac{\eta}{2}(\delta x^{-1} + \delta^{-1} x)\right), \quad x &gt; 0.\]</div>
-<p>Note that <span class="math notranslate nohighlight">\(\delta\)</span> serves as a scale parameter of the GIG distribution.</p>
-</section>
-<section id="moment-generating-function">
-<h2>Moment Generating Function<a class="headerlink" href="#moment-generating-function" title="Link to this heading">#</a></h2>
-<p>The moment generating function of a GIG distributed random variable <span class="math notranslate nohighlight">\(X\)</span> is given by:</p>
-<div class="math notranslate nohighlight">
-\[E[e^{uX}] = \left(\sqrt{\frac{a}{a-2u}}\right)^p
-\frac{K_p(\sqrt{b(a-2u)})}{K_p(\sqrt{ab})}
-= \left(\sqrt{\frac{\eta}{\eta-2\delta u}}\right)^p
-\frac{K_p(\sqrt{\eta^2-2\delta u})}{K_p(\eta)}.\]</div>
+<section id="density">
+<h2>Density<a class="headerlink" href="#density" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight" id="equation-gig-pdf">
+<span class="eqno">(1)<a class="headerlink" href="#equation-gig-pdf" title="Link to this equation">#</a></span>\[f(x\mid p,a,b) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})} x^{p-1}
+\exp\left(-\frac{1}{2}(b x^{-1} + a x)\right), \quad x &gt; 0,\]</div>
+<p>where <span class="math notranslate nohighlight">\(K_p\)</span> is the modified Bessel function of the second kind
+(<a class="reference internal" href="../references.html#dlmf"><span class="std std-ref">DLMF</span></a> §10.32). On a boundary, read <a class="reference internal" href="#equation-gig-pdf">(1)</a> as the
+limit named above. Do not substitute <span class="math notranslate nohighlight">\(a = 0\)</span> or <span class="math notranslate nohighlight">\(b = 0\)</span> into the
+Bessel ratio.</p>
 </section>
 <section id="moments">
 <h2>Moments<a class="headerlink" href="#moments" title="Link to this heading">#</a></h2>
-<p>The moments of the GIG distribution have a particularly elegant form:</p>
+<p>For <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span>,</p>
 <div class="math notranslate nohighlight" id="equation-gig-moments">
-<span class="eqno">(3)<a class="headerlink" href="#equation-gig-moments" title="Link to this equation">#</a></span>\[E[X^\alpha] = \left(\sqrt{\frac{b}{a}}\right)^\alpha
-\frac{K_{p+\alpha}(\sqrt{ab})}{K_p(\sqrt{ab})}
-= \delta^\alpha \frac{K_{p+\alpha}(\eta)}{K_p(\eta)}.\]</div>
-<p>The same Bessel-ratio form is used for
+<span class="eqno">(2)<a class="headerlink" href="#equation-gig-moments" title="Link to this equation">#</a></span>\[E[X^r] = \left(\sqrt{\frac{b}{a}}\right)^r
+\frac{K_{p+r}(\sqrt{ab})}{K_p(\sqrt{ab})}.\]</div>
+<p>The ratio is finite for every real <span class="math notranslate nohighlight">\(r\)</span>, so every moment exists.
 <a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.mean"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mean()</span></code></a>
 and
-<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var"><code class="xref py py-meth docutils literal notranslate"><span class="pre">var()</span></code></a>.</p>
-</section>
-<section id="tail-behavior">
-<h2>Tail Behavior<a class="headerlink" href="#tail-behavior" title="Link to this heading">#</a></h2>
-<p>The GIG density combines the power-law factor <span class="math notranslate nohighlight">\(x^{p-1}\)</span> with a two-sided
-exponential factor. For <span class="math notranslate nohighlight">\(a &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b &gt; 0\)</span> the tail asymptotics are</p>
-<div class="math notranslate nohighlight" id="equation-gig-tails">
-<span class="eqno">(4)<a class="headerlink" href="#equation-gig-tails" title="Link to this equation">#</a></span>\[\begin{split}f(x) &amp;\sim C\, x^{p-1}\, e^{-a x / 2}, \qquad x \to \infty, \\
-f(x) &amp;\sim C\, x^{p-1}\, e^{-b / (2x)}, \qquad x \to 0^+,\end{split}\]</div>
-<p>where <span class="math notranslate nohighlight">\(C\)</span> collects the normalising constants. The right tail decays
-<strong>exponentially</strong> (a <em>semi-heavy</em> tail), while the left tail is suppressed
-<em>super-exponentially</em> by the factor <span class="math notranslate nohighlight">\(e^{-b/(2x)}\)</span>. Consequently, whenever
-<span class="math notranslate nohighlight">\(a, b &gt; 0\)</span>, <strong>every moment is finite</strong>,</p>
-<div class="math notranslate nohighlight">
-\[E[X^\alpha] &lt; \infty \quad \text{for all } \alpha \in \mathbb{R},\]</div>
-<p>in agreement with the closed form <a class="reference internal" href="#equation-gig-moments">(3)</a>, which is well defined for
-every real order <span class="math notranslate nohighlight">\(\alpha\)</span>.</p>
-<p>The order <span class="math notranslate nohighlight">\(p\)</span> controls only the polynomial prefactor; the exponential
-factors dominate both tails. Genuine power-law (Pareto-type) heaviness therefore
-appears only at the boundary of the parameter space, where one of the two
-exponential factors degenerates:</p>
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.var"><code class="xref py py-meth docutils literal notranslate"><span class="pre">var()</span></code></a>
+use this formula, with <span class="math notranslate nohighlight">\(\mathrm{Var}[X] = E[X^2] - E[X]^2\)</span>.
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moment" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.raw_moment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw_moment()</span></code></a>
+returns the same ratio and requires <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span>.</p>
+<p>At a boundary the moment domain changes.</p>
 <ul class="simple">
-<li><p><strong>Inverse-gamma limit</strong> (<span class="math notranslate nohighlight">\(a \to 0\)</span>, <span class="math notranslate nohighlight">\(p &lt; 0\)</span>): the right cutoff
-<span class="math notranslate nohighlight">\(e^{-a x / 2}\)</span> vanishes and <span class="math notranslate nohighlight">\(f(x) \sim C\, x^{p-1}\)</span>, a power law
-with tail index <span class="math notranslate nohighlight">\(-p\)</span>. Positive moments then satisfy
-<span class="math notranslate nohighlight">\(E[X^\alpha] &lt; \infty\)</span> if and only if <span class="math notranslate nohighlight">\(\alpha &lt; -p\)</span>.</p></li>
-<li><p><strong>Gamma limit</strong> (<span class="math notranslate nohighlight">\(b \to 0\)</span>, <span class="math notranslate nohighlight">\(p &gt; 0\)</span>): the origin factor
-<span class="math notranslate nohighlight">\(e^{-b / (2x)}\)</span> vanishes, <span class="math notranslate nohighlight">\(f(x) \sim C\, x^{p-1}\)</span> as
-<span class="math notranslate nohighlight">\(x \to 0^+\)</span>, and the right tail stays exponential. All positive moments
-remain finite, while inverse moments <span class="math notranslate nohighlight">\(E[X^{-\alpha}]\)</span> are finite if and
-only if <span class="math notranslate nohighlight">\(\alpha &lt; p\)</span>.</p></li>
+<li><p>Gamma, <span class="math notranslate nohighlight">\(p &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b \to 0\)</span>: <span class="math notranslate nohighlight">\(E[X^r] &lt; \infty\)</span> if and only if
+<span class="math notranslate nohighlight">\(r &gt; -p\)</span>.</p></li>
+<li><p>Inverse gamma, <span class="math notranslate nohighlight">\(p &lt; 0\)</span> and <span class="math notranslate nohighlight">\(a \to 0\)</span>: <span class="math notranslate nohighlight">\(E[X^r] &lt; \infty\)</span> if and only
+if <span class="math notranslate nohighlight">\(r &lt; -p\)</span>.</p></li>
 </ul>
+<p>The tail expansion that produces these domains is in the GIG note.</p>
 </section>
-<section id="skewness-and-kurtosis">
-<h2>Skewness and Kurtosis<a class="headerlink" href="#skewness-and-kurtosis" title="Link to this heading">#</a></h2>
-<p>Because <a class="reference internal" href="#equation-gig-moments">(3)</a> supplies every raw moment <span class="math notranslate nohighlight">\(m_k = E[X^k]\)</span> in
-closed form, the standardised moments follow directly. With <span class="math notranslate nohighlight">\(\mu = m_1\)</span>
-and <span class="math notranslate nohighlight">\(\sigma^2 = m_2 - m_1^2\)</span>, the third and fourth central moments are</p>
+<section id="exponential-family">
+<h2>Exponential family<a class="headerlink" href="#exponential-family" title="Link to this heading">#</a></h2>
 <div class="math notranslate nohighlight">
-\[\begin{split}\mu_3 &amp;= m_3 - 3 m_1 m_2 + 2 m_1^3, \\
-\mu_4 &amp;= m_4 - 4 m_1 m_3 + 6 m_1^2 m_2 - 3 m_1^4,\end{split}\]</div>
-<p>and the skewness and excess kurtosis are</p>
-<div class="math notranslate nohighlight" id="equation-gig-kurtosis">
-<span class="eqno">(5)<a class="headerlink" href="#equation-gig-kurtosis" title="Link to this equation">#</a></span>\[\gamma_1 = \frac{\mu_3}{\sigma^3}, \qquad
-\gamma_2 = \frac{\mu_4}{\sigma^4} - 3 .\]</div>
-<p>For <span class="math notranslate nohighlight">\(a, b &gt; 0\)</span> both are finite (all four moments exist), and the GIG is
-right-skewed and leptokurtic over the usual parameter range.</p>
-<p>The kurtosis, however, requires a finite fourth moment, so it becomes unbounded
-precisely in the heavy-tailed inverse-gamma limit. As <span class="math notranslate nohighlight">\(a \to 0\)</span> one has
-<span class="math notranslate nohighlight">\(X \to \text{InvGamma}(\alpha, b/2)\)</span> with <span class="math notranslate nohighlight">\(\alpha = -p\)</span>, and</p>
+\[f(x\mid\theta) = h(x) \exp\left(\theta^\top t(x) - \psi(\theta)\right)\]</div>
 <div class="math notranslate nohighlight">
-\[\gamma_2 = \frac{6(5\alpha - 11)}{(\alpha - 3)(\alpha - 4)}, \qquad \alpha &gt; 4,\]</div>
-<p>which diverges as <span class="math notranslate nohighlight">\(\alpha \to 4^+\)</span> and is undefined for
-<span class="math notranslate nohighlight">\(\alpha \le 4\)</span>. The kurtosis therefore fails exactly where the right tail
-is heaviest, which motivates tail diagnostics that remain finite without a
-fourth moment (for example the <em>varentropy</em> <span class="math notranslate nohighlight">\(\operatorname{Var}[-\log f(X)]\)</span>,
-which stays finite throughout this limit).</p>
-</section>
-<section id="exponential-family-form">
-<h2>Exponential Family Form<a class="headerlink" href="#exponential-family-form" title="Link to this heading">#</a></h2>
-<p>The GIG distribution belongs to the exponential family with density:</p>
-<div class="math notranslate nohighlight">
-\[f(x|\theta) = h(x) \exp\left(\theta^\top t(x) - \psi(\theta)\right)\]</div>
-<p><strong>Sufficient Statistics:</strong></p>
-<div class="math notranslate nohighlight">
-\[\begin{split}t(x) = \begin{pmatrix} \log x \\ x^{-1} \\ x \end{pmatrix}\end{split}\]</div>
-<p><strong>Natural Parameters:</strong></p>
-<p>The natural parameters <span class="math notranslate nohighlight">\(\theta = (\theta_1, \theta_2, \theta_3)\)</span> are derived from
-the classical parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span>:</p>
+\[\begin{split}t(x) = \begin{pmatrix} \log x \\ x^{-1} \\ x \end{pmatrix},
+\qquad
+h(x) = \mathbf{1}_{x &gt; 0}.\end{split}\]</div>
 <div class="math notranslate nohighlight" id="equation-gig-natural-params">
-<span class="eqno">(6)<a class="headerlink" href="#equation-gig-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1 \quad \text{(unbounded)} \\
-\theta_2 &amp;= -\frac{b}{2} &lt; 0 \\
-\theta_3 &amp;= -\frac{a}{2} &lt; 0\end{split}\]</div>
-<p>The inverse transformation is:</p>
-<div class="math notranslate nohighlight">
-\[p = \theta_1 + 1, \quad b = -2\theta_2, \quad a = -2\theta_3\]</div>
-<p><strong>Base Measure:</strong></p>
-<div class="math notranslate nohighlight">
-\[h(x) = \mathbf{1}_{x &gt; 0}\]</div>
-<p><strong>Log Partition Function:</strong></p>
+<span class="eqno">(3)<a class="headerlink" href="#equation-gig-natural-params" title="Link to this equation">#</a></span>\[\begin{split}\theta_1 &amp;= p - 1, \\
+\theta_2 &amp;= -\frac{b}{2} \le 0, \\
+\theta_3 &amp;= -\frac{a}{2} \le 0.\end{split}\]</div>
+<p>Strict inequality is the interior. The inverse map is
+<span class="math notranslate nohighlight">\(p = \theta_1 + 1\)</span>, <span class="math notranslate nohighlight">\(b = -2\theta_2\)</span>, <span class="math notranslate nohighlight">\(a = -2\theta_3\)</span>.</p>
 <div class="math notranslate nohighlight" id="equation-gig-log-partition">
-<span class="eqno">(7)<a class="headerlink" href="#equation-gig-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right)\]</div>
-<p>where <span class="math notranslate nohighlight">\(p = \theta_1 + 1\)</span>, <span class="math notranslate nohighlight">\(a = -2\theta_3\)</span>, and <span class="math notranslate nohighlight">\(b = -2\theta_2\)</span>.</p>
-<p><strong>Expectation Parameters:</strong></p>
-<p>The expectation parameters <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X)]\)</span> are:</p>
+<span class="eqno">(4)<a class="headerlink" href="#equation-gig-log-partition" title="Link to this equation">#</a></span>\[\psi(\theta) = \log 2 + \log K_p(\sqrt{ab}) + \frac{p}{2} \log\left(\frac{b}{a}\right),\]</div>
+<p>with <span class="math notranslate nohighlight">\(p\)</span>, <span class="math notranslate nohighlight">\(a\)</span>, and <span class="math notranslate nohighlight">\(b\)</span> as above. This display is the interior formula.
+On a gamma or inverse-gamma boundary, <span class="math notranslate nohighlight">\(\psi\)</span> is the log-partition of that
+boundary law. The expectation parameter
+<span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta) = E[t(X)]\)</span> is</p>
 <div class="math notranslate nohighlight" id="equation-gig-expectation-params">
-<span class="eqno">(8)<a class="headerlink" href="#equation-gig-expectation-params" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;= E[\log X] = \frac{\partial \psi}{\partial \theta_1} \\
-\eta_2 &amp;= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})} \\
-\eta_3 &amp;= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}\end{split}\]</div>
-<p>Unfortunately we do not have an analytical formula for <span class="math notranslate nohighlight">\(\eta_1 = E[\log X]\)</span>.
-In practice it can only be approximated numerically.</p>
+<span class="eqno">(5)<a class="headerlink" href="#equation-gig-expectation-params" title="Link to this equation">#</a></span>\[\begin{split}\eta_1 &amp;= E[\log X] = \frac{\partial \psi}{\partial \theta_1}
+= \frac12\log\frac{b}{a}
++ \left.\partial_\nu \log K_\nu(\sqrt{ab})\right|_{\nu=p}, \\
+\eta_2 &amp;= E[X^{-1}] = \sqrt{\frac{a}{b}} \frac{K_{p-1}(\sqrt{ab})}{K_p(\sqrt{ab})}, \\
+\eta_3 &amp;= E[X] = \sqrt{\frac{b}{a}} \frac{K_{p+1}(\sqrt{ab})}{K_p(\sqrt{ab})}.\end{split}\]</div>
+<p>The order derivative is not an elementary expression. Its equality with
+<span class="math notranslate nohighlight">\(\partial\psi/\partial\theta_1\)</span> is derived in the GIG note.
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.expectation_params" title="normix.exponential_family.ExponentialFamily.expectation_params"><code class="xref py py-meth docutils literal notranslate"><span class="pre">expectation_params()</span></code></a>
+returns <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> in that order.</p>
 </section>
-<section id="maximum-likelihood-estimation">
-<h2>Maximum Likelihood Estimation<a class="headerlink" href="#maximum-likelihood-estimation" title="Link to this heading">#</a></h2>
-<p>Given the expectation parameters <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span>, computing the
-classical parameters <span class="math notranslate nohighlight">\((p, a, b)\)</span> by solving the above equations is a challenging
-problem. Let <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_n\)</span> be a sequence of sample data, then the
-maximum likelihood estimator (MLE) of GIG is given by:</p>
+<section id="likelihood">
+<h2>Likelihood<a class="headerlink" href="#likelihood" title="Link to this heading">#</a></h2>
+<p>Given <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span>, the classical parameters solve
+<a class="reference internal" href="#equation-gig-expectation-params">(5)</a>. For a sample <span class="math notranslate nohighlight">\(x_1,\ldots,x_n\)</span> the maximum
+likelihood estimator is</p>
 <div class="math notranslate nohighlight" id="equation-gig-mle">
-<span class="eqno">(9)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation">#</a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
-<p>where <span class="math notranslate nohighlight">\(L_{GIG}\)</span> is the log-likelihood function (excluding constants):</p>
+<span class="eqno">(6)<a class="headerlink" href="#equation-gig-mle" title="Link to this equation">#</a></span>\[(\hat{p}, \hat{a}, \hat{b}) = \arg\max_{p,a,b} L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3),\]</div>
+<p>where the log-likelihood, up to an additive constant, is</p>
 <div class="math notranslate nohighlight" id="equation-gig-loglik">
-<span class="eqno">(10)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3) =
+<span class="eqno">(7)<a class="headerlink" href="#equation-gig-loglik" title="Link to this equation">#</a></span>\[L_{GIG}(p, a, b | \hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3) =
 (p-1) \hat{\eta}_1 - \frac{1}{2} b \hat{\eta}_2 - \frac{1}{2} a \hat{\eta}_3
-+ \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})),\]</div>
-<p>and the empirical sufficient statistics retain the order <span class="math notranslate nohighlight">\((\log X, X^{-1}, X)\)</span>:</p>
++ \frac{p}{2} \log(a/b) - \log(K_p(\sqrt{ab})).\]</div>
+<p>The arguments stay in the order <span class="math notranslate nohighlight">\((\log X, X^{-1}, X)\)</span>:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(\hat{\eta}_1 = \frac{1}{n} \sum_{k=1}^n \log(x_k)\)</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(\hat{\eta}_2 = \frac{1}{n} \sum_{k=1}^n x_k^{-1}\)</span></p></li>
 <li><p><span class="math notranslate nohighlight">\(\hat{\eta}_3 = \frac{1}{n} \sum_{k=1}^n x_k\)</span></p></li>
 </ul>
-<p>One can verify that the optimal solution <span class="math notranslate nohighlight">\((\hat{p}, \hat{a}, \hat{b})\)</span> must
-satisfy <a class="reference internal" href="#equation-gig-expectation-params">(8)</a> where <span class="math notranslate nohighlight">\((\eta_1, \eta_2, \eta_3)\)</span> are
-replaced by <span class="math notranslate nohighlight">\((\hat{\eta}_1, \hat{\eta}_2, \hat{\eta}_3)\)</span>.</p>
-</section>
-<section id="numerical-challenges">
-<h2>Numerical Challenges<a class="headerlink" href="#numerical-challenges" title="Link to this heading">#</a></h2>
-<p>As discussed in <a class="reference internal" href="../references.html#jorgensen2012"><span class="std std-ref">Jorgensen2012</span></a>, there is no analytical expression for
-<span class="math notranslate nohighlight">\(\hat{p}\)</span> or even its partial derivatives. Most literature suggests fixing
-<span class="math notranslate nohighlight">\(p\)</span> when maximizing the log-likelihood function.</p>
-<p>Even when <span class="math notranslate nohighlight">\(p\)</span> is fixed, <a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a> reports that when <span class="math notranslate nohighlight">\(|p|\)</span> is large
-(say, above 10), there might be no solution for the first two equations in
-<a class="reference internal" href="#equation-gig-expectation-params">(8)</a>.</p>
+<p>An interior critical point satisfies <a class="reference internal" href="#equation-gig-expectation-params">(5)</a> at the
+empirical moments. There is no closed form for <span class="math notranslate nohighlight">\(\hat{p}\)</span>
+(<a class="reference internal" href="../references.html#jorgensen2012"><span class="std std-ref">Jorgensen2012</span></a>).
+<a class="reference internal" href="../references.html#hu2005"><span class="std std-ref">Hu2005</span></a> reports that the moment equations for <span class="math notranslate nohighlight">\(\eta_2\)</span> and
+<span class="math notranslate nohighlight">\(\eta_3\)</span> can fail to have a solution when <span class="math notranslate nohighlight">\(|p|\)</span> is large.
+<a class="reference internal" href="../api/distributions.html#normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation" title="normix.distributions.generalized_inverse_gaussian.GeneralizedInverseGaussian.from_expectation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_expectation()</span></code></a>
+is the numerical inversion.</p>
 </section>
 <section id="hellinger-distance">
-<h2>Hellinger Distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading">#</a></h2>
-<p>To measure estimation errors, one good choice is the Hellinger distance between
-the true and estimated parameters (<a class="reference internal" href="../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>).</p>
-<p><strong>Proposition.</strong> Let <span class="math notranslate nohighlight">\((p_1, a_1, b_1)\)</span> and <span class="math notranslate nohighlight">\((p_2, a_2, b_2)\)</span> be the
-parameters of two GIG distributions. The squared Hellinger distance between the
-two distributions is given by:</p>
+<h2>Hellinger distance<a class="headerlink" href="#hellinger-distance" title="Link to this heading">#</a></h2>
+<p>For two GIG laws with natural parameters <span class="math notranslate nohighlight">\(\theta\)</span> and <span class="math notranslate nohighlight">\(\varphi\)</span>, the
+squared Hellinger distance that
+<a class="reference internal" href="../api/index.html#normix.exponential_family.ExponentialFamily.squared_hellinger" title="normix.exponential_family.ExponentialFamily.squared_hellinger"><code class="xref py py-meth docutils literal notranslate"><span class="pre">squared_hellinger()</span></code></a>
+evaluates is</p>
 <div class="math notranslate nohighlight">
-\[H_{GIG}^2(p_1, a_1, b_1 \| p_2, a_2, b_2) = 1 -
-\frac{(a_1/b_1)^{p_1/4} (a_2/b_2)^{p_2/4}}
-     {\sqrt{K_{p_1}(\sqrt{a_1 b_1}) K_{p_2}(\sqrt{a_2 b_2})}}
-\frac{K_{\bar{p}}(\sqrt{\bar{a}\bar{b}})}{(\bar{a}/\bar{b})^{\bar{p}/2}},\]</div>
-<p>where <span class="math notranslate nohighlight">\(\bar{p} = (p_1 + p_2)/2\)</span>, <span class="math notranslate nohighlight">\(\bar{a} = (a_1 + a_2)/2\)</span>, and
-<span class="math notranslate nohighlight">\(\bar{b} = (b_1 + b_2)/2\)</span>.</p>
+\[H^2 = 1 - \exp\left(
+\psi\left(\frac{\theta+\varphi}{2}\right)
+- \frac{\psi(\theta)+\psi(\varphi)}{2}
+\right).\]</div>
+<p>The Bessel-ratio form of the same affinity is derived in the GIG note
+(<a class="reference internal" href="../references.html#shi2016"><span class="std std-ref">Shi2016</span></a>).</p>
 </section>
-<section id="special-cases">
-<h2>Special Cases<a class="headerlink" href="#special-cases" title="Link to this heading">#</a></h2>
-<p>There are several important special cases of the GIG distribution:</p>
+<section id="boundary-laws">
+<h2>Boundary laws<a class="headerlink" href="#boundary-laws" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><strong>Inverse Gaussian (IG)</strong>: when <span class="math notranslate nohighlight">\(p = -1/2\)</span></p></li>
-<li><p><strong>Gamma</strong>: when <span class="math notranslate nohighlight">\(p &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\text{Gamma}(p, a/2)\)</span></p></li>
-<li><p><strong>Inverse Gamma</strong>: when <span class="math notranslate nohighlight">\(p &lt; 0\)</span> and <span class="math notranslate nohighlight">\(a \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\text{InvGamma}(-p, b/2)\)</span></p></li>
-</ul>
-<p>These special cases are implemented as separate classes in <code class="docutils literal notranslate"><span class="pre">normix</span></code>:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a></p></li>
-<li><p><a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a></p></li>
+<li><p>Inverse Gaussian: <span class="math notranslate nohighlight">\(p = -1/2\)</span>, stored as
+<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian" title="normix.distributions.inverse_gaussian.InverseGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGaussian</span></code></a>.
+<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gaussian.InverseGaussian.to_gig" title="normix.distributions.inverse_gaussian.InverseGaussian.to_gig"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_gig()</span></code></a>
+maps <span class="math notranslate nohighlight">\((\mu, \lambda)\)</span> to <span class="math notranslate nohighlight">\(\mathrm{GIG}(-1/2,\, \lambda/\mu^2,\, \lambda)\)</span>.</p></li>
+<li><p>Gamma: <span class="math notranslate nohighlight">\(p &gt; 0\)</span> and <span class="math notranslate nohighlight">\(b \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\mathrm{Gamma}(p, a/2)\)</span>, stored as
+<a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma" title="normix.distributions.gamma.Gamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gamma</span></code></a>.
+<a class="reference internal" href="../api/distributions.html#normix.distributions.gamma.Gamma.to_gig" title="normix.distributions.gamma.Gamma.to_gig"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_gig()</span></code></a>
+maps <span class="math notranslate nohighlight">\((\alpha, \beta)\)</span> to <span class="math notranslate nohighlight">\(\mathrm{GIG}(\alpha,\, 2\beta,\, 0)\)</span>.</p></li>
+<li><p>Inverse gamma: <span class="math notranslate nohighlight">\(p &lt; 0\)</span> and <span class="math notranslate nohighlight">\(a \to 0\)</span>, giving <span class="math notranslate nohighlight">\(\mathrm{InvGamma}(-p, b/2)\)</span>,
+stored as
+<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma" title="normix.distributions.inverse_gamma.InverseGamma"><code class="xref py py-class docutils literal notranslate"><span class="pre">InverseGamma</span></code></a>.
+<a class="reference internal" href="../api/distributions.html#normix.distributions.inverse_gamma.InverseGamma.to_gig" title="normix.distributions.inverse_gamma.InverseGamma.to_gig"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_gig()</span></code></a>
+maps <span class="math notranslate nohighlight">\((\alpha, \beta)\)</span> to <span class="math notranslate nohighlight">\(\mathrm{GIG}(-\alpha,\, 0,\, 2\beta)\)</span>.</p></li>
 </ul>
 </section>
 </section>
@@ -737,17 +685,13 @@ two distributions is given by:</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#definition">Definition</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-parameterization">Alternative Parameterization</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moment-generating-function">Moment Generating Function</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters">Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#density">Density</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moments">Moments</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tail-behavior">Tail Behavior</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#skewness-and-kurtosis">Skewness and Kurtosis</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family-form">Exponential Family Form</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#maximum-likelihood-estimation">Maximum Likelihood Estimation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#numerical-challenges">Numerical Challenges</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger Distance</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#special-cases">Special Cases</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exponential-family">Exponential family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#likelihood">Likelihood</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hellinger-distance">Hellinger distance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-laws">Boundary laws</a></li>
 </ul>
   </nav></div>
 
