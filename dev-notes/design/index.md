@@ -44,7 +44,7 @@
 
 - `../ARCHITECTURE.md` — module hierarchy, distribution storage table,
   numerical constants table.
-- `../../docs/theory/` — GIG, GH, and varentropy library contracts (derivations on xshi-math); other pages are mathematical derivations.
+- `../../docs/theory/` — GIG, GH, varentropy, EM, and online-EM library contracts (derivations on xshi-math); other pages are mathematical derivations.
 - `../tech_notes/` — deep dives (Bessel survey, GIG benchmarks,
   EM profiling, JAX overhead, gradient-fitting vs EM/MLE, GIG
   concentration symbol).

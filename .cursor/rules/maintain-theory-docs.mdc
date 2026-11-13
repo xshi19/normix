@@ -10,7 +10,8 @@ alwaysApply: false
 
 `docs/theory/` holds MyST notes for the distributions and algorithms.
 The source is Shi2016.
-`gig.md`, `gh.md`, and `varentropy.md` state the library contract.
+`gig.md`, `gh.md`, `varentropy.md`, `em_algorithm.md`, and `online_em.md`
+state the library contract.
 Link each derivation to the matching page on
 <https://xshi19.github.io/math/normix-theory/>.
 Leave every other theory page as a derivation.
@@ -22,8 +23,8 @@ Leave every other theory page as a derivation.
 | `gig.md` | GIG library contract | `tutorials/distributions/02_gig` |
 | `gh.md` | GH library contract | `tutorials/core/02_gh_family_tour` |
 | `varentropy.md` | Entropy library contract | `tutorials/stats/03_varentropy` |
-| `em_algorithm.md` | EM for GH mixtures | `tutorials/em/*` |
-| `online_em.md` | Online EM | (theory-only for now) |
+| `em_algorithm.md` | EM library contract | `tutorials/em/01_batch_em`, `04_em_vs_mcecm` |
+| `online_em.md` | Online EM library contract | `tutorials/em/02_incremental_em` |
 | `shrinkage.md` | Shrinkage estimation | (theory-only for now) |
 | `factor_analysis.md` | Factor analysis | `tutorials/distributions/05_factor_mixtures` |
 | `mean_risk_optimization.md` | Mean-risk portfolios | `tutorials/finance/05_mean_risk_optimization` |
@@ -45,31 +46,30 @@ Leave every other theory page as a derivation.
 ## Selective enrichment (not a full merge)
 
 Tutorials stay executable demos.
-Fitting and portfolio theory pages stay derivations.
+Shrinkage, factor analysis, and portfolio theory pages stay derivations.
 For a high-overlap pair, put the key formula in the tutorial intro.
-On `gig.md`, `gh.md`, and `varentropy.md`, link the derivation to xshi-math.
+On `gig.md`, `gh.md`, `varentropy.md`, `em_algorithm.md`, and `online_em.md`, link the derivation to xshi-math.
 Do not paste code cells into a theory page.
 Do not merge a tutorial and a theory page.
 
 ## When to Update
 
 - Add a theory file for a new distribution or algorithm.
-- For `gig.md`, `gh.md`, or `varentropy.md`, update the contract on that page.
+- For `gig.md`, `gh.md`, `varentropy.md`, `em_algorithm.md`, or `online_em.md`, update the contract on that page.
 - Link a moved derivation to the matching xshi-math page.
 - Fix an error in place on any other theory page.
-- Leave `em_algorithm.md` and `online_em.md` unchanged until batch B12.
 - Add a cross-link both ways when a tutorial covers a theory-only topic.
 
 ## Relationship to Other Docs
 
-- `docs/theory/` holds the GIG, GH, and varentropy contracts, plus derivations for the other topics.
+- `docs/theory/` holds the GIG, GH, varentropy, EM, and online-EM contracts, plus derivations for the other topics.
 - `dev-notes/tech_notes/` = **implementation notes**
 - `docs/design/` = **design rationale**
 
 ## Gotchas
 
 - Do not put a numerical floor or a solver tolerance on a theory page.
-- On `gig.md`, `gh.md`, and `varentropy.md`, state the formula the code evaluates.
+- On `gig.md`, `gh.md`, `varentropy.md`, `em_algorithm.md`, and `online_em.md`, state the formula the code evaluates.
 - Name a public method only when it evaluates that formula.
 - On every other theory page, keep the derivation and omit the implementation.
 - **Don't mix `.rst` and `.md`** — all theory content is MyST `.md`.

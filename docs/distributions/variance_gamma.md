@@ -67,7 +67,7 @@ Built from the shared location/shape block and the Gamma subordinator:
 
 The marginal $f(x)$ is not itself an exponential family, but the joint
 $(X, Y)$ is. Its natural parameters are stated in {doc}`../theory/gh`.
-EM is derived in {doc}`../theory/em_algorithm`.
+The EM updates are stated in {doc}`../theory/em_algorithm`.
 
 ## Quick usage
 
