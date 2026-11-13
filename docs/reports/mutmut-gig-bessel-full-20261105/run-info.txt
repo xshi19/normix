@@ -1,0 +1,9 @@
+git_sha=c79dda8c14ef11a1b953448521e0418c1282968d
+mutmut=python -m mutmut, version 3.8.1
+python=3.12.15
+jax=0.9.1
+nproc=8 max_children=3 patterns=
+start=2026-11-05T05:54:48Z
+end=2026-11-06T02:13:20Z
+exit_code=0
+wall_seconds=73112
