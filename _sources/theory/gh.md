@@ -245,8 +245,8 @@ Where a moment of $Y$ does not exist, the entry is $+\infty$.
 where $L_{\text{GIG}}$ is {eq}`gig-loglik`. These are the updates
 {meth}`~normix.mixtures.marginal.MarginalMixture.m_step` applies, with
 the expectations in {eq}`gh-expectation` replaced by conditional
-expectations. The derivation is in the GH note. The EM write-up is
-{doc}`em_algorithm`.
+expectations. The derivation is in the GH note. The conditional
+update, in the stored statistic order, is in {doc}`em_algorithm`.
 
 ## Hellinger distance
 

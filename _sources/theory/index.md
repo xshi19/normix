@@ -1,9 +1,10 @@
 # Mathematical Background
 
-`gig`, `gh`, and `varentropy` state the formulas normix computes.
-Derivations of those three topics are on the
+`gig`, `gh`, `varentropy`, `em_algorithm`, and `online_em` state the
+formulas normix computes. Derivations of those topics are on the
 [Normix theory](https://xshi19.github.io/math/normix-theory/) site.
-Fitting and portfolio pages still carry their derivations here.
+Shrinkage, factor analysis, and the portfolio pages still carry their
+derivations here.
 Bibliographic entries live in {doc}`../references`.
 The distribution notes follow {ref}`Shi2016 <shi2016>`.
 

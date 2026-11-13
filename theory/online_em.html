@@ -459,14 +459,9 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#online-em-for-exponential-families">Online EM for Exponential Families</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regret-framework">Regret Framework</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-rules">Update Rules</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regret-bound">Regret Bound</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#application-to-the-gh-distribution">Application to the GH Distribution</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations-for-curved-exponential-families">Limitations for Curved Exponential Families</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-update">Sequential update</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generalized-hyperbolic-mixtures">Generalized hyperbolic mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curved-families">Curved families</a></li>
 </ul>
             </nav>
         </div>
@@ -480,161 +475,124 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="online-em-algorithm">
 <h1>Online EM Algorithm<a class="headerlink" href="#online-em-algorithm" title="Link to this heading">#</a></h1>
-<p>In this section we review the online EM algorithm for exponential families
-with hidden data <a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>, and apply it to the Generalized Hyperbolic
-distribution.</p>
-<section id="online-em-for-exponential-families">
-<h2>Online EM for Exponential Families<a class="headerlink" href="#online-em-for-exponential-families" title="Link to this heading">#</a></h2>
-<p>Consider the exponential family with density:</p>
+<p>This page states the sequential updates normix computes: the statistic
+recursion, the implemented step sizes, the generalized-hyperbolic
+M-step on the running state, and the constrained M-step for a curved
+family. The aggregation identity for the index <span class="math notranslate nohighlight">\(t = 1,\ldots,T\)</span>, the
+Bregman regret identity, and the comparison of the constrained and
+ambient stationary equations are derived in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-online-em/">online-EM note</a>.
+The method is <a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a>.</p>
+<p>normix writes a density as <span class="math notranslate nohighlight">\(f(x\mid\theta)\)</span>. On that site the same
+function is <span class="math notranslate nohighlight">\(p_\theta(x)\)</span>.</p>
+<p>The Legendre dual on this page is
+<span class="math notranslate nohighlight">\(\varphi(\eta) = \langle\theta, \eta\rangle - \psi(\theta)\)</span>, so
+<span class="math notranslate nohighlight">\(\theta = \nabla\varphi(\eta)\)</span> and <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>.
+The online-EM note writes this dual as <span class="math notranslate nohighlight">\(\psi^*\)</span>.
+The note writes a classical or constrained parameter as <span class="math notranslate nohighlight">\(\vartheta\)</span>.
+This page uses <span class="math notranslate nohighlight">\(\theta\)</span> for the natural parameter. A factor model keeps
+the symbol <span class="math notranslate nohighlight">\(u\)</span> from <a class="reference internal" href="factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>.</p>
+<p><strong>See also:</strong> executable walkthrough in
+<a class="reference internal" href="../tutorials/em/02_incremental_em.html"><span class="doc">Incremental (mini-batch) EM</span></a>.</p>
+<section id="sequential-update">
+<h2>Sequential update<a class="headerlink" href="#sequential-update" title="Link to this heading">#</a></h2>
+<p>For an observation <span class="math notranslate nohighlight">\(x_t\)</span>, write</p>
 <div class="math notranslate nohighlight">
-\[f(x, y | \theta) = h(x, y)
-\exp\!\left(\theta^\top t(x, y) - \psi(\theta)\right),\]</div>
-<p>where <span class="math notranslate nohighlight">\(x\)</span> is observable, <span class="math notranslate nohighlight">\(y\)</span> is hidden, and</p>
+\[\bar t(x_t) = E[t(X, Y) \mid X = x_t]\]</div>
+<p>at the parameter available when <span class="math notranslate nohighlight">\(x_t\)</span> arrives.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.IncrementalEMFitter" title="normix.fitting.em.IncrementalEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a> keeps the running state
+in a <a class="reference internal" href="../api/fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a>, starting from
+<a class="reference internal" href="../api/mixtures.html#normix.mixtures.marginal.NormalMixture.compute_eta_from_model" title="normix.mixtures.marginal.NormalMixture.compute_eta_from_model"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_eta_from_model()</span></code></a>.
+One step applies</p>
 <div class="math notranslate nohighlight">
-\[\psi(\theta) = \log \int h(x, y)
-\exp\!\left(\theta^\top t(x, y)\right) dx \, dy.\]</div>
-<p>The expectation parameter is <span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta)\)</span>, and the
-Legendre dual of <span class="math notranslate nohighlight">\(\psi\)</span> is
-<span class="math notranslate nohighlight">\(\phi(\eta) = \eta^\top \theta - \psi(\theta)\)</span>,
-with <span class="math notranslate nohighlight">\(\theta = \nabla\phi(\eta)\)</span>.</p>
-<section id="regret-framework">
-<h3>Regret Framework<a class="headerlink" href="#regret-framework" title="Link to this heading">#</a></h3>
-<p>The parameter estimation process can be viewed as an online game. At time
-<span class="math notranslate nohighlight">\(t-1\)</span> we make a prediction <span class="math notranslate nohighlight">\(\theta_{t-1}\)</span>. At time <span class="math notranslate nohighlight">\(t\)</span> the
-environment reveals an observation <span class="math notranslate nohighlight">\(x_t\)</span>, and the loss is
-<span class="math notranslate nohighlight">\(l(x_t, \theta_{t-1}) = -\log f(x_t | \theta_{t-1})\)</span>. The <strong>regret</strong>
-from <span class="math notranslate nohighlight">\(t = 1\)</span> to <span class="math notranslate nohighlight">\(T\)</span> is:</p>
-<div class="math notranslate nohighlight" id="equation-regret-def">
-<span class="eqno">(1)<a class="headerlink" href="#equation-regret-def" title="Link to this equation">#</a></span>\[r_T(\theta_0, \ldots, \theta_{T-1}) =
--\sum_{t=1}^T \log f(x_t | \theta_{t-1})
-- \min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
-+ \tau_0 \, D_\psi(\theta \| \theta_0)\right),\]</div>
-<p>where $D_\psi(\theta | \theta_0) = \psi(\theta) - \psi(\theta_0)</p>
-<ul class="simple">
-<li><p>\nabla\psi(\theta_0)^\top (\theta - \theta_0)<span class="math notranslate nohighlight">\( is the Bregman divergence,
-which coincides with the KL divergence \)</span>D_{KL}(\theta_0 | \theta)$.</p></li>
+\[\eta \leftarrow a + b\,\eta + c\,\bar t,\]</div>
+<p>with weights from
+<a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.AffineRule.weights" title="normix.fitting.eta_rules.AffineRule.weights"><code class="xref py py-meth docutils literal notranslate"><span class="pre">weights()</span></code></a>.
+For the first four rules below, <span class="math notranslate nohighlight">\(a = 0\)</span>.</p>
+<ul>
+<li><p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.IdentityUpdate" title="normix.fitting.eta_rules.IdentityUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">IdentityUpdate</span></code></a>: <span class="math notranslate nohighlight">\(b = 0\)</span>, <span class="math notranslate nohighlight">\(c = 1\)</span>.
+The running state is replaced by the new average.</p></li>
+<li><p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.RobbinsMonroUpdate" title="normix.fitting.eta_rules.RobbinsMonroUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">RobbinsMonroUpdate</span></code></a>: at step
+<span class="math notranslate nohighlight">\(t = 0, 1, 2, \ldots\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[c = \frac{1}{\tau_0 + t}, \qquad b = 1 - c,\]</div>
+<p>with <span class="math notranslate nohighlight">\(\tau_0 + t \ne 0\)</span>. The class default is <span class="math notranslate nohighlight">\(\tau_0 = 10\)</span>, so the
+first weight is <span class="math notranslate nohighlight">\(1/10\)</span>.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.IncrementalEMFitter" title="normix.fitting.em.IncrementalEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a> uses that default
+when no rule is passed, and it passes <span class="math notranslate nohighlight">\(t = 0\)</span> on the first batch.
+This is the Robbins–Monro schedule
+<a class="reference internal" href="../references.html#robbinsmonro1951"><span class="std std-ref">RobbinsMonro1951</span></a> at that index.</p>
+</li>
+<li><p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.SampleWeightedUpdate" title="normix.fitting.eta_rules.SampleWeightedUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleWeightedUpdate</span></code></a>: if <span class="math notranslate nohighlight">\(n\)</span> is the
+cumulative count before the batch and <span class="math notranslate nohighlight">\(m\)</span> is the batch size,</p>
+<div class="math notranslate nohighlight">
+\[b = \frac{n}{n+m}, \qquad c = \frac{m}{n+m},\]</div>
+<p>and then <span class="math notranslate nohighlight">\(n \leftarrow n + m\)</span>. The count starts at <span class="math notranslate nohighlight">\(0\)</span>, so the first
+batch has <span class="math notranslate nohighlight">\(b = 0\)</span> and <span class="math notranslate nohighlight">\(c = 1\)</span> and replaces the initial state.
+Every batch satisfies <span class="math notranslate nohighlight">\((n+m)\eta_{\mathrm{new}} = n\,\eta + m\,\bar t\)</span>
+with the count from before the batch.</p>
+</li>
+<li><p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.EWMAUpdate" title="normix.fitting.eta_rules.EWMAUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">EWMAUpdate</span></code></a>: <span class="math notranslate nohighlight">\(b = 1 - w\)</span> and
+<span class="math notranslate nohighlight">\(c = w\)</span>, with default <span class="math notranslate nohighlight">\(w = 0.1\)</span>. The weight does not depend on <span class="math notranslate nohighlight">\(t\)</span>.</p></li>
+<li><p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.AffineUpdate" title="normix.fitting.eta_rules.AffineUpdate"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineUpdate</span></code></a> stores constant
+<span class="math notranslate nohighlight">\((a, b, c)\)</span>.</p></li>
 </ul>
+<p>If <code class="docutils literal notranslate"><span class="pre">inner_iter</span></code> is <span class="math notranslate nohighlight">\(1\)</span>, <span class="math notranslate nohighlight">\(\bar t\)</span> is the E-step average on the current
+mini-batch. If <code class="docutils literal notranslate"><span class="pre">inner_iter</span></code> is greater than <span class="math notranslate nohighlight">\(1\)</span>, the fitter runs that
+many E-step, M-step, and regularization cycles on the mini-batch and
+sets <span class="math notranslate nohighlight">\(\bar t\)</span> to the expectation parameters of the fitted model. The
+fitter then applies <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a> to the updated state, followed by the
+same regularization options as
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a>. The default is <code class="docutils literal notranslate"><span class="pre">none</span></code>.
+Each batch is drawn from the sample after the sample mean has been
+removed. That mean is added back to <span class="math notranslate nohighlight">\(\mu\)</span> at the end. <span class="math notranslate nohighlight">\(\gamma\)</span>,
+<span class="math notranslate nohighlight">\(\Sigma\)</span>, and the mixing parameters are unchanged by the shift.</p>
+<p>The online-EM note indexes the reciprocal schedule by
+<span class="math notranslate nohighlight">\(t = 1,\ldots,T\)</span>, so its first weight is <span class="math notranslate nohighlight">\(1/(\tau_0+1)\)</span>.
+Its aggregation identity is for that index. See the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-online-em/#posterior-statistics-and-the-sequential-update">online-EM note</a>.
+The same weight families are set out as update rules in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-em-framework/#two-layers-of-update-rules">EM-framework note</a>.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.eta_rules.Shrinkage" title="normix.fitting.eta_rules.Shrinkage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shrinkage</span></code></a> composes any of these rules
+with the penalty in <a class="reference internal" href="shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a>.</p>
+<p>The Bregman regret identity for the note’s index is derived in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-online-em/#a-bregman-regret-identity">online-EM note</a>.</p>
 </section>
-<section id="update-rules">
-<h3>Update Rules<a class="headerlink" href="#update-rules" title="Link to this heading">#</a></h3>
-<p>The online EM algorithm updates the expectation parameters as follows.
-Starting from <span class="math notranslate nohighlight">\(\eta_0 = \nabla\psi(\theta_0)\)</span>:</p>
-<div class="math notranslate nohighlight" id="equation-online-em-update">
-<span class="eqno">(2)<a class="headerlink" href="#equation-online-em-update" title="Link to this equation">#</a></span>\[\begin{split}\eta_t &amp;= \eta_{t-1} + \tau_t^{-1}
-\left(\bar{t}(x_t | \theta_{t-1}) - \eta_{t-1}\right), \\
-\theta_t &amp;= \nabla\phi(\eta_t),\end{split}\]</div>
-<p>where</p>
-<div class="math notranslate nohighlight">
-\[\bar{t}(x_t | \theta_{t-1}) := E[t(X, Y) | X = x_t, \theta_{t-1}]\]</div>
-<p>is the conditional expectation of the sufficient statistics, and
-<span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span> is the step size.</p>
+<section id="generalized-hyperbolic-mixtures">
+<h2>Generalized hyperbolic mixtures<a class="headerlink" href="#generalized-hyperbolic-mixtures" title="Link to this heading">#</a></h2>
+<p>The conditional moments on a batch are <a class="reference internal" href="em_algorithm.html#equation-gig-moment-cond">(1)</a>.
+The six blocks are the averages <a class="reference internal" href="em_algorithm.html#equation-e-step">(2)</a>, computed on the batch
+rather than on the full sample, and stored in that order.
+The running state uses the same order. The parameter update is
+<a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a> at the running state. The GIG arguments are that state’s
+log moment, inverse moment, and first moment, in that order. For the
+joint GH family this is the classical form of <span class="math notranslate nohighlight">\(\theta = \nabla\varphi(\eta)\)</span>.
+The batch formulas and the boundary-moment checks are in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-online-em/#application-to-generalized-hyperbolic-mixtures">online-EM note</a>.
+The fitter options are described in <a class="reference internal" href="../design/em_framework.html"><span class="doc">EM Framework</span></a>.</p>
 </section>
-<section id="regret-bound">
-<h3>Regret Bound<a class="headerlink" href="#regret-bound" title="Link to this heading">#</a></h3>
-<p><strong>Theorem.</strong> With <span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span>, the regret
-<a class="reference internal" href="#equation-regret-def">(1)</a> of the online EM algorithm <a class="reference internal" href="#equation-online-em-update">(2)</a> is:</p>
-<div class="math notranslate nohighlight" id="equation-regret-decomp">
-<span class="eqno">(3)<a class="headerlink" href="#equation-regret-decomp" title="Link to this equation">#</a></span>\[r_T = \sum_{t=1}^T \tau_t \, D_\psi(\theta_{t-1} \| \theta_t)
-+ \sum_{t=1}^T D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})
-- \tau_T \, D_\phi(\eta_T \| \eta_{ML}),\]</div>
-<p>where <span class="math notranslate nohighlight">\(\theta_{ML}\)</span> is the penalized MLE:</p>
+<section id="curved-families">
+<h2>Curved families<a class="headerlink" href="#curved-families" title="Link to this heading">#</a></h2>
+<p>A curved family has classical parameter <span class="math notranslate nohighlight">\(u\)</span> and natural map
+<span class="math notranslate nohighlight">\(\theta(u)\)</span>,</p>
 <div class="math notranslate nohighlight">
-\[\theta_{ML} = \arg\min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
-+ \tau_0 \, D_\psi(\theta \| \theta_0)\right),\]</div>
-<p><span class="math notranslate nohighlight">\(\eta_{ML} = \nabla\psi(\theta_{ML})\)</span>, and
-<span class="math notranslate nohighlight">\(D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})\)</span> is the KL divergence
-between the conditional densities <span class="math notranslate nohighlight">\(f(y | x_t, \theta_{t-1})\)</span> and
-<span class="math notranslate nohighlight">\(f(y | x_t, \theta_{ML})\)</span>.</p>
-<p><em>Proof.</em> The first part of the regret is:</p>
+\[f(x, y \mid u) = h(x, y)\exp\!\left(
+\langle\theta(u), t(x, y)\rangle - \psi(\theta(u))\right).\]</div>
+<p>The M-step on a running state <span class="math notranslate nohighlight">\(\eta\)</span> is</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}-\sum_{t=1}^T \log f(x_t | \theta_{t-1})
-&amp;= -\sum_{t=1}^T E[\log f(X, Y | \theta_{t-1}) | X = x_t, \theta_{t-1}] \\
-&amp;\quad + \sum_{t=1}^T E[\log f(Y | X, \theta_{t-1}) | X = x_t, \theta_{t-1}].\end{split}\]</div>
-<p>The conditional expectation of the joint log-density satisfies:</p>
+\[u \in \arg\max_u \left\{
+\langle\theta(u), \eta\rangle - \psi(\theta(u))\right\}.\]</div>
+<p>At an interior stationary point,</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}&amp;\sum_{t=1}^T \left(\psi(\theta_{t-1})
-- \theta_{t-1}^\top \bar{t}(x_t | \theta_{t-1})\right) \\
-&amp;= \sum_{t=1}^T \left(-\phi(\eta_{t-1})
-- \tau_t \theta_{t-1}^\top (\eta_t - \eta_{t-1})\right) \\
-&amp;= \sum_{t=1}^T \tau_t D_\phi(\eta_t \| \eta_{t-1})
-+ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T) \\
-&amp;= \sum_{t=1}^T \tau_t D_\psi(\theta_{t-1} \| \theta_t)
-+ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T),\end{split}\]</div>
-<p>using <span class="math notranslate nohighlight">\(\phi(\eta) = \theta^\top \eta - \psi(\theta)\)</span> and
-<span class="math notranslate nohighlight">\(D_\phi(\eta_t \| \eta_{t-1}) = D_\psi(\theta_{t-1} \| \theta_t)\)</span>.</p>
-<p>The key identity for the accumulated conditional expectations is:</p>
-<div class="math notranslate nohighlight">
-\[\eta_T = \tau_T^{-1} \left(\tau_0 \eta_0
-+ \sum_{t=1}^T \bar{t}(x_t | \theta_{t-1})\right).\]</div>
-<p>Applying this to the second part of the regret:</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}&amp;-\sum_{t=1}^T E[\log f(X, Y | \theta_{ML}) | X = x_t, \theta_{t-1}]
-+ \tau_0 \, D_\psi(\theta_{ML} \| \theta_0) \\
-&amp;= \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T)
-+ \tau_T D_\phi(\eta_T \| \eta_{ML}).\end{split}\]</div>
-<p>Combining both parts yields <a class="reference internal" href="#equation-regret-decomp">(3)</a>. <span class="math notranslate nohighlight">\(\square\)</span></p>
-</section>
-</section>
-<section id="application-to-the-gh-distribution">
-<h2>Application to the GH Distribution<a class="headerlink" href="#application-to-the-gh-distribution" title="Link to this heading">#</a></h2>
-<p>For the joint GH distribution <a class="reference internal" href="gh.html#equation-gh-joint">(2)</a>, which is an exponential family,
-the online EM algorithm updates the sufficient statistics as follows. Given
-a sequence of observations <span class="math notranslate nohighlight">\(x_1, x_2, \ldots, x_T\)</span>:</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}s_1^{(t+1)} &amp;= s_1^{(t)} + \tau_{t+1}^{-1}
-\left(E[Y^{-1} | X = x_{t+1}, \theta_t] - s_1^{(t)}\right), \\
-s_2^{(t+1)} &amp;= s_2^{(t)} + \tau_{t+1}^{-1}
-\left(E[Y | X = x_{t+1}, \theta_t] - s_2^{(t)}\right), \\
-s_3^{(t+1)} &amp;= s_3^{(t)} + \tau_{t+1}^{-1}
-\left(E[\log Y | X = x_{t+1}, \theta_t] - s_3^{(t)}\right), \\
-s_4^{(t+1)} &amp;= s_4^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} - s_4^{(t)}\right), \\
-s_5^{(t+1)} &amp;= s_5^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} \, E[Y^{-1} | X = x_{t+1}, \theta_t] - s_5^{(t)}\right), \\
-s_6^{(t+1)} &amp;= s_6^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} x_{t+1}^\top E[Y^{-1} | X = x_{t+1}, \theta_t]
-- s_6^{(t)}\right),\end{split}\]</div>
-<p>where the conditional expectations are given by <a class="reference internal" href="em_algorithm.html#equation-gig-moment-cond">(1)</a>.</p>
-<p>The parameters <span class="math notranslate nohighlight">\(\theta_t = (\mu_t, \gamma_t, \Sigma_t, p_t, a_t, b_t)\)</span>
-are then recovered from the sufficient statistics using the same formulas as
-the M-step (see <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a>):</p>
-<div class="math notranslate nohighlight">
-\[\begin{split}\mu_t &amp;= \frac{s_4^{(t)} - s_2^{(t)} s_5^{(t)}}
-{1 - s_1^{(t)} s_2^{(t)}}, \\
-\gamma_t &amp;= \frac{s_5^{(t)} - s_1^{(t)} s_4^{(t)}}
-{1 - s_1^{(t)} s_2^{(t)}}, \\
-\Sigma_t &amp;= s_6^{(t)} - s_5^{(t)} \mu_t^\top
-- \mu_t (s_5^{(t)})^\top + s_1^{(t)} \mu_t \mu_t^\top
-- s_2^{(t)} \gamma_t \gamma_t^\top,\end{split}\]</div>
-<p>and</p>
-<div class="math notranslate nohighlight">
-\[(p_t, a_t, b_t) = \arg\max_{p, a, b}
-L_{GIG}(p, a, b \,|\, s_1^{(t)}, s_2^{(t)}, s_3^{(t)}).\]</div>
-<p>The online EM algorithm has comparable convergence rate to the batch EM
-algorithm, but each step processes only a single observation, making it
-much faster per iteration. The step size <span class="math notranslate nohighlight">\(\tau_t = \tau_0 + t\)</span>
-corresponds to starting with an initial weight of <span class="math notranslate nohighlight">\(\tau_0\)</span> “pseudo-observations.”</p>
-</section>
-<section id="limitations-for-curved-exponential-families">
-<h2>Limitations for Curved Exponential Families<a class="headerlink" href="#limitations-for-curved-exponential-families" title="Link to this heading">#</a></h2>
-<p>The online EM algorithm of <a class="reference internal" href="../references.html#cappe2009"><span class="std std-ref">Cappe2009</span></a> may not converge for <strong>curved
-exponential families</strong> of the form:</p>
-<div class="math notranslate nohighlight">
-\[f(x, y | u) = h(x, y) \exp\!\left(\theta(u)^\top t(x, y)
-- \psi(\theta(u))\right),\]</div>
-<p>where <span class="math notranslate nohighlight">\(\theta(u)\)</span> is a nonlinear mapping projecting the parameter
-<span class="math notranslate nohighlight">\(u\)</span> to a higher-dimensional space. The batch EM algorithm for curved
-exponential families solves:</p>
-<div class="math notranslate nohighlight">
-\[\nabla\theta(u)^\top \left(\frac{1}{n} \sum_{j=1}^n
-E[t(X, Y) | x_j, \theta(u)] - \nabla\psi(\theta(u))\right) = 0,\]</div>
-<p>while the online EM tends to solve:</p>
-<div class="math notranslate nohighlight">
-\[\frac{1}{n} \sum_{j=1}^n E[t(X, Y) | x_j, \theta(u)]
-- \nabla\psi(\theta(u)) = 0,\]</div>
-<p>which may not have a solution when <span class="math notranslate nohighlight">\(\dim(u) &lt; \dim(\theta)\)</span>. Therefore,
-the online EM algorithm cannot be directly applied to the factor analysis
-model described in <a class="reference internal" href="factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>.</p>
+\[D\theta(u)^\top \bigl(\eta - \nabla\psi(\theta(u))\bigr) = 0.\]</div>
+<p><a class="reference internal" href="../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.m_step" title="normix.mixtures.factor.FactorNormalMixture.m_step"><code class="xref py py-meth docutils literal notranslate"><span class="pre">m_step()</span></code></a> evaluates
+<a class="reference internal" href="factor_analysis.html#equation-fa-mstep">(3)</a> for <span class="math notranslate nohighlight">\((\mu, \gamma, F, D)\)</span>. The mixing block uses the
+moment order of <a class="reference internal" href="em_algorithm.html#equation-m-step">(3)</a>: log moment, inverse moment, then first
+moment.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.em.IncrementalEMFitter" title="normix.fitting.em.IncrementalEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">IncrementalEMFitter</span></code></a> calls that method on a
+factor model. The comparison with the ambient equation
+<span class="math notranslate nohighlight">\(\eta = \nabla\psi(\theta(u))\)</span> is in the
+<a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-online-em/#curved-families-need-a-constrained-m-step">online-EM note</a>.</p>
 </section>
 </section>
 
@@ -685,14 +643,9 @@ model described in <a class="reference internal" href="factor_analysis.html"><sp
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#online-em-for-exponential-families">Online EM for Exponential Families</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regret-framework">Regret Framework</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-rules">Update Rules</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regret-bound">Regret Bound</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#application-to-the-gh-distribution">Application to the GH Distribution</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations-for-curved-exponential-families">Limitations for Curved Exponential Families</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-update">Sequential update</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generalized-hyperbolic-mixtures">Generalized hyperbolic mixtures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curved-families">Curved families</a></li>
 </ul>
   </nav></div>
 

@@ -1,216 +1,145 @@
 # Online EM Algorithm
 
-In this section we review the online EM algorithm for exponential families
-with hidden data {ref}`Cappe2009 <cappe2009>`, and apply it to the Generalized Hyperbolic
-distribution.
+This page states the sequential updates normix computes: the statistic
+recursion, the implemented step sizes, the generalized-hyperbolic
+M-step on the running state, and the constrained M-step for a curved
+family. The aggregation identity for the index $t = 1,\ldots,T$, the
+Bregman regret identity, and the comparison of the constrained and
+ambient stationary equations are derived in the
+[online-EM note](https://xshi19.github.io/math/normix-theory/normix-online-em/).
+The method is {ref}`Cappe2009 <cappe2009>`.
 
-## Online EM for Exponential Families
+normix writes a density as $f(x\mid\theta)$. On that site the same
+function is $p_\theta(x)$.
 
-Consider the exponential family with density:
+The Legendre dual on this page is
+$\varphi(\eta) = \langle\theta, \eta\rangle - \psi(\theta)$, so
+$\theta = \nabla\varphi(\eta)$ and $\eta = \nabla\psi(\theta)$.
+The online-EM note writes this dual as $\psi^*$.
+The note writes a classical or constrained parameter as $\vartheta$.
+This page uses $\theta$ for the natural parameter. A factor model keeps
+the symbol $u$ from {doc}`factor_analysis`.
 
-```{math}
-f(x, y | \theta) = h(x, y)
-\exp\!\left(\theta^\top t(x, y) - \psi(\theta)\right),
-```
+**See also:** executable walkthrough in
+{doc}`../tutorials/em/02_incremental_em`.
 
-where $x$ is observable, $y$ is hidden, and
+## Sequential update
 
-```{math}
-\psi(\theta) = \log \int h(x, y)
-\exp\!\left(\theta^\top t(x, y)\right) dx \, dy.
-```
-
-The expectation parameter is $\eta = \nabla\psi(\theta)$, and the
-Legendre dual of $\psi$ is
-$\phi(\eta) = \eta^\top \theta - \psi(\theta)$,
-with $\theta = \nabla\phi(\eta)$.
-
-### Regret Framework
-
-The parameter estimation process can be viewed as an online game. At time
-$t-1$ we make a prediction $\theta_{t-1}$. At time $t$ the
-environment reveals an observation $x_t$, and the loss is
-$l(x_t, \theta_{t-1}) = -\log f(x_t | \theta_{t-1})$. The **regret**
-from $t = 1$ to $T$ is:
+For an observation $x_t$, write
 
 ```{math}
-:label: regret-def
-
-r_T(\theta_0, \ldots, \theta_{T-1}) =
--\sum_{t=1}^T \log f(x_t | \theta_{t-1})
-- \min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
-+ \tau_0 \, D_\psi(\theta \| \theta_0)\right),
+\bar t(x_t) = E[t(X, Y) \mid X = x_t]
 ```
 
-where $D_\psi(\theta \| \theta_0) = \psi(\theta) - \psi(\theta_0)
-- \nabla\psi(\theta_0)^\top (\theta - \theta_0)$ is the Bregman divergence,
-which coincides with the KL divergence $D_{KL}(\theta_0 \| \theta)$.
-
-### Update Rules
-
-The online EM algorithm updates the expectation parameters as follows.
-Starting from $\eta_0 = \nabla\psi(\theta_0)$:
+at the parameter available when $x_t$ arrives.
+{class}`~normix.fitting.em.IncrementalEMFitter` keeps the running state
+in a {class}`~normix.fitting.eta.NormalMixtureEta`, starting from
+{meth}`~normix.mixtures.marginal.NormalMixture.compute_eta_from_model`.
+One step applies
 
 ```{math}
-:label: online-em-update
-
-\eta_t &= \eta_{t-1} + \tau_t^{-1}
-\left(\bar{t}(x_t | \theta_{t-1}) - \eta_{t-1}\right), \\
-\theta_t &= \nabla\phi(\eta_t),
+\eta \leftarrow a + b\,\eta + c\,\bar t,
 ```
 
-where
+with weights from
+{meth}`~normix.fitting.eta_rules.AffineRule.weights`.
+For the first four rules below, $a = 0$.
+
+- {class}`~normix.fitting.eta_rules.IdentityUpdate`: $b = 0$, $c = 1$.
+  The running state is replaced by the new average.
+- {class}`~normix.fitting.eta_rules.RobbinsMonroUpdate`: at step
+  $t = 0, 1, 2, \ldots$,
+
+  ```{math}
+  c = \frac{1}{\tau_0 + t}, \qquad b = 1 - c,
+  ```
+
+  with $\tau_0 + t \ne 0$. The class default is $\tau_0 = 10$, so the
+  first weight is $1/10$.
+  {class}`~normix.fitting.em.IncrementalEMFitter` uses that default
+  when no rule is passed, and it passes $t = 0$ on the first batch.
+  This is the Robbins–Monro schedule
+  {ref}`RobbinsMonro1951 <robbinsmonro1951>` at that index.
+- {class}`~normix.fitting.eta_rules.SampleWeightedUpdate`: if $n$ is the
+  cumulative count before the batch and $m$ is the batch size,
+
+  ```{math}
+  b = \frac{n}{n+m}, \qquad c = \frac{m}{n+m},
+  ```
+
+  and then $n \leftarrow n + m$. The count starts at $0$, so the first
+  batch has $b = 0$ and $c = 1$ and replaces the initial state.
+  Every batch satisfies $(n+m)\eta_{\mathrm{new}} = n\,\eta + m\,\bar t$
+  with the count from before the batch.
+- {class}`~normix.fitting.eta_rules.EWMAUpdate`: $b = 1 - w$ and
+  $c = w$, with default $w = 0.1$. The weight does not depend on $t$.
+- {class}`~normix.fitting.eta_rules.AffineUpdate` stores constant
+  $(a, b, c)$.
+
+If `inner_iter` is $1$, $\bar t$ is the E-step average on the current
+mini-batch. If `inner_iter` is greater than $1$, the fitter runs that
+many E-step, M-step, and regularization cycles on the mini-batch and
+sets $\bar t$ to the expectation parameters of the fitted model. The
+fitter then applies {eq}`m-step` to the updated state, followed by the
+same regularization options as
+{class}`~normix.fitting.em.BatchEMFitter`. The default is `none`.
+Each batch is drawn from the sample after the sample mean has been
+removed. That mean is added back to $\mu$ at the end. $\gamma$,
+$\Sigma$, and the mixing parameters are unchanged by the shift.
+
+The online-EM note indexes the reciprocal schedule by
+$t = 1,\ldots,T$, so its first weight is $1/(\tau_0+1)$.
+Its aggregation identity is for that index. See the
+[online-EM note](https://xshi19.github.io/math/normix-theory/normix-online-em/#posterior-statistics-and-the-sequential-update).
+The same weight families are set out as update rules in the
+[EM-framework note](https://xshi19.github.io/math/normix-theory/normix-em-framework/#two-layers-of-update-rules).
+{class}`~normix.fitting.eta_rules.Shrinkage` composes any of these rules
+with the penalty in {doc}`shrinkage`.
+
+The Bregman regret identity for the note's index is derived in the
+[online-EM note](https://xshi19.github.io/math/normix-theory/normix-online-em/#a-bregman-regret-identity).
+
+## Generalized hyperbolic mixtures
+
+The conditional moments on a batch are {eq}`gig-moment-cond`.
+The six blocks are the averages {eq}`e-step`, computed on the batch
+rather than on the full sample, and stored in that order.
+The running state uses the same order. The parameter update is
+{eq}`m-step` at the running state. The GIG arguments are that state's
+log moment, inverse moment, and first moment, in that order. For the
+joint GH family this is the classical form of $\theta = \nabla\varphi(\eta)$.
+The batch formulas and the boundary-moment checks are in the
+[online-EM note](https://xshi19.github.io/math/normix-theory/normix-online-em/#application-to-generalized-hyperbolic-mixtures).
+The fitter options are described in {doc}`../design/em_framework`.
+
+## Curved families
+
+A curved family has classical parameter $u$ and natural map
+$\theta(u)$,
 
 ```{math}
-\bar{t}(x_t | \theta_{t-1}) := E[t(X, Y) | X = x_t, \theta_{t-1}]
+f(x, y \mid u) = h(x, y)\exp\!\left(
+\langle\theta(u), t(x, y)\rangle - \psi(\theta(u))\right).
 ```
 
-is the conditional expectation of the sufficient statistics, and
-$\tau_t = \tau_0 + t$ is the step size.
-
-### Regret Bound
-
-**Theorem.** With $\tau_t = \tau_0 + t$, the regret
-{eq}`regret-def` of the online EM algorithm {eq}`online-em-update` is:
+The M-step on a running state $\eta$ is
 
 ```{math}
-:label: regret-decomp
-
-r_T = \sum_{t=1}^T \tau_t \, D_\psi(\theta_{t-1} \| \theta_t)
-+ \sum_{t=1}^T D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})
-- \tau_T \, D_\phi(\eta_T \| \eta_{ML}),
+u \in \arg\max_u \left\{
+\langle\theta(u), \eta\rangle - \psi(\theta(u))\right\}.
 ```
 
-where $\theta_{ML}$ is the penalized MLE:
+At an interior stationary point,
 
 ```{math}
-\theta_{ML} = \arg\min_\theta \left(-\sum_{t=1}^T \log f(x_t | \theta)
-+ \tau_0 \, D_\psi(\theta \| \theta_0)\right),
+D\theta(u)^\top \bigl(\eta - \nabla\psi(\theta(u))\bigr) = 0.
 ```
 
-$\eta_{ML} = \nabla\psi(\theta_{ML})$, and
-$D_{KL}(x_t, \theta_{t-1} \| x_t, \theta_{ML})$ is the KL divergence
-between the conditional densities $f(y | x_t, \theta_{t-1})$ and
-$f(y | x_t, \theta_{ML})$.
-
-*Proof.* The first part of the regret is:
-
-```{math}
--\sum_{t=1}^T \log f(x_t | \theta_{t-1})
-&= -\sum_{t=1}^T E[\log f(X, Y | \theta_{t-1}) | X = x_t, \theta_{t-1}] \\
-&\quad + \sum_{t=1}^T E[\log f(Y | X, \theta_{t-1}) | X = x_t, \theta_{t-1}].
-```
-
-The conditional expectation of the joint log-density satisfies:
-
-```{math}
-&\sum_{t=1}^T \left(\psi(\theta_{t-1})
-- \theta_{t-1}^\top \bar{t}(x_t | \theta_{t-1})\right) \\
-&= \sum_{t=1}^T \left(-\phi(\eta_{t-1})
-- \tau_t \theta_{t-1}^\top (\eta_t - \eta_{t-1})\right) \\
-&= \sum_{t=1}^T \tau_t D_\phi(\eta_t \| \eta_{t-1})
-+ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T) \\
-&= \sum_{t=1}^T \tau_t D_\psi(\theta_{t-1} \| \theta_t)
-+ \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T),
-```
-
-using $\phi(\eta) = \theta^\top \eta - \psi(\theta)$ and
-$D_\phi(\eta_t \| \eta_{t-1}) = D_\psi(\theta_{t-1} \| \theta_t)$.
-
-The key identity for the accumulated conditional expectations is:
-
-```{math}
-\eta_T = \tau_T^{-1} \left(\tau_0 \eta_0
-+ \sum_{t=1}^T \bar{t}(x_t | \theta_{t-1})\right).
-```
-
-Applying this to the second part of the regret:
-
-```{math}
-&-\sum_{t=1}^T E[\log f(X, Y | \theta_{ML}) | X = x_t, \theta_{t-1}]
-+ \tau_0 \, D_\psi(\theta_{ML} \| \theta_0) \\
-&= \tau_0 \phi(\eta_0) - \tau_T \phi(\eta_T)
-+ \tau_T D_\phi(\eta_T \| \eta_{ML}).
-```
-
-Combining both parts yields {eq}`regret-decomp`. $\square$
-
-## Application to the GH Distribution
-
-For the joint GH distribution {eq}`gh-joint`, which is an exponential family,
-the online EM algorithm updates the sufficient statistics as follows. Given
-a sequence of observations $x_1, x_2, \ldots, x_T$:
-
-```{math}
-s_1^{(t+1)} &= s_1^{(t)} + \tau_{t+1}^{-1}
-\left(E[Y^{-1} | X = x_{t+1}, \theta_t] - s_1^{(t)}\right), \\
-s_2^{(t+1)} &= s_2^{(t)} + \tau_{t+1}^{-1}
-\left(E[Y | X = x_{t+1}, \theta_t] - s_2^{(t)}\right), \\
-s_3^{(t+1)} &= s_3^{(t)} + \tau_{t+1}^{-1}
-\left(E[\log Y | X = x_{t+1}, \theta_t] - s_3^{(t)}\right), \\
-s_4^{(t+1)} &= s_4^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} - s_4^{(t)}\right), \\
-s_5^{(t+1)} &= s_5^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} \, E[Y^{-1} | X = x_{t+1}, \theta_t] - s_5^{(t)}\right), \\
-s_6^{(t+1)} &= s_6^{(t)} + \tau_{t+1}^{-1}
-\left(x_{t+1} x_{t+1}^\top E[Y^{-1} | X = x_{t+1}, \theta_t]
-- s_6^{(t)}\right),
-```
-
-where the conditional expectations are given by {eq}`gig-moment-cond`.
-
-The parameters $\theta_t = (\mu_t, \gamma_t, \Sigma_t, p_t, a_t, b_t)$
-are then recovered from the sufficient statistics using the same formulas as
-the M-step (see {eq}`m-step`):
-
-```{math}
-\mu_t &= \frac{s_4^{(t)} - s_2^{(t)} s_5^{(t)}}
-{1 - s_1^{(t)} s_2^{(t)}}, \\
-\gamma_t &= \frac{s_5^{(t)} - s_1^{(t)} s_4^{(t)}}
-{1 - s_1^{(t)} s_2^{(t)}}, \\
-\Sigma_t &= s_6^{(t)} - s_5^{(t)} \mu_t^\top
-- \mu_t (s_5^{(t)})^\top + s_1^{(t)} \mu_t \mu_t^\top
-- s_2^{(t)} \gamma_t \gamma_t^\top,
-```
-
-and
-
-```{math}
-(p_t, a_t, b_t) = \arg\max_{p, a, b}
-L_{GIG}(p, a, b \,|\, s_1^{(t)}, s_2^{(t)}, s_3^{(t)}).
-```
-
-The online EM algorithm has comparable convergence rate to the batch EM
-algorithm, but each step processes only a single observation, making it
-much faster per iteration. The step size $\tau_t = \tau_0 + t$
-corresponds to starting with an initial weight of $\tau_0$ "pseudo-observations."
-
-## Limitations for Curved Exponential Families
-
-The online EM algorithm of {ref}`Cappe2009 <cappe2009>` may not converge for **curved
-exponential families** of the form:
-
-```{math}
-f(x, y | u) = h(x, y) \exp\!\left(\theta(u)^\top t(x, y)
-- \psi(\theta(u))\right),
-```
-
-where $\theta(u)$ is a nonlinear mapping projecting the parameter
-$u$ to a higher-dimensional space. The batch EM algorithm for curved
-exponential families solves:
-
-```{math}
-\nabla\theta(u)^\top \left(\frac{1}{n} \sum_{j=1}^n
-E[t(X, Y) | x_j, \theta(u)] - \nabla\psi(\theta(u))\right) = 0,
-```
-
-while the online EM tends to solve:
-
-```{math}
-\frac{1}{n} \sum_{j=1}^n E[t(X, Y) | x_j, \theta(u)]
-- \nabla\psi(\theta(u)) = 0,
-```
-
-which may not have a solution when $\dim(u) < \dim(\theta)$. Therefore,
-the online EM algorithm cannot be directly applied to the factor analysis
-model described in {doc}`factor_analysis`.
+{meth}`~normix.mixtures.factor.FactorNormalMixture.m_step` evaluates
+{eq}`fa-mstep` for $(\mu, \gamma, F, D)$. The mixing block uses the
+moment order of {eq}`m-step`: log moment, inverse moment, then first
+moment.
+{class}`~normix.fitting.em.IncrementalEMFitter` calls that method on a
+factor model. The comparison with the ambient equation
+$\eta = \nabla\psi(\theta(u))$ is in the
+[online-EM note](https://xshi19.github.io/math/normix-theory/normix-online-em/#curved-families-need-a-constrained-m-step).
