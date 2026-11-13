@@ -223,8 +223,8 @@ L_d = \left(p - 1 - \tfrac{d}{2}\right)\partial_p + z\,\partial_z,
 
 For $d = 0$ this is {eq}`ve-gig`. The shift
 $p - 1 \mapsto p - 1 - d/2$ is the natural coordinate $\theta_1$ in
-{eq}`gh-natural-params`. Variance-gamma, normal-inverse gamma, and
-normal-inverse Gaussian joints are the cases $b \to 0$, $a \to 0$, and
-$p = -1/2$. Each uses its own subordinator log-partition. The
-normal-inverse Gaussian joint is evaluated through its GH embedding, so
-the order $p$ moves with the density-power path.
+{eq}`gh-natural-params`. Variance-gamma ($b \to 0$) and normal-inverse
+gamma ($a \to 0$) evaluate $R(\alpha)$ from their own subordinator
+log-partitions. The normal-inverse Gaussian joint fixes $p = -1/2$ in
+its log-partition, so the density-power integral is evaluated on the
+GH embedding, where $p$ moves with $\alpha$.
