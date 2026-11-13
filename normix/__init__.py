@@ -96,7 +96,7 @@ from normix.divergences import (
     kl_divergence_from_eta,
 )
 
-__version__ = "0.4.5"  # x-release-please-version
+__version__ = "0.5.0"  # x-release-please-version
 
 __all__ = [
     # Exponential family base
