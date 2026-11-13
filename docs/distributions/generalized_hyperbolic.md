@@ -73,7 +73,7 @@ Built from the shared location/shape block and the GIG subordinator:
 
 The marginal is not an exponential family, but the joint $(X, Y)$ is.
 Its natural parameters and marginal log-density are stated in
-{doc}`../theory/gh`. EM and MCECM are derived in
+{doc}`../theory/gh`. The EM and MCECM updates are stated in
 {doc}`../theory/em_algorithm`.
 
 ## Quick usage

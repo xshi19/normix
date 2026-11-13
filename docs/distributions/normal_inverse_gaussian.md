@@ -67,8 +67,8 @@ Built from the shared location/shape block and the InverseGaussian subordinator:
 | $\lambda$ | `lam` | InverseGaussian shape |
 
 The marginal is not an exponential family, but the joint $(X, Y)$ is.
-Its natural parameters are stated in {doc}`../theory/gh`. EM is derived
-in {doc}`../theory/em_algorithm`.
+Its natural parameters are stated in {doc}`../theory/gh`. The EM
+updates are stated in {doc}`../theory/em_algorithm`.
 
 ## Quick usage
 
