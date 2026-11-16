@@ -487,3 +487,48 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 - Companion notebook: `notebooks/em_shrinkage_demo.py`.
 - Historical / archived: `../archive/design/em_covariance_extensions.md`,
   `../archive/design/penalised_em.md`.
+
+## Weighted batch EM (E18)
+
+Status: chosen for batch EM/MCECM and the data-fitting convenience APIs.
+Decision and recording date: 2026-11-15. Authority: the owner's weighted
+batch EM task in this session, session-reported, no durable source.
+E3, E9, E10, E16, E17, and S9 remain governing constraints.
+
+Normalize finite nonnegative observation weights to sum to one. Divide by
+the maximum before summation so finite large weights cannot overflow the
+normalizer. Reject wrong shapes, negative/nonfinite weights, and zero
+total weight. Eager calls raise `ValueError`; traced weights retain an
+Equinox runtime check. Keep the original reductions when weights are absent.
+
+Use the same weights for every E-step statistic, conjugacy likelihood,
+sample center, and initial moment. Factor Z statistics follow from the
+weighted first six statistics by the existing affine identities.
+GH's candidate warm starts and likelihood ranking must also be weighted.
+E16's shrinkage-target translation uses that weighted center without an
+extra field on the statistic pytree.
+
+Pass $n_{\mathrm{eff}}=(\sum_iw_i)^2/\sum_iw_i^2$ as the eta rule's
+`batch_size`. The owner explicitly requested this choice. It preserves
+weight-scale invariance and measures the concentration of observation
+mass. `Shrinkage.tau` is already a relative penalty strength; neither it
+nor the scale-gauge regularizations use sample count.
+
+Raw weight sums were not selected as sample counts because they depend on
+weight units. Frequency-count corrections to the initial covariance would
+break weight-scale invariance. A new weighted-fitter abstraction is unnecessary:
+the existing aggregation and fit arguments suffice. Integer replication
+is the oracle for likelihood EM. It is not the oracle for count-dependent
+eta updates, whose effective sample size differs from the replicated count.
+
+Evidence added 2026-11-15: `tests/test_weighted_em.py` checks replication,
+uniform/absent weights, all factor fields, both backends and loops,
+MCECM, and EWMA convergence. It also covers initialization, centering,
+effective sample size, MLE, invalid inputs, and transformed E-steps.
+Zero-weight observations are masked before posterior calculations, so an
+ignored extreme observation cannot contaminate a matrix statistic through
+zero times infinity. Exact commands and measured
+results belong to the task report. External review remains pending.
+
+Reopen if frequency-weight uncertainty estimates need replicated counts,
+or if weighted online observations become a separate requested feature.
