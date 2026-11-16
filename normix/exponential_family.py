@@ -55,6 +55,38 @@ def _check_backend(backend: str, *, name: str = "backend") -> None:
         raise ValueError(f"{name} must be 'jax' or 'cpu', got {backend!r}")
 
 
+def _normalize_sample_weight(
+    sample_weight: Optional[jax.Array], n: int,
+) -> Optional[jax.Array]:
+    """Validate observation weights and normalize without overflowing their sum."""
+    if sample_weight is None:
+        return None
+    weight = jnp.asarray(sample_weight, dtype=jnp.float64)
+    if weight.shape != (n,) or n == 0:
+        raise ValueError(f"sample_weight must have shape ({n},) for a nonempty sample")
+    invalid = (
+        jnp.any(~jnp.isfinite(weight)) | jnp.any(weight < 0)
+        | ~jnp.any(weight > 0)
+    )
+    message = "sample_weight must be finite, nonnegative, and not all zero"
+    if isinstance(invalid, jax.core.Tracer):
+        weight = eqx.error_if(weight, invalid, message)
+    elif bool(invalid):
+        raise ValueError(message)
+    weight = weight / jnp.max(weight)
+    return weight / jnp.sum(weight)
+
+
+def _weighted_mean(
+    values: jax.Array, sample_weight: Optional[jax.Array],
+) -> jax.Array:
+    """Average axis zero using normalized weights; retain the unweighted reduction."""
+    if sample_weight is None:
+        return jnp.mean(values, axis=0)
+    weight = sample_weight.reshape((-1,) + (1,) * (values.ndim - 1))
+    return jnp.sum(weight * jnp.where(weight > 0, values, 0.0), axis=0)
+
+
 class ExponentialFamily(eqx.Module):
     """
     Abstract base class for exponential family distributions.
@@ -566,6 +598,7 @@ class ExponentialFamily(eqx.Module):
         cls,
         X: jax.Array,
         *,
+        sample_weight: Optional[jax.Array] = None,
         theta0: Optional[jax.Array] = None,
         maxiter: int = 500,
         tol: float = 1e-10,
@@ -580,6 +613,10 @@ class ExponentialFamily(eqx.Module):
         ----------
         X : jax.Array
             ``(n, ...)`` array of observations.
+        sample_weight : jax.Array, optional
+            Finite, nonnegative weights of shape ``(n,)``, with positive
+            total weight. Normalized internally to sum to one. ``None``
+            retains the unweighted sample average.
         theta0 : jax.Array, optional
             Initial natural parameters :math:`\theta_0` for the :math:`\eta\to\theta` solver.
         maxiter : int
@@ -600,9 +637,10 @@ class ExponentialFamily(eqx.Module):
             a traced call keeps the previous contract.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
-        cls._validate_positive_sample(X)
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0] if X.ndim else 0)
+        cls._validate_positive_sample(X, sample_weight)
         stats = jax.vmap(cls.sufficient_statistics)(X)   # (n, dim_t)
-        eta_hat = jnp.mean(stats, axis=0)
+        eta_hat = _weighted_mean(stats, sample_weight)
         return cls.from_expectation(
             eta_hat, theta0=theta0, maxiter=maxiter, tol=tol, verbose=verbose)
 
@@ -610,6 +648,7 @@ class ExponentialFamily(eqx.Module):
         self,
         X: jax.Array,
         *,
+        sample_weight: Optional[jax.Array] = None,
         maxiter: int = 500,
         tol: float = 1e-10,
         verbose: int = 0,
@@ -625,6 +664,8 @@ class ExponentialFamily(eqx.Module):
         ----------
         X : jax.Array
             ``(n, ...)`` array of observations.
+        sample_weight : jax.Array, optional
+            Observation weights as in :meth:`fit_mle`.
         maxiter : int
             Maximum iterations for the :math:`\eta\to\theta` solver.
         tol : float
@@ -634,8 +675,11 @@ class ExponentialFamily(eqx.Module):
         """
         cls = type(self)
         X = jnp.asarray(X, dtype=jnp.float64)
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0] if X.ndim else 0)
+        if sample_weight is not None:
+            cls._validate_positive_sample(X, sample_weight)
         stats = jax.vmap(cls.sufficient_statistics)(X)
-        eta_hat = jnp.mean(stats, axis=0)
+        eta_hat = _weighted_mean(stats, sample_weight)
         return cls.from_expectation(
             eta_hat, theta0=self.natural_params(),
             maxiter=maxiter, tol=tol, verbose=verbose, **kwargs)
@@ -645,20 +689,28 @@ class ExponentialFamily(eqx.Module):
     # ------------------------------------------------------------------
 
     @classmethod
-    def default_init(cls, X: jax.Array) -> "ExponentialFamily":
+    def default_init(
+        cls, X: jax.Array, *, sample_weight: Optional[jax.Array] = None,
+    ) -> "ExponentialFamily":
         r"""Moment-based initialisation from data.
 
         Computes :math:`\hat\eta = \frac{1}{n}\sum_i t(x_i)` and inverts to get
         an initial model. For distributions with closed-form ``from_expectation``
         (Gamma, InverseGamma, InverseGaussian), this gives the MLE directly.
+        ``sample_weight`` follows :meth:`fit_mle` and weights these moments.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0] if X.ndim else 0)
+        if sample_weight is not None:
+            cls._validate_positive_sample(X, sample_weight)
         stats = jax.vmap(cls.sufficient_statistics)(X)
-        eta_hat = jnp.mean(stats, axis=0)
+        eta_hat = _weighted_mean(stats, sample_weight)
         return cls.from_expectation(eta_hat)
 
     @classmethod
-    def _validate_positive_sample(cls, X: jax.Array) -> None:
+    def _validate_positive_sample(
+        cls, X: jax.Array, sample_weight: Optional[jax.Array] = None,
+    ) -> None:
         """Reject samples for which a positive-support MLE does not exist.
 
         Host-side only. A traced ``X`` (``jit``, ``vmap``) skips the
@@ -669,7 +721,7 @@ class ExponentialFamily(eqx.Module):
         """
         if not cls._on_positive_support():
             return
-        if isinstance(X, jax.core.Tracer):
+        if isinstance(X, jax.core.Tracer) or isinstance(sample_weight, jax.core.Tracer):
             return
         arr = np.asarray(X)
         if arr.ndim == 0 or arr.size == 0 or arr.shape[0] == 0:
@@ -681,6 +733,8 @@ class ExponentialFamily(eqx.Module):
             raise ValueError(
                 f"{cls.__name__}.fit_mle requires observations on the "
                 f"positive support (x > 0)")
+        if sample_weight is not None:
+            arr = arr[np.asarray(sample_weight) > 0]
         if arr.shape[0] < 2:
             raise ValueError(
                 f"{cls.__name__}.fit_mle requires n >= 2; a single "

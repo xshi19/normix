@@ -42,9 +42,9 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.exponential_family import ExponentialFamily, _normalize_sample_weight, _weighted_mean
 from normix.fitting.eta import _unpack_gig_eta
 
-from normix.exponential_family import ExponentialFamily
 from normix.fitting.eta import FactorMixtureStats
 from normix.mixtures.marginal import (
     MarginalMixture,
@@ -326,7 +326,10 @@ class FactorNormalMixture(MarginalMixture):
             'zw': zw,
         }
 
-    def e_step(self, X: jax.Array, *, backend: str = 'jax') -> "EStepResult":
+    def e_step(
+        self, X: jax.Array, *, backend: str = 'jax',
+        sample_weight: jax.Array | None = None,
+    ) -> "EStepResult":
         r"""Full E-step: posterior :math:`Y` expectations + deterministic
         :math:`Z` reductions.
 
@@ -337,16 +340,21 @@ class FactorNormalMixture(MarginalMixture):
         ``docs/theory/factor_analysis.md`` §E-Step) and whose
         ``log_lik`` is the conjugacy mean log-likelihood at the current
         parameters.
+        ``sample_weight`` follows :meth:`fit`; it weights all ten
+        statistics and the returned log-likelihood.
         """
         from normix.fitting.eta import EStepResult
 
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0])
+        if sample_weight is not None:
+            X = jnp.where(sample_weight[:, None] > 0, X, self.mu)
         if backend == 'cpu':
             sub_exp = self._e_step_subordinator_cpu(X)
         elif backend == 'jax':
             sub_exp = self._e_step_subordinator_jax(X)
         else:
             raise ValueError(f"unknown backend {backend!r}")
-        eta, log_lik = self._aggregate_stats(X, sub_exp)
+        eta, log_lik = self._aggregate_stats(X, sub_exp, sample_weight)
         return EStepResult(eta=eta, log_lik=log_lik)
 
     def _e_step_subordinator_jax(self, X: jax.Array) -> Dict[str, jax.Array]:
@@ -384,6 +392,7 @@ class FactorNormalMixture(MarginalMixture):
         self,
         X: jax.Array,
         sub_exp: Dict[str, jax.Array],
+        sample_weight: jax.Array | None = None,
     ) -> tuple:
         """Average per-obs expectations into the six classical sums and
         compute the four factor-related statistics deterministically."""
@@ -392,12 +401,16 @@ class FactorNormalMixture(MarginalMixture):
         E_inv_Y = sub_exp['E_inv_Y']
         E_Y = sub_exp['E_Y']
 
-        s1 = jnp.mean(E_inv_Y)
-        s2 = jnp.mean(E_Y)
-        s3 = jnp.mean(E_log_Y)
-        s4 = jnp.mean(X, axis=0)
-        s5 = jnp.mean(X * E_inv_Y[:, None], axis=0)
-        s6 = jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
+        s1 = _weighted_mean(E_inv_Y, sample_weight)
+        s2 = _weighted_mean(E_Y, sample_weight)
+        s3 = _weighted_mean(E_log_Y, sample_weight)
+        s4 = _weighted_mean(X, sample_weight)
+        s5 = _weighted_mean(X * E_inv_Y[:, None], sample_weight)
+        s6 = (
+            jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
+            if sample_weight is None else
+            jnp.einsum('ni,nj,n->ij', X, X, sample_weight * E_inv_Y)
+        )
 
         s7, s8, s9, s10 = self._z_stats_from_six(s1, s2, s4, s5, s6)
         eta = FactorMixtureStats(
@@ -410,6 +423,7 @@ class FactorNormalMixture(MarginalMixture):
             sub_exp['psi_post'], sub_exp['zw'],
             self.log_det_sigma(), self.d,
             self._conjugacy_psi_prior(),
+            sample_weight,
         )
         return eta, log_lik
 
@@ -687,6 +701,7 @@ class FactorNormalMixture(MarginalMixture):
     @classmethod
     def default_init(
         cls, X: jax.Array, *, r: int = 1,
+        sample_weight: jax.Array | None = None,
     ) -> "FactorNormalMixture":
         """Moment-based initialisation from data with ``r`` factors.
 
@@ -696,12 +711,20 @@ class FactorNormalMixture(MarginalMixture):
         plus a positive diagonal residual.
 
         Useful as a starting point for ``model.fit(X)``.
+        ``sample_weight`` follows :meth:`fit` and weights the sample mean
+        and population covariance before the factor decomposition.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         n, d = X.shape
-        mu = jnp.mean(X, axis=0)
+        sample_weight = _normalize_sample_weight(sample_weight, n)
+        if sample_weight is not None:
+            X = jnp.where(sample_weight[:, None] > 0, X, 0.0)
+        mu = _weighted_mean(X, sample_weight)
         Xc = X - mu
-        S = (Xc.T @ Xc) / n + SIGMA_INIT_REG * jnp.eye(d)
+        S = (
+            (Xc.T @ Xc) / n if sample_weight is None else
+            Xc.T @ (sample_weight[:, None] * Xc)
+        ) + SIGMA_INIT_REG * jnp.eye(d)
 
         eigvals, eigvecs = jnp.linalg.eigh(S)            # ascending
         idx = jnp.argsort(eigvals)[::-1]                 # descending
