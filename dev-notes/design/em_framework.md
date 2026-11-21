@@ -575,3 +575,14 @@ weighted/unweighted E-steps, both mixture hierarchies, distinct shrinkage priors
 custom covariance, per-field shrinkage, JIT, and vmap. Self-prior conversion now
 uses explicit moment translation, so floating-point rounding can differ from the
 old recomputation of model moments; measured deltas belong to the task report.
+
+## GH exception scope (E17)
+
+Status: existing contract enforced on 2026-11-20; no new fallback policy.
+Authority: owner's audit task, session-reported, no durable source.
+Both GH CPU instance updates catch only `SolverDidNotConverge` and `ValueError`.
+The constructor path still propagates failures. A broad `Exception` catch had
+hidden `TypeError` and `RuntimeError` as successful reuse of the old GIG.
+`test_gh_warm_failure_exception_contract` injects all four classes into full and
+factor GH and checks either exact retention or propagation of the same exception.
+Reopen only if a further numerical exception gets an explicit recovery contract.

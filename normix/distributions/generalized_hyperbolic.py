@@ -32,6 +32,7 @@ import jax
 import jax.numpy as jnp
 
 from normix.fitting.eta import _pack_gig_eta, _unpack_gig_eta
+from normix.fitting.solvers import SolverDidNotConverge
 
 from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
@@ -215,11 +216,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         r"""Fit GIG subordinator from :math:`(E[\log Y], E[1/Y], E[Y])`.
 
         Forwards ``theta0`` (warm-start), ``backend``, ``method``, and
-        ``maxiter`` to :meth:`GIG.from_expectation`. No sanity-check
-        fallback at the classmethod level — that lives in
-        :meth:`GeneralizedHyperbolic.m_step_subordinator` for the EM
-        instance path where a sane "current" model exists to fall back
-        to.
+        ``maxiter`` to :meth:`GIG.from_expectation`. Exceptions propagate
+        from this constructor. The CPU EM instance path in
+        :meth:`GeneralizedHyperbolic.m_step_subordinator` retains its
+        previous subordinator on ``SolverDidNotConverge`` or ``ValueError``.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG.from_expectation(
@@ -413,8 +413,8 @@ class GeneralizedHyperbolic(NormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
         """Warm-start the GIG solve from the current subordinator.
 
-        On CPU, a failed solve keeps this GIG and EM continues.
-        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG
+        and EM continues. Other exceptions propagate.
         A finite solve outside the clamp does the same.
         A non-finite JAX solve is left in place so EM can set
         ``solver_failed``.
@@ -435,7 +435,7 @@ class GeneralizedHyperbolic(NormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except Exception:
+            except (SolverDidNotConverge, ValueError):
                 gig_new = current_gig
             else:
                 gig_new = _cpu_gig_or_previous(gig_new, current_gig)
@@ -710,8 +710,8 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
         """Warm-start the GIG solve from the current subordinator.
 
-        On CPU, a failed solve keeps this GIG and EM continues.
-        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG
+        and EM continues. Other exceptions propagate.
         A finite solve outside the clamp does the same.
         A non-finite JAX solve is left in place so EM can set
         ``solver_failed``.
@@ -731,7 +731,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except Exception:
+            except (SolverDidNotConverge, ValueError):
                 gig_new = current_gig
             else:
                 gig_new = _cpu_gig_or_previous(gig_new, current_gig)
