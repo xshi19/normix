@@ -453,3 +453,11 @@ Batch fitting still subtracts the weighted sample mean, or the ordinary mean
 when weights are absent. Incremental fitting uses its ordinary sample mean.
 Shrinkage targets are translated using their stored origin, including targets
 built from another model or with a custom covariance.
+
+## Posterior scale regularization
+
+The E-step applies {data}`~normix.utils.constants.B_POST_FLOOR` only when the
+prior GIG scale $b$ is exactly zero, as in variance-gamma. A positive prior
+scale is preserved even below that floor, in both mixture hierarchies and both
+backends. This keeps the existing VG mode regularization while leaving positive
+GH, NIG, and NInvG posterior scales unchanged.

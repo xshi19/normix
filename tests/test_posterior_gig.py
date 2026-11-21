@@ -84,6 +84,38 @@ def _make_factor(name):
     _, fac_cls, sub, _ = _FAMILIES[name]
     return fac_cls.from_classical(mu=_MU, gamma=_GAMMA, F=_F, D=_D, **sub)
 
+
+@pytest.mark.contract
+@pytest.mark.parametrize("name,sub", [
+    ("GH", dict(p=1.0, a=1.0, b=1e-12)),
+    ("NIG", dict(mu_ig=1e-6, lam=1e-12)),
+    ("NInvG", dict(alpha=2.0, beta=5e-13)),
+])
+@pytest.mark.parametrize("factor", [False, True])
+@pytest.mark.parametrize("backend", ["cpu", "jax"])
+def test_tiny_positive_prior_b_is_not_floored(name, sub, factor, backend):
+    marginal_cls, factor_cls, _, _ = _FAMILIES[name]
+    common = dict(mu=jnp.zeros(1), gamma=jnp.zeros(1), **sub)
+    model = (factor_cls.from_classical(**common, F=jnp.zeros((1, 1)), D=jnp.ones(1))
+             if factor else marginal_cls.from_classical(**common, sigma=jnp.eye(1)))
+    posterior_owner = model if factor else model._joint
+    _, _, b = posterior_owner._floored_posterior_gig_params(0.0, 0.0)
+    np.testing.assert_allclose(b, 1e-12, rtol=1e-15, atol=0)
+    result = model.e_step(jnp.zeros((1, 1)), backend=backend)
+    eta = result.eta
+    np.testing.assert_allclose(result.log_lik, model.log_prob(jnp.zeros(1)), rtol=0, atol=2e-11)
+    if name == "GH":
+        expected_y, expected_inv_y = 1.000001, 1e6
+    elif name == "NInvG":
+        expected_y, expected_inv_y = 1e-12 / 3.0, 5e12
+    else:
+        from scipy.special import kve
+
+        expected_y = 1e-6 * kve(0, 1e-6) / kve(1, 1e-6)
+        expected_inv_y = 1e6 * kve(2, 1e-6) / kve(1, 1e-6)
+    np.testing.assert_allclose(eta.E_Y, expected_y, rtol=2e-10, atol=0)
+    np.testing.assert_allclose(eta.E_inv_Y, expected_inv_y, rtol=2e-10, atol=0)
+
 @pytest.mark.parametrize("name", list(_FAMILIES))
 @pytest.mark.parametrize("hierarchy", ["joint", "factor"])
 def test_posterior_gig_map_matches_analytic_formula(name, hierarchy):
@@ -105,7 +137,7 @@ def test_posterior_gig_map_matches_analytic_formula(name, hierarchy):
 @pytest.mark.parametrize("hierarchy", ["joint", "factor"])
 def test_floor_binds_only_for_vg(name, hierarchy):
     """R1 dormancy: at the mode (z2=0) the floor changes b_post only for VG
-    (prior b=0); for GH/NIG/NInvG the prior b>0 leaves it untouched."""
+    (prior b=0); the floor is disabled for positive prior scales."""
     model = _make_joint(name) if hierarchy == "joint" else _make_factor(name)
     w2 = 0.83
     _, _, b_unfloored = model._posterior_gig_params(0.0, w2)
@@ -161,7 +193,8 @@ def test_posterior_gig_named_moments(name, factor, backend):
     for i, x in enumerate(X):
         _, _, z2, w2, _ = joint._quad_forms(x)
         p, a, b = joint._posterior_gig_params(z2, w2)
-        expected = GIG(p, a, jnp.maximum(b, B_POST_FLOOR)).expectation_params()
+        expected_b = jnp.maximum(b, B_POST_FLOOR) if name == "VG" else b
+        expected = GIG(p, a, expected_b).expectation_params()
         for key, index in (("E_log_Y", 0), ("E_inv_Y", 1), ("E_Y", 2)):
             np.testing.assert_allclose(actual[key][i], expected[index], rtol=1e-7, atol=1e-8)
 

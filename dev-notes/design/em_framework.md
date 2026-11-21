@@ -586,3 +586,27 @@ hidden `TypeError` and `RuntimeError` as successful reuse of the old GIG.
 `test_gh_warm_failure_exception_contract` injects all four classes into full and
 factor GH and checks either exact retention or propagation of the same exception.
 Reopen only if a further numerical exception gets an explicit recovery contract.
+
+## Posterior floor scope (E12)
+
+Status: corrected on 2026-11-20. Authority: owner's audit task,
+session-reported, no durable source. The prior-to-posterior conjugacy map is
+unchanged. Apply `B_POST_FLOOR` only when the prior's GIG $b=0$ (VG, including
+an exact Gamma boundary represented as GIG). Preserve every positive prior $b$.
+The old reasoning that positive means above $10^{-6}$ was false: at $x=\mu$,
+GH $(p,a,b)=(1,1,10^{-12})$ had its posterior $b$ raised a millionfold.
+
+The CPU batch path also used $\sqrt{\max(ab,\mathrm{tiny})}$. Removing the
+posterior floor exposed that alteration at the inverse-gamma boundary:
+$a=0$, $b=10^{-12}$, and posterior $p=-2.5$ gave $E[Y]=4.9722\times10^{-11}$
+instead of $10^{-12}/3$. For subnormal products, computing
+$\sqrt{a}\sqrt{b}$ after the existing input floors preserves the scale without
+underflow. Normal products retain their original arithmetic. The Bessel kernel
+and its unused derivative outputs are unchanged.
+
+A general floor was not selected: it changes valid GH/NIG/NInvG laws without a
+requested approximation contract. Removing the VG floor was not selected: it
+would restore the known mode singularity. Tests cover both hierarchies and both
+backends against half-order GH and inverse-gamma formulas and SciPy NIG ratios.
+Reopen if a positive-scale posterior cannot be evaluated within its stated
+accuracy domain; any approximation would need a separate error contract.

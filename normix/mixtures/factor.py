@@ -282,9 +282,12 @@ class FactorNormalMixture(MarginalMixture):
         r"""E-step entry point: ``_posterior_gig_params`` with
         :math:`b_{\mathrm{post}}` floored at
         :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;
-        only binds for VG, prior :math:`b=0`)."""
+        applied only when the prior has :math:`b=0`, as in VG).
+        Positive prior scales are preserved."""
         p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
-        return p_post, a_post, jnp.maximum(b_post, B_POST_FLOOR)
+        b_post = jnp.where(self.subordinator().to_gig().b == 0,
+                           jnp.maximum(b_post, B_POST_FLOOR), b_post)
+        return p_post, a_post, b_post
 
     @classmethod
     @abc.abstractmethod

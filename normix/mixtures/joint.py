@@ -478,9 +478,9 @@ class JointNormalMixture(ExponentialFamily):
 
         The posterior scale :math:`b_{\mathrm{post}} = b +
         (x-\mu)^\top\Sigma^{-1}(x-\mu)` is floored at
-        :data:`~normix.utils.constants.B_POST_FLOOR`, which bounds
-        :math:`E[1/Y\mid x]` for observations near the mode. The floor only
-        binds for VG (prior :math:`b=0`); see :doc:`/theory/em_algorithm`.
+        :data:`~normix.utils.constants.B_POST_FLOOR` only when the prior
+        has :math:`b=0` (VG). Positive prior scales are preserved;
+        see :doc:`/theory/em_algorithm`.
 
         :math:`\psi_{\mathrm{post}}` reuses ``m.log_k`` from the same
         :func:`~normix.utils.bessel.log_kv_moments` call that produces
@@ -534,12 +534,14 @@ class JointNormalMixture(ExponentialFamily):
         :math:`b_{\mathrm{post}}` floored at
         :data:`~normix.utils.constants.B_POST_FLOOR`.
 
-        The floor bounds :math:`E[1/Y\mid x]` for observations near the mode;
-        it only binds for VG (prior :math:`b=0`). This is the single
+        The floor is applied only to priors with :math:`b=0` (VG).
+        Positive prior scales are preserved. This is the single
         chokepoint through which all E-step paths obtain the posterior GIG.
         """
         p_post, a_post, b_post = self._posterior_gig_params(z2, w2)
-        return p_post, a_post, jnp.maximum(b_post, B_POST_FLOOR)
+        b_post = jnp.where(self.subordinator().to_gig().b == 0,
+                           jnp.maximum(b_post, B_POST_FLOOR), b_post)
+        return p_post, a_post, b_post
 
     # ------------------------------------------------------------------
     # Helper: solve Cholesky-based quantities
