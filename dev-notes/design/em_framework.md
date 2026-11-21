@@ -505,8 +505,8 @@ Use the same weights for every E-step statistic, conjugacy likelihood,
 sample center, and initial moment. Factor Z statistics follow from the
 weighted first six statistics by the existing affine identities.
 GH's candidate warm starts and likelihood ranking must also be weighted.
-E16's shrinkage-target translation uses that weighted center without an
-extra field on the statistic pytree.
+E16's shrinkage-target translation uses that weighted center. The
+2026-11-20 E16 amendment records the statistic origin explicitly.
 
 Pass $n_{\mathrm{eff}}=(\sum_iw_i)^2/\sum_iw_i^2$ as the eta rule's
 `batch_size`. The owner explicitly requested this choice. It preserves
@@ -532,3 +532,46 @@ results belong to the task report. External review remains pending.
 
 Reopen if frequency-weight uncertainty estimates need replicated counts,
 or if weighted online observations become a separate requested feature.
+
+
+## Explicit statistic origins (E16)
+
+Status: chosen; supersedes E16's implicit-origin and equality-inference clauses.
+Decision, evidence, and recording date: 2026-11-20. Authority: owner's four-fix
+audit task, session-reported, no durable source. The owner explicitly reopened
+E16 and authorized completion without waiting for external review.
+
+The previous decision protected covariance at a large location but lost the
+location itself. With Gamma(3,2) mixing, $\mu=10^8$, $\gamma=0.3$, and
+$\Sigma=1$, `compute_eta_from_model` stored $s_4=0.45$ and the M-step returned
+$\mu=0$. Commit `be6ef67` had introduced the implicit centered store to prevent
+covariance cancellation. That reason still holds; its origin must survive.
+
+`NormalMixtureEta.origin` is a dynamic array, default zero. Its three location
+fields are moments of $X-\mathrm{origin}$. `FactorMixtureStats` inherits these
+fields and also translates the X–Z cross moment. Producers select the existing
+`MOMENT_CANCEL_ATOL` threshold before accumulation; ordinary inputs retain the
+original reductions. M-steps add the origin after covariance reconstruction.
+`rebase` changes coordinates, and `affine_combine` aligns inputs to the new
+estimate's origin. The origin is coordinate metadata, never a weighted moment.
+Per-field shrinkage uses the same combination path. A callable weight operates
+on statistics in those aligned coordinates.
+
+Fit preprocessing still uses the weighted mean under E18. Translating a prior
+first shifts its recorded origin and then rebases to zero. The former model
+comparison is removed. Non-self priors now retain their location too. MAP
+objectives express the model in the prior's coordinates. Custom-covariance
+shrinkage targets use the same origin selection. E13's prior moment policy,
+E16's support/MLE rules, and S9's backend placement remain unchanged.
+
+Not selected: raw float64 second moments (lose covariance); an implicit origin
+(lose location); equality-based inference (fails for other-model priors).
+Reopen if unnormalized statistic measures need their own mass coordinate or if
+origins separated by a large distance must be combined without loss of covariance.
+Already-rounded raw moments cannot recover their lost digits through `rebase`.
+
+Evidence: `tests/test_robustness.py` covers the complete normal roundtrip,
+weighted/unweighted E-steps, both mixture hierarchies, distinct shrinkage priors,
+custom covariance, per-field shrinkage, JIT, and vmap. Self-prior conversion now
+uses explicit moment translation, so floating-point rounding can differ from the
+old recomputation of model moments; measured deltas belong to the task report.

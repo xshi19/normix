@@ -783,4 +783,4 @@ class JointNormalMixture(ExponentialFamily):
         Sigma = Sigma + SIGMA_REG * jnp.eye(d)
         L_new = jnp.linalg.cholesky(Sigma)
 
-        return mu_new, gamma_new, L_new
+        return mu_new + eta.origin, gamma_new, L_new

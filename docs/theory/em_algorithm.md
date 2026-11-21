@@ -275,8 +275,9 @@ When a statistic rule is set, it is applied to the first E-step average
 only. The fitter subtracts the (possibly weighted) sample mean from the data and from
 $\mu$ before these updates, and adds that mean back to $\mu$.
 $\gamma$, $\Sigma$, and the mixing parameters are unchanged by the
-shift. A shrinkage target equal to the initial model's expectation
-parameters is expressed in the centered coordinates. The penalty itself
+shift. Each shrinkage target is expressed in the centered coordinates using its
+explicit statistic origin. The stored location moments refer to
+$X-\mathrm{origin}$; the M-step restores that origin to $\mu$. The penalty itself
 is {doc}`shrinkage`.
 
 The ascent argument for an exact conditional maximization is in the

@@ -432,3 +432,24 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 - Theory: {doc}`EM algorithm <../theory/em_algorithm>`,
   {doc}`Shrinkage <../theory/shrinkage>`,
   {doc}`Factor analysis <../theory/factor_analysis>`.
+
+
+## Statistic coordinates
+
+{class}`~normix.fitting.eta.NormalMixtureEta` stores an explicit `origin`,
+zero by default. Its location fields are moments of $X-\mathrm{origin}$.
+{class}`~normix.fitting.eta.FactorMixtureStats` shares that contract and includes
+the translated X–Z cross moment. The M-step restores the origin after computing
+the covariance. At large locations this preserves both location and dispersion.
+
+Use {meth}`~normix.fitting.eta.NormalMixtureEta.rebase` to express moments about
+another origin. Use {func}`~normix.fitting.eta.affine_combine` for statistic
+arithmetic: it aligns origins before combining the moment fields. An ordinary
+pytree sum also sums the coordinate metadata and is not a statistic combination.
+Raw moments whose covariance digits were already lost cannot be repaired by
+changing their origin afterward.
+
+Batch fitting still subtracts the weighted sample mean, or the ordinary mean
+when weights are absent. Incremental fitting uses its ordinary sample mean.
+Shrinkage targets are translated using their stored origin, including targets
+built from another model or with a custom covariance.

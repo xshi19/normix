@@ -45,7 +45,7 @@ import jax.numpy as jnp
 from normix.exponential_family import ExponentialFamily, _normalize_sample_weight, _weighted_mean
 from normix.fitting.eta import _unpack_gig_eta
 
-from normix.fitting.eta import FactorMixtureStats
+from normix.fitting.eta import FactorMixtureStats, _moment_origin
 from normix.mixtures.marginal import (
     MarginalMixture,
     _normal_mixture_cov,
@@ -404,6 +404,8 @@ class FactorNormalMixture(MarginalMixture):
         s1 = _weighted_mean(E_inv_Y, sample_weight)
         s2 = _weighted_mean(E_Y, sample_weight)
         s3 = _weighted_mean(E_log_Y, sample_weight)
+        origin = _moment_origin(self.mu, s1)
+        X = X - origin
         s4 = _weighted_mean(X, sample_weight)
         s5 = _weighted_mean(X * E_inv_Y[:, None], sample_weight)
         s6 = (
@@ -412,8 +414,9 @@ class FactorNormalMixture(MarginalMixture):
             jnp.einsum('ni,nj,n->ij', X, X, sample_weight * E_inv_Y)
         )
 
-        s7, s8, s9, s10 = self._z_stats_from_six(s1, s2, s4, s5, s6)
+        s7, s8, s9, s10 = self._z_stats_from_six(s1, s2, s4, s5, s6, origin=origin)
         eta = FactorMixtureStats(
+            origin=origin,
             E_inv_Y=s1, E_Y=s2, E_log_Y=s3,
             E_X=s4, E_X_inv_Y=s5, E_XXT_inv_Y=s6,
             E_XZT_inv_sqrtY=s7, E_Z_inv_sqrtY=s8,
@@ -431,6 +434,7 @@ class FactorNormalMixture(MarginalMixture):
         self,
         s1: jax.Array, s2: jax.Array,
         s4: jax.Array, s5: jax.Array, s6: jax.Array,
+        *, origin: jax.Array = 0.0,
     ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Deterministic relations from
         ``docs/theory/factor_analysis.md`` §E-Step. Inputs are the
@@ -440,7 +444,7 @@ class FactorNormalMixture(MarginalMixture):
         Computed at the *current* model parameters (μ, γ, F, β); β is
         evaluated once via ``_beta``.
         """
-        mu = self.mu
+        mu = self.mu - origin
         gamma = self.gamma
         beta = self._beta()                              # (r, d)
 
@@ -531,7 +535,7 @@ class FactorNormalMixture(MarginalMixture):
                   + 2.0 * mu * gamma)
 
         D = jnp.maximum(diag_R, D_FLOOR)
-        return mu, gamma, F, D
+        return mu + eta.origin, gamma, F, D
 
     def m_step(self, eta: FactorMixtureStats, **kwargs) -> "FactorNormalMixture":
         r"""Full M-step: update :math:`(\mu, \gamma, F, D)` and the
@@ -602,7 +606,8 @@ class FactorNormalMixture(MarginalMixture):
         theory doc).
         """
         E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
-        mu = self.mu
+        origin = _moment_origin(self.mu, E_inv_Y)
+        mu = self.mu - origin
         gamma = self.gamma
         Sigma = self.sigma()
 
@@ -612,8 +617,9 @@ class FactorNormalMixture(MarginalMixture):
               + jnp.outer(mu, mu) * E_inv_Y
               + jnp.outer(gamma, gamma) * E_Y
               + jnp.outer(mu, gamma) + jnp.outer(gamma, mu))
-        s7, s8, s9, s10 = self._z_stats_from_six(E_inv_Y, E_Y, s4, s5, s6)
+        s7, s8, s9, s10 = self._z_stats_from_six(E_inv_Y, E_Y, s4, s5, s6, origin=origin)
         return FactorMixtureStats(
+            origin=origin,
             E_inv_Y=E_inv_Y, E_Y=E_Y, E_log_Y=E_log_Y,
             E_X=s4, E_X_inv_Y=s5, E_XXT_inv_Y=s6,
             E_XZT_inv_sqrtY=s7, E_Z_inv_sqrtY=s8,

@@ -251,9 +251,7 @@ class Shrinkage(EtaUpdateRule):
             # Per-field τ: factors are leaf-wise τ/(1+τ) and 1/(1+τ).
             factor_a = jax.tree.map(lambda t: t / (1.0 + t), self.tau)
             factor_b = jax.tree.map(lambda t: 1.0 / (1.0 + t), self.tau)
-            shifted_eta0 = jax.tree.map(jnp.multiply, factor_a, self.eta0)
-            scaled_base = jax.tree.map(jnp.multiply, factor_b, eta_base)
-            eta_t = jax.tree.map(jnp.add, shifted_eta0, scaled_base)
+            eta_t = affine_combine(self.eta0, eta_base, factor_a, factor_b)
         else:
             # Scalar τ: factors broadcast to every leaf.
             factor_a = self.tau / (1.0 + self.tau)
