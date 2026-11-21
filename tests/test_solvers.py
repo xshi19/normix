@@ -56,6 +56,36 @@ class TestBregmanResult:
         with pytest.raises(Exception):
             r.fun = 1.0  # frozen dataclass
 
+
+@pytest.mark.contract
+def test_multistart_final_retry_preserves_derivative_callbacks(monkeypatch):
+    starts = [jnp.array([0.0]), jnp.array([1.0])]
+    calls = []
+    result = BregmanResult(theta=jnp.array([2.0]), fun=-2.0, grad_norm=0.0,
+                          num_steps=1, converged=True)
+
+    def hess(theta):
+        return np.eye(len(theta))
+
+    def attempt(f, eta, theta0, **kwargs):
+        calls.append((theta0, kwargs))
+        if len(calls) <= len(starts):
+            raise ValueError("retry this start")
+        return result
+
+    monkeypatch.setattr(solvers, "solve_bregman", attempt)
+    actual = solve_bregman_multistart(
+        quadratic_f, jnp.array([2.0]), starts, backend="cpu", method="newton",
+        grad_fn=quadratic_grad, hess_fn=hess, max_steps=7, tol=1e-9)
+    np.testing.assert_array_equal(actual.theta, result.theta)
+    assert actual.converged
+    assert len(calls) == len(starts) + 1
+    np.testing.assert_array_equal(calls[-1][0], starts[0])
+    for _, kwargs in calls:
+        assert kwargs.get("grad_fn") is quadratic_grad
+        assert kwargs.get("hess_fn") is hess
+        assert kwargs == calls[0][1]
+
 # ---------------------------------------------------------------------------
 # bregman_objective
 # ---------------------------------------------------------------------------
