@@ -253,6 +253,10 @@ $$
 **Decision: floor $b_{\text{post}}$ at a constant $b_{\min}$, uniformly for all
 families.** Rationale:
 
+> Superseded 2026-11-20 (E12): the floor now applies only when the prior GIG
+> has $b=0$ (VG). Flooring a positive prior $b<10^{-6}$ distorted GH/NIG/NInvG
+> posteriors. The VG analysis below is unchanged.
+
 - *Simplicity.* A constant `jnp.maximum(b_post, B_POST_FLOOR)` needs no
   per-observation $a_{\text{post}}$ coupling and reads identically in every E-step
   path.

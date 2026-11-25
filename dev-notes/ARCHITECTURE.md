@@ -267,11 +267,11 @@ from there. Never define magic numbers locally in distribution files.
 | `GIG_CLAMP_LO` | `1e-6` | Lower clamp for GIG `a`, `b` in the GH M-step |
 | `GIG_CLAMP_HI` | `1e6` | Upper clamp for GIG `a`, `b` in the GH M-step |
 | `GIG_P_MAX` | `50.0` | Maximum \|p\| from GIG solver before fallback |
-| `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step (bounds the conditional inverse moment near the mode; only binds for VG) |
+| `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step, applied only when the prior `b = 0` (VG); positive prior scales are kept (E12) |
 | `ALPHA_MOMENT_MARGIN` | `0.1` | Floor on the `(α−1)` denominator of the VG/NInvG prior moment `β/(α−1)` in `compute_eta_from_model` (keeps it finite and positive when `α ≤ 1`) |
 | `ALPHA_MIN_MARGIN` | `0.1` | Margin ε for the opt-in VG `fit(alpha_min=…)` shape bound: `'density'`→`d/2+ε`, `'inverse_moment'`→`d/2+1+ε` |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
-| `MOMENT_CANCEL_ATOL` | `1e-6` | `compute_eta_from_model` stores moments about μ when ε‖μ‖²\|E[1/Y]\| exceeds this |
+| `MOMENT_CANCEL_ATOL` | `1e-6` | Statistic producers set `origin = μ` (moments of X−μ) when ε‖μ‖²\|E[1/Y]\| exceeds this (E16) |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
