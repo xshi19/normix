@@ -40,74 +40,32 @@ def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Arra
 
 
 def _translate_location_moments(eta, center: jax.Array):
-    """Shift :math:`(s_4, s_5, s_6)` into coordinates where :math:`X` lost ``center``.
-
-    :math:`s_1, s_2, s_3` are invariant. Applied to a shrinkage target
-    before a centered fit; the η pytree gains no center field.
-    """
-    r = jnp.asarray(center, dtype=jnp.float64)
-    s1 = eta.E_inv_Y
-    s4 = eta.E_X - r
-    s5 = eta.E_X_inv_Y - s1 * r
-    s6 = (
-        eta.E_XXT_inv_Y
-        - jnp.outer(eta.E_X_inv_Y, r)
-        - jnp.outer(r, eta.E_X_inv_Y)
-        + s1 * jnp.outer(r, r)
-    )
-    return eqx.tree_at(
-        lambda e: (e.E_X, e.E_X_inv_Y, e.E_XXT_inv_Y),
-        eta,
-        (s4, s5, s6),
-    )
-
-
-def _same_eta(a, b) -> bool:
-    """True when two η pytrees have the same structure and the same values."""
-    leaves_a, treedef_a = jax.tree_util.tree_flatten(a)
-    leaves_b, treedef_b = jax.tree_util.tree_flatten(b)
-    if treedef_a != treedef_b:
-        return False
-    for x, y in zip(leaves_a, leaves_b):
-        if getattr(x, "shape", None) != getattr(y, "shape", None):
-            return False
-        if not bool(jnp.array_equal(jnp.asarray(x), jnp.asarray(y))):
-            return False
-    return True
+    """Express moments of the shifted observation in coordinates about zero."""
+    shifted = eqx.tree_at(lambda e: e.origin, eta, eta.origin - center)
+    return shifted.rebase(jnp.zeros_like(eta.origin))
 
 
 def _recenter_eta_update(model, rule, center: jax.Array):
-    """Return ``rule`` with its prior η in the centered coordinates.
+    """Translate a prior into the fit coordinates using its explicit origin.
 
-    ``model`` has already had ``center`` subtracted from ``mu``. A target
-    equal to that model's own ``compute_eta_from_model`` (before the
-    shift) is rebuilt from the centered model. Rebuilding is required
-    when the store is about :math:`\\mu`: those moments do not contain
-    :math:`\\mu`, and translating them by the sample mean puts
-    :math:`s_1 c c^\\top` back into :math:`s_6`. Any other target is
-    shifted as a population moment. Factor latent statistics on that
-    path are recomputed from the shifted six. Rules without an ``eta0``
-    are unchanged.
+    Factor latent moments are recomputed from the translated six statistics
+    at the centered model. Rules without an ``eta0`` are unchanged.
     """
     if rule is None or not hasattr(rule, "eta0"):
         return rule
-    origin = model.replace(mu=model.mu + center)
-    if _same_eta(rule.eta0, origin.compute_eta_from_model()):
-        eta0 = model.compute_eta_from_model()
-    else:
-        eta0 = _translate_location_moments(rule.eta0, center)
-        if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
-            s7, s8, s9, s10 = model._z_stats_from_six(
-                eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
-                eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
-            )
-            eta0 = eqx.tree_at(
-                lambda e: (
-                    e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
-                ),
-                eta0,
-                (s7, s8, s9, s10),
-            )
+    eta0 = _translate_location_moments(rule.eta0, center)
+    if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
+        s7, s8, s9, s10 = model._z_stats_from_six(
+            eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
+            eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
+        )
+        eta0 = eqx.tree_at(
+            lambda e: (
+                e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
+            ),
+            eta0,
+            (s7, s8, s9, s10),
+        )
     return type(rule)(rule.base, eta0, rule.tau)
 
 
@@ -483,8 +441,8 @@ class BatchEMFitter:
         if not self._map_penalty_applies(model):
             return log_lik
         rule = self.eta_update
-        joint = model._joint
         eta0 = rule.eta0
+        joint = model.replace(mu=model.mu - eta0.origin)._joint
         eta0_flat = jnp.concatenate([
             _pack_gig_eta(E_log_Y=eta0.E_log_Y, E_inv_Y=eta0.E_inv_Y, E_Y=eta0.E_Y),
             jnp.ravel(eta0.E_X),

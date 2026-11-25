@@ -233,8 +233,24 @@ def test_affine_combine_with_shift():
     eta2 = model.e_step(X).eta
     shift = jax.tree.map(lambda x: 0.1 * jnp.ones_like(x), eta1)
     result = affine_combine(eta1, eta2, b=0.0, c=1.0, a=shift)
-    expected = np.array(eta2.E_Y) + 0.1
-    np.testing.assert_allclose(float(result.E_Y), float(expected), atol=1e-12)
+    for name in ("E_inv_Y", "E_Y", "E_log_Y", "E_X", "E_X_inv_Y", "E_XXT_inv_Y"):
+        np.testing.assert_allclose(getattr(result, name), getattr(eta2, name) + 0.1,
+                                   rtol=0, atol=1e-12)
+    np.testing.assert_array_equal(result.origin, eta2.origin)
+
+
+def test_affine_combine_weight_pytree_origin_is_not_a_weight():
+    """A per-field weight built with tree.map matches the scalar weight."""
+    X = _make_data()
+    model = _make_models(X)["VG"]
+    eta1 = model.compute_eta_from_model()
+    eta2 = model.e_step(X).eta
+    b = jax.tree.map(lambda x: jnp.full_like(x, 0.3), eta1)
+    c = jax.tree.map(lambda x: jnp.full_like(x, 0.7), eta1)
+    actual = affine_combine(eta1, eta2, b=b, c=c)
+    expected = affine_combine(eta1, eta2, b=0.3, c=0.7)
+    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected)):
+        np.testing.assert_array_equal(got, ref)
 
 # ---------------------------------------------------------------------------
 # Eta update rules — weight contracts

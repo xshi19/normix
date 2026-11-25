@@ -242,7 +242,7 @@ The equivalence leaks through exactly four channels, which is
 where the hypotheses live:
 
 1. **Absolute floors and clamps are not equivariant.**
-   `B_POST_FLOOR` ($b_{\mathrm{post}}\ge 10^{-6}$), `SIGMA_REG`,
+   `B_POST_FLOOR` ($b_{\mathrm{post}}\ge 10^{-6}$ when the prior $b=0$), `SIGMA_REG`,
    `GIG_CLAMP_LO/HI` are fixed constants while $q(x)$ and the GIG
    parameters scale with the gauge. On daily equities the
    $E[Y]=1$ gauge puts $q(x)\approx d$ (Mahalanobis scale); the
