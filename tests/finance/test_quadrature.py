@@ -104,6 +104,15 @@ def test_quadrature_moments_and_jit(sub):
             sub.quadrature(bad)
 
 
+def test_minimum_node_count_is_a_probability_rule():
+    sub = GeneralizedInverseGaussian(1.0, 2.0, 1.0)
+    measure = sub.quadrature(8)
+    assert measure.Y.shape == (8,)
+    assert np.all(np.isfinite(measure.Y)) and np.all(measure.Y > 0)
+    assert np.all(measure.p >= 0)
+    np.testing.assert_allclose(measure.p.sum(), 1.0, atol=5e-15)
+
+
 def test_quadrature_vmap_over_parameters():
     rates = jnp.array([0.5, 1.0, 2.0])
     means = jax.jit(jax.vmap(lambda b: Gamma(2.0, b).quadrature().mean()))(rates)

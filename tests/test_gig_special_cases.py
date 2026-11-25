@@ -6,6 +6,8 @@ are not in the current API. These tests verify the GIG's behavior at
 special-case boundaries and its relationship to limiting distributions.
 """
 
+import math
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -30,6 +32,31 @@ class TestGIGGammaLimit:
     def test_log_partition_finite(self, p, a):
         gig = GIG(p=p, a=a, b=1e-14)
         assert np.isfinite(float(gig.log_partition()))
+
+    @pytest.mark.parametrize("p,a,x", [
+        (0.5, 2.0, 0.25),
+        (0.5, 2.0, 1.0),
+        (1.0, 4.0, 1.0),
+        (3.0, 4.0, 2.0),
+    ])
+    def test_log_prob_matches_gamma(self, p, a, x):
+        gig = GIG(p=p, a=a, b=0.0)
+        gamma = Gamma(alpha=p, beta=a / 2.0)
+        assert_allclose(
+            float(gig.log_prob(x)), float(gamma.log_prob(x)), rtol=1e-8, atol=1e-10,
+        )
+
+    @pytest.mark.parametrize("p,a,expected", [
+        (0.5, 2.0, math.inf),
+        (1.0, 4.0, math.log(2.0)),
+        (3.0, 2.0, -math.inf),
+    ])
+    def test_log_prob_at_zero(self, p, a, expected):
+        got = float(GIG(p=p, a=a, b=0.0).log_prob(0.0))
+        if math.isinf(expected):
+            assert got == expected
+        else:
+            assert_allclose(got, expected, rtol=0.0, atol=1e-12)
 
     def test_fit_gamma_data(self):
         """GIG fitted to Gamma samples should recover Gamma-like parameters."""
@@ -56,6 +83,22 @@ class TestGIGInverseGammaLimit:
         p = -shape
         gig = GIG(p=p, a=1e-14, b=b)
         assert np.isfinite(float(gig.log_partition()))
+
+    @pytest.mark.parametrize("shape,rate,x", [
+        (0.5, 1.0, 1.0),
+        (2.0, 1.5, 0.5),
+        (2.0, 1.5, 2.0),
+    ])
+    def test_log_prob_matches_inverse_gamma(self, shape, rate, x):
+        gig = GIG(p=-shape, a=0.0, b=2.0 * rate)
+        ig = InverseGamma(alpha=shape, beta=rate)
+        assert_allclose(
+            float(gig.log_prob(x)), float(ig.log_prob(x)), rtol=1e-8, atol=1e-10,
+        )
+
+    def test_log_prob_at_zero_is_minus_inf(self):
+        assert float(GIG(p=-0.5, a=0.0, b=2.0).log_prob(0.0)) == -math.inf
+        assert float(GIG(p=-2.0, a=0.0, b=3.0).log_prob(0.0)) == -math.inf
 
 class TestGIGInverseGaussianLimit:
     """GIG(p=-1/2, a, b) should relate to InverseGaussian."""

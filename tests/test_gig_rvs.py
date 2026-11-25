@@ -93,6 +93,11 @@ class TestGIGLogMode:
         assert_allclose(float(gig.mode()), float(gamma.mode()), rtol=1e-12)
         assert_allclose(float(gig.mode()), 2.0 / 3.0, rtol=1e-12)
 
+    @pytest.mark.parametrize("p,a", [(1.5, 3.0), (1.2, 2.0)])
+    def test_mode_gamma_boundary_shape_below_two(self, p, a):
+        gig = GIG(p, a, 0.0)
+        assert_allclose(float(gig.mode()), 2.0 * (p - 1.0) / a, rtol=1e-12)
+
     def test_mode_invgamma_boundary(self):
         gig = GIG(-2.0, 0.0, 3.0)
         ig = InverseGamma(alpha=2.0, beta=1.5)
@@ -108,6 +113,54 @@ class TestGIGLogMode:
     def test_rvs_invgamma_boundary_finite(self):
         draws = np.asarray(GIG(-2.0, 0.0, 3.0).rvs(500, seed=0), dtype=np.float64)
         assert np.all(np.isfinite(draws) & (draws > 0.0))
+
+    @pytest.mark.parametrize("p,a,b,mean,mean_inv", [
+        (-3.0, 0.0, 4.0, 1.0, 1.5),
+        (-3.0, 0.0, 0.5, 0.125, 12.0),
+        (2.0, 0.5, 0.0, 8.0, None),
+        (0.5, 2.0, 0.0, 0.5, None),
+    ])
+    def test_rvs_boundary_moments(self, p, a, b, mean, mean_inv):
+        draws = np.asarray(GIG(p, a, b).rvs(8000, seed=0), dtype=np.float64)
+        assert np.all(np.isfinite(draws) & (draws > 0.0))
+        assert float(np.var(draws)) > 0.0
+        assert_allclose(float(np.mean(draws)), mean, rtol=0.05)
+        if mean_inv is not None:
+            assert_allclose(float(np.mean(1.0 / draws)), mean_inv, rtol=0.05)
+
+    @pytest.mark.parametrize("p,a,b", [
+        (1.0, 0.0, 0.0),
+        (0.0, 2.0, 0.0),
+        (0.0, 0.0, 2.0),
+        (-1.0, 1.0, 0.0),
+        (-1.0, 0.0, 0.0),
+        (1.0, 0.0, 1.0),
+    ])
+    def test_rvs_off_support_is_nan(self, p, a, b):
+        draws = np.asarray(GIG(p, a, b).rvs(16, seed=0), dtype=np.float64)
+        assert np.all(np.isnan(draws))
+
+    def test_rvs_scipy_matches_mean(self):
+        gig = GIG(1.0, 2.0, 3.0)
+        draws = np.asarray(gig.rvs(4000, seed=0, method="scipy"), dtype=np.float64)
+        assert np.all(np.isfinite(draws) & (draws > 0.0))
+        assert_allclose(float(np.mean(draws)), float(gig.mean()), rtol=0.05)
+
+    def test_rvs_scipy_seed_is_reproducible(self):
+        gig = GIG(1.0, 2.0, 3.0)
+        first = np.asarray(gig.rvs(32, seed=0, method="scipy"))
+        again = np.asarray(gig.rvs(32, seed=0, method="scipy"))
+        other = np.asarray(gig.rvs(32, seed=1, method="scipy"))
+        assert np.array_equal(first, again)
+        assert not np.array_equal(first, other)
+
+    def test_rvs_pinv_seed_is_reproducible(self):
+        gig = GIG(1.0, 2.0, 3.0)
+        first = np.asarray(gig.rvs(32, seed=0, method="pinv"))
+        again = np.asarray(gig.rvs(32, seed=0, method="pinv"))
+        other = np.asarray(gig.rvs(32, seed=1, method="pinv"))
+        assert np.array_equal(first, again)
+        assert not np.array_equal(first, other)
 
     def test_exhausted_tdr_rounds_are_nan(self, monkeypatch):
         import normix.distributions.generalized_inverse_gaussian as gig_mod

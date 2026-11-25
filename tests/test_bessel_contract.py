@@ -407,6 +407,35 @@ def test_cpu_vectorized_batch():
     assert np.asarray(m.d2_arg).shape == (8,)
 
 
+@pytest.mark.contract
+def test_batched_covariance_matches_scalar():
+    vs = np.array([0.0, 0.5, -1.0, 2.5])
+    zs = np.array([0.3, 1.0, 2.0, 0.7])
+    batched = np.asarray(log_kv_moments(vs, zs, backend="cpu").cov)
+    rows = [
+        np.asarray(log_kv_moments(float(v), float(z), backend="cpu").cov)
+        for v, z in zip(vs, zs)
+    ]
+    np.testing.assert_allclose(batched, np.stack(rows), rtol=1e-12, atol=1e-14)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("backend", _BACKEND_NAMES)
+def test_log_kv_broadcasts_order_and_argument(backend):
+    vs = np.array([0.0, 0.5, -1.0, 2.0])
+    zs = np.array([0.3, 1.0, 2.0, 4.0])
+    by_order = np.asarray(log_kv(vs, 1.5, backend=backend))
+    order_loop = np.array([
+        float(log_kv(float(v), 1.5, backend=backend)) for v in vs
+    ])
+    np.testing.assert_allclose(by_order, order_loop, rtol=1e-12, atol=1e-14)
+    by_arg = np.asarray(log_kv(0.5, zs, backend=backend))
+    arg_loop = np.array([
+        float(log_kv(0.5, float(z), backend=backend)) for z in zs
+    ])
+    np.testing.assert_allclose(by_arg, arg_loop, rtol=1e-12, atol=1e-14)
+
+
 # ---------------------------------------------------------------------------
 # Exact identities / extreme argument
 # ---------------------------------------------------------------------------

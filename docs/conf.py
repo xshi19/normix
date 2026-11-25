@@ -43,6 +43,7 @@ exclude_patterns = [
     'Thumbs.db',
     '.DS_Store',
     'pdfs',
+    'reports',
 ]
 
 # Fail unresolved cross-refs loudly (review roadmap W7). Content pages use

@@ -13,7 +13,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from normix.utils.bessel import log_kv
+from normix.utils.bessel import log_kv, log_kv_moments
 from normix.distributions.generalized_inverse_gaussian import GIG
 from normix.distributions.generalized_hyperbolic import (
     JointGeneralizedHyperbolic, GeneralizedHyperbolic,
@@ -82,6 +82,13 @@ def test_log_kv_default_backend_unchanged():
     result_default = float(log_kv(v, z))
     result_jax = float(log_kv(v, z, backend='jax'))
     assert result_default == result_jax
+
+def test_log_kv_moments_default_backend_matches_jax():
+    v, z = 1.0, 2.0
+    default = log_kv_moments(v, z)
+    explicit = log_kv_moments(v, z, backend='jax')
+    assert float(default.log_k) == float(explicit.log_k)
+    assert float(default.d_arg) == float(explicit.d_arg)
 
 def test_log_kv_jax_path_still_jit_able():
     """The JAX path (default) remains JIT-able after the refactor."""

@@ -68,6 +68,22 @@ def test_gig_cdf_ppf_matches_scipy(p, a, b):
     ours_cdf = np.asarray(gig.cdf(jnp.asarray(ref_ppf)))
     np.testing.assert_allclose(ours_cdf, _QS, rtol=1e-3, atol=1e-4)
 
+@pytest.mark.parametrize("p,a,b", [
+    (1.0, 2.0, 3.0),
+    (-0.5, 1.5, 2.5),
+    (2.0, 1.0, 0.5),
+    (0.5, 0.4, 2.0),
+])
+@pytest.mark.parametrize("x", [0.3, 1.0, 2.5])
+def test_gig_log_prob_matches_scipy(p, a, b, x):
+    gig = GIG(p=p, a=a, b=b)
+    b_sp = float(np.sqrt(a * b))
+    scale = float(np.sqrt(b / a))
+    ref = float(stats.geninvgauss.logpdf(x, p=p, b=b_sp, scale=scale))
+    np.testing.assert_allclose(float(gig.log_prob(x)), ref, rtol=1e-6, atol=1e-8)
+    np.testing.assert_allclose(float(gig.pdf(x)), float(np.exp(ref)), rtol=1e-6, atol=1e-8)
+
+
 def test_gig_cdf_ppf_round_trip():
     gig = GIG(p=0.5, a=1.5, b=2.0)
     qs = jnp.asarray(_QS)
