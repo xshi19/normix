@@ -82,7 +82,7 @@ ALPHA_MIN_MARGIN: float = 0.1
 #: Regularisation added to Σ in the M-step Cholesky factorisation
 SIGMA_REG: float = 1e-8
 
-#: Cancellation tolerance ε ‖μ‖² |E[1/Y]| for location moments.
+#: Cancellation tolerance ε ‖μ‖² ``|E[1/Y]|`` for location moments.
 #: Above this threshold, statistic producers store moments with origin = μ.
 MOMENT_CANCEL_ATOL: float = 1e-6
 
