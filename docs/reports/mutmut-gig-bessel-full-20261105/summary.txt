@@ -1,3 +1,0 @@
-   2856 killed
-    350 survived
-     45 timeout

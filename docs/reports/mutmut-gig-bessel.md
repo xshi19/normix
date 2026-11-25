@@ -35,7 +35,9 @@ Config is `[tool.mutmut]` in `pyproject.toml`; the entry point is `scripts/run_m
 | Score | 86.62% | 89.23% | +2.61 pp |
 
 The verified score is `(2856 + 45) / 3251` = 2901/3251 ≈ 89.23%.
-Per-mutant results are under `docs/reports/mutmut-gig-bessel-full-20261105/` (`status.tsv`, `summary.txt`, `mutmut-cicd-stats.json`, `run-info.txt`).
+Raw per-mutant artifacts from that run were dropped from the tree.
+The verified totals above stay in this note: 89.23% (2901/3251) = (2856 killed + 45 timeout) / 3251, with 350 survivors, on commit `c79dda8`.
+Reproduce the run, and those files, with `scripts/run_mutmut.sh`.
 
 The earlier 86.62% figure and the 412-survivor class counts below are historical.
 They came from a prior campaign classification, not from this verified re-run.
