@@ -699,7 +699,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         a_safe = np.maximum(a, TINY)
         b_safe = np.maximum(b, TINY)
         tiny = np.finfo(np.float64).tiny
-        z = np.sqrt(np.maximum(a_safe * b_safe, tiny))
+        product = a_safe * b_safe
+        z = np.where(product < tiny, np.sqrt(a_safe) * np.sqrt(b_safe), np.sqrt(product))
         log_sqrt_ba = 0.5 * (np.log(b_safe) - np.log(a_safe))
         m = log_kv_moments(p, z, backend='cpu')
         eta, _ = GeneralizedInverseGaussian._eta_H_from_moments(

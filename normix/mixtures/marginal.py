@@ -557,7 +557,7 @@ class NormalMixture(MarginalMixture):
     def compute_eta_from_model(self) -> "NormalMixtureEta":
         r"""Reconstruct :math:`\eta` from the model's own parameters.
 
-        Uses the *marginal* expectations of the joint sufficient statistics:
+        At origin zero, the *marginal* expectations of the joint sufficient statistics are:
 
         .. math::
 
@@ -568,44 +568,26 @@ class NormalMixture(MarginalMixture):
 
         When :math:`\varepsilon\|\mu\|^2|E[1/Y]|` exceeds
         :data:`~normix.utils.constants.MOMENT_CANCEL_ATOL`, those three
-        moments are stored about :math:`\mu` instead. Float64 cannot hold
-        both :math:`s_1\mu\mu^\top` and :math:`\Sigma`; the centered store
-        is what the unchanged M-step needs in order to return :math:`\Sigma`.
+        moments are stored about :math:`\mu` with an explicit ``origin``.
+        The M-step restores that origin after reconstructing the covariance.
         """
-        from normix.fitting.eta import NormalMixtureEta
-
-        from normix.utils.constants import MOMENT_CANCEL_ATOL
+        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
         j = self._joint
         mu, gamma = j.mu, j.gamma
         sigma = j.sigma()
 
-        # Raw moments are the population values. When ε ‖μ‖² |E[1/Y]| exceeds
-        # MOMENT_CANCEL_ATOL a float64 store of s6 has already lost Σ, so
-        # store the same moments about μ. The M-step is unchanged and
-        # returns that Σ; there is no center field on η.
-        cancel = (jnp.finfo(jnp.float64).eps * jnp.abs(E_inv_Y)
-                  * jnp.sum(jnp.square(mu)))
-        about_mu = cancel > MOMENT_CANCEL_ATOL
-        E_X_raw = mu + gamma * E_Y
-        E_X_about = gamma * E_Y
-        E_XiY_raw = mu * E_inv_Y + gamma
-        E_XiY_about = gamma
+        origin = _moment_origin(mu, E_inv_Y)
+        mu = mu - origin
         cross = jnp.outer(mu, gamma) + jnp.outer(gamma, mu)
-        E_XXT_raw = (sigma
-                     + jnp.outer(mu, mu) * E_inv_Y
-                     + jnp.outer(gamma, gamma) * E_Y
-                     + cross)
-        E_XXT_about = sigma + jnp.outer(gamma, gamma) * E_Y
-
         return NormalMixtureEta(
-            E_log_Y=E_log_Y,
-            E_inv_Y=E_inv_Y,
-            E_Y=E_Y,
-            E_X=jnp.where(about_mu, E_X_about, E_X_raw),
-            E_X_inv_Y=jnp.where(about_mu, E_XiY_about, E_XiY_raw),
-            E_XXT_inv_Y=jnp.where(about_mu, E_XXT_about, E_XXT_raw),
+            E_log_Y=E_log_Y, E_inv_Y=E_inv_Y, E_Y=E_Y,
+            E_X=mu + gamma * E_Y,
+            E_X_inv_Y=mu * E_inv_Y + gamma,
+            E_XXT_inv_Y=(sigma + jnp.outer(mu, mu) * E_inv_Y
+                        + jnp.outer(gamma, gamma) * E_Y + cross),
+            origin=origin,
         )
 
     @abc.abstractmethod
@@ -691,12 +673,15 @@ class NormalMixture(MarginalMixture):
         sample_weight: jax.Array | None = None,
     ) -> tuple:
         """Average per-observation expectations; conjugacy mean log-likelihood."""
-        from normix.fitting.eta import NormalMixtureEta
+        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         X = jnp.asarray(X, dtype=jnp.float64)
         E_inv_Y = sub_exp['E_inv_Y']
+        origin = _moment_origin(self.mu, _weighted_mean(E_inv_Y, sample_weight))
+        X = X - origin
 
         eta = NormalMixtureEta(
+            origin=origin,
             E_log_Y=_weighted_mean(sub_exp['E_log_Y'], sample_weight),
             E_inv_Y=_weighted_mean(E_inv_Y, sample_weight),
             E_Y=_weighted_mean(sub_exp['E_Y'], sample_weight),

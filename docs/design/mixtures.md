@@ -258,24 +258,32 @@ Both stats classes use **descriptive field names** in **theory order**
 
 ```python
 class NormalMixtureEta(eqx.Module):
-    E_inv_Y:     # s_1 = E[Y⁻¹],    scalar
-    E_Y:         # s_2 = E[Y],       scalar
-    E_log_Y:     # s_3 = E[log Y],   scalar
-    E_X:         # s_4 = E[X],       (d,)
-    E_X_inv_Y:   # s_5 = E[X / Y],   (d,)
-    E_XXT_inv_Y: # s_6 = E[X X^T/Y], (d, d)
+    E_inv_Y:     # s_1 = E[Y⁻¹],                 scalar
+    E_Y:         # s_2 = E[Y],                    scalar
+    E_log_Y:     # s_3 = E[log Y],                scalar
+    E_X:         # s_4 = E[X−o],                  (d,)
+    E_X_inv_Y:   # s_5 = E[(X−o)/Y],              (d,)
+    E_XXT_inv_Y: # s_6 = E[(X−o)(X−o)^T/Y],       (d, d)
+    origin:      # o, keyword-only, default 0;     (d,)  not a statistic
 
-class FactorMixtureStats(eqx.Module):
-    # fields s_1 … s_6 identical to NormalMixtureEta
-    E_XZT_inv_sqrtY: # s_7  = E[X Z^T Y^{-1/2}], (d, r)
-    E_Z_inv_sqrtY:   # s_8  = E[Z Y^{-1/2}],     (r,)
-    E_Z_sqrtY:       # s_9  = E[Z Y^{1/2}],      (r,)
-    E_ZZT:           # s_10 = E[Z Z^T],          (r, r)
+class FactorMixtureStats(NormalMixtureEta):
+    # inherits s_1 … s_6 and origin
+    E_XZT_inv_sqrtY: # s_7  = E[(X−o) Z^T Y^{-1/2}], (d, r)
+    E_Z_inv_sqrtY:   # s_8  = E[Z Y^{-1/2}],         (r,)
+    E_Z_sqrtY:       # s_9  = E[Z Y^{1/2}],          (r,)
+    E_ZZT:           # s_10 = E[Z Z^T],              (r, r)
 ```
 
 Sharing the first six fields means shrinkage targets, weights, and
 tests written for the standard family port directly to the factor
 family.
+
+`origin` is a pytree leaf but not a statistic. Six-field constructors
+get `origin = 0`, so raw moments and per-field weight pytrees (for
+example a Σ-only `tau` for `Shrinkage`) keep working unchanged.
+`eta.rebase(o)` changes coordinates; `affine_combine` aligns the
+statistics to `eta_new.origin` before combining and ignores the
+weight pytree's `origin`. See {doc}`em_framework` § Statistic coordinates.
 
 ---
 

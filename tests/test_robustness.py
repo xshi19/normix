@@ -14,16 +14,108 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from normix import GIG, Gamma, InverseGamma, InverseGaussian, VarianceGamma
+from normix import GIG, Gamma, InverseGamma, InverseGaussian, VarianceGamma, FactorVarianceGamma
 from normix.fitting.em import BatchEMFitter
 from normix.fitting.eta_rules import IdentityUpdate, Shrinkage
-from normix.fitting.shrinkage_targets import eta0_from_model
+from normix.fitting.shrinkage_targets import eta0_from_model, eta0_with_sigma
+from normix.fitting.eta import affine_combine
 from normix.mixtures.joint import JointNormalMixture
 from normix.utils.constants import SIGMA_REG
 
 pytestmark = pytest.mark.contract
 
 _FAMILIES = [Gamma, InverseGamma, InverseGaussian, GIG]
+
+
+def _location_model(factor, shift=0.0):
+    common = dict(mu=jnp.array([shift]), gamma=jnp.array([0.3]), alpha=3.0, beta=2.0)
+    if factor:
+        return FactorVarianceGamma.from_classical(**common, F=jnp.array([[0.5]]), D=jnp.array([0.75]))
+    return VarianceGamma.from_classical(**common, sigma=jnp.eye(1))
+
+
+@pytest.mark.parametrize("shift", [0.0, 1e8])
+def test_large_location_model_roundtrip(shift):
+    model = VarianceGamma.from_classical(
+        mu=jnp.array([shift]), gamma=jnp.array([0.3]),
+        sigma=jnp.eye(1), alpha=3.0, beta=2.0,
+    )
+    eta = model.compute_eta_from_model()
+    np.testing.assert_allclose(eta.E_X + eta.origin, [shift + 0.45], rtol=0, atol=1e-8)
+    recovered = VarianceGamma.from_expectation(eta)
+    np.testing.assert_allclose(recovered.mu, model.mu, rtol=0, atol=1e-8)
+    np.testing.assert_allclose(recovered.gamma, model.gamma, rtol=0, atol=1e-12)
+    np.testing.assert_allclose(recovered.sigma(), model.sigma() + SIGMA_REG,
+                               rtol=0, atol=1e-12)
+
+
+@pytest.mark.parametrize("weighted", [False, True])
+@pytest.mark.parametrize("backend", ["jax", "cpu"])
+@pytest.mark.parametrize("factor", [False, True])
+def test_large_location_estep_roundtrip(weighted, backend, factor):
+    base = _location_model(factor)
+    X = jnp.array([[-2.0], [-0.5], [0.0], [0.25], [1.0], [3.0]])
+    weights = jnp.arange(1.0, 7.0) if weighted else None
+    shifted = base.replace(mu=base.mu + 1e8)
+    actual = shifted.m_step(shifted.e_step(
+        X + 1e8, backend=backend, sample_weight=weights).eta)
+    expected = base.m_step(base.e_step(X, backend=backend, sample_weight=weights).eta)
+    np.testing.assert_allclose(actual.mu, expected.mu + 1e8, rtol=0, atol=2e-8)
+    np.testing.assert_allclose(actual.gamma, expected.gamma, rtol=0, atol=1e-12)
+    np.testing.assert_allclose(actual.sigma(), expected.sigma(), rtol=0, atol=1e-12)
+
+
+@pytest.mark.parametrize("factor", [False, True])
+@pytest.mark.parametrize("weighted", [False, True])
+@pytest.mark.parametrize("algorithm,backend", [("em", "jax"), ("mcecm", "cpu")])
+def test_large_location_distinct_shrinkage_prior(factor, weighted, algorithm, backend):
+    base = _location_model(factor)
+    X = jnp.array([[-2.0], [-0.5], [0.0], [0.25], [1.0], [3.0]])
+    weights = jnp.arange(1.0, 7.0) if weighted else None
+    results = []
+    for shift in [0.0, 1e8]:
+        init = base.replace(mu=base.mu + shift)
+        prior = base.replace(mu=base.mu + shift + 0.25)
+        result = BatchEMFitter(
+            max_iter=3, tol=0, algorithm=algorithm, track_ll=True,
+            eta_update=Shrinkage(IdentityUpdate(), prior.compute_eta_from_model(), 0.2),
+            e_step_backend=backend, m_step_backend=backend,
+        ).fit(init, X + shift, sample_weight=weights)
+        assert not result.diverged and not result.solver_failed
+        results.append(result)
+    expected, actual = results
+    np.testing.assert_allclose(actual.model.mu, expected.model.mu + 1e8, rtol=0, atol=3e-8)
+    np.testing.assert_allclose(actual.model.gamma, expected.model.gamma, rtol=0, atol=5e-8)
+    np.testing.assert_allclose(actual.model.sigma(), expected.model.sigma(), rtol=0, atol=5e-8)
+    np.testing.assert_allclose(actual.log_likelihoods, expected.log_likelihoods, rtol=0, atol=5e-8)
+
+
+@pytest.mark.parametrize("factor", [False, True])
+@pytest.mark.parametrize("per_field", [False, True])
+def test_shrinkage_aligns_explicit_origins_under_jit(factor, per_field):
+    model = _location_model(factor)
+    eta = model.compute_eta_from_model().rebase(jnp.array([0.25]))
+    prior = model.replace(mu=model.mu + 0.5).compute_eta_from_model()
+    tau = jax.tree.map(lambda x: jnp.full_like(x, 0.2), prior) if per_field else 0.2
+    rule = Shrinkage(IdentityUpdate(), prior, tau)
+    result, _ = jax.jit(lambda e: rule(e, e, 0, 6, {}))(eta)
+    expected = affine_combine(prior, eta.rebase(jnp.zeros(1)), 1/6, 5/6)
+    actual = result.rebase(jnp.zeros(1))
+    np.testing.assert_array_equal(result.origin, eta.origin)
+    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected)):
+        np.testing.assert_allclose(got, ref, rtol=0, atol=1e-14)
+
+
+def test_large_location_custom_sigma_prior_and_vmap_roundtrip():
+    model = _location_model(False, 1e8)
+    target = eta0_with_sigma(model, jnp.array([[2.0]]))
+    recovered = VarianceGamma.from_expectation(target)
+    np.testing.assert_allclose(recovered.mu, model.mu, rtol=0, atol=1e-8)
+    np.testing.assert_allclose(recovered.sigma(), [[2.0 + SIGMA_REG]], rtol=0, atol=1e-12)
+    roundtrip = jax.jit(jax.vmap(lambda shift: JointNormalMixture._mstep_normal_params(
+        _location_model(False, shift).compute_eta_from_model())[0]))
+    shifts = jnp.array([0.0, 1e8, -1e8])
+    np.testing.assert_allclose(roundtrip(shifts)[:, 0], shifts, rtol=0, atol=1e-8)
 
 
 def _package_sigma(model) -> np.ndarray:

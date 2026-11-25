@@ -55,10 +55,8 @@ GIG_P_MAX: float = 50.0
 
 # ── E-step constants ──────────────────────────────────────────────────
 
-#: Floor for the posterior GIG scale b_post = b + (x-μ)ᵀΣ⁻¹(x-μ) in the EM
-#: E-step. Bounds the conditional inverse moment E[1/Y|x] for observations near
-#: the mode (where (x-μ)ᵀΣ⁻¹(x-μ) → 0). Only binds for VG, whose prior b = 0;
-#: for GH / NIG / NInvG the prior b > 0 already keeps b_post above this floor.
+#: Floor for the E-step posterior scale when the prior GIG scale b = 0 (VG).
+#: Positive prior scales, including those below this floor, are preserved.
 B_POST_FLOOR: float = 1e-6
 
 #: Lower floor on the (α−1) denominator of the VG/NInvG prior reconstruction
@@ -84,10 +82,8 @@ ALPHA_MIN_MARGIN: float = 0.1
 #: Regularisation added to Σ in the M-step Cholesky factorisation
 SIGMA_REG: float = 1e-8
 
-#: When ε ‖μ‖² ``|E[1/Y]|`` exceeds this, compute_eta_from_model stores the
-#: location moments about μ. A float64 uncentered second moment has already
-#: lost Σ, and no M-step arithmetic can recover it. 1e-6 matches the
-#: translation check; below it the raw moments still round-trip.
+#: Cancellation tolerance ε ‖μ‖² ``|E[1/Y]|`` for location moments.
+#: Above this threshold, statistic producers store moments with origin = μ.
 MOMENT_CANCEL_ATOL: float = 1e-6
 
 #: Magnitude floor for D = 1 − E[1/Y]·E[Y] in the M-step (applied as −max(``|D|``, floor))

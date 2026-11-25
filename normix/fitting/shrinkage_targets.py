@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING
 import jax
 import jax.numpy as jnp
 
-from normix.fitting.eta import NormalMixtureEta
+from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
 if TYPE_CHECKING:  # pragma: no cover
     from normix.mixtures.marginal import NormalMixture
@@ -64,7 +64,7 @@ def eta0_from_model(model: "NormalMixture") -> NormalMixtureEta:
     Returns
     -------
     NormalMixtureEta
-        Six-field expectation pytree.
+        Six-statistic expectation pytree with an explicit origin.
     """
     return model.compute_eta_from_model()
 
@@ -92,7 +92,7 @@ def eta0_with_sigma(
     Returns
     -------
     NormalMixtureEta
-        Six-field expectation pytree with ``E_XXT_inv_Y`` rebuilt from
+        Six-statistic expectation pytree with an explicit origin with ``E_XXT_inv_Y`` rebuilt from
         ``Sigma0``.
     """
     Sigma0 = jnp.asarray(Sigma0, dtype=jnp.float64)
@@ -100,8 +100,11 @@ def eta0_with_sigma(
     mu, gamma = j.mu, j.gamma
 
     E_log_Y, E_inv_Y, E_Y = model._subordinator_expectations()
+    origin = _moment_origin(mu, E_inv_Y)
+    mu = mu - origin
 
     return NormalMixtureEta(
+        origin=origin,
         E_inv_Y=E_inv_Y,
         E_Y=E_Y,
         E_log_Y=E_log_Y,
@@ -131,7 +134,7 @@ def eta0_isotropic(
     Returns
     -------
     NormalMixtureEta
-        Six-field expectation pytree.
+        Six-statistic expectation pytree with an explicit origin.
     """
     d = model.d
     Sigma0 = jnp.asarray(sigma2, dtype=jnp.float64) * jnp.eye(d, dtype=jnp.float64)
@@ -155,7 +158,7 @@ def eta0_diagonal(
     Returns
     -------
     NormalMixtureEta
-        Six-field expectation pytree.
+        Six-statistic expectation pytree with an explicit origin.
     """
     diag = jnp.asarray(diag, dtype=jnp.float64)
     Sigma0 = jnp.diag(diag)

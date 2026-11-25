@@ -621,6 +621,31 @@ class TestEMSolverFailure:
         np.testing.assert_allclose(float(result.model.a), 1.0)
         np.testing.assert_allclose(float(result.model.b), 1.0)
 
+    @pytest.mark.parametrize("factor", [False, True])
+    @pytest.mark.parametrize("exc_type", [RuntimeError, TypeError, ValueError, SolverDidNotConverge])
+    def test_gh_warm_failure_exception_contract(self, factor, exc_type, monkeypatch):
+        from normix import FactorGeneralizedHyperbolic, GeneralizedHyperbolic, GIG
+
+        common = dict(mu=jnp.zeros(2), gamma=jnp.zeros(2), p=1.0, a=1.0, b=1.0)
+        model = (FactorGeneralizedHyperbolic.from_classical(
+            **common, F=jnp.array([[0.3], [0.2]]), D=jnp.ones(2)) if factor else
+            GeneralizedHyperbolic.from_classical(**common, sigma=jnp.eye(2)))
+        eta = model.compute_eta_from_model()
+        error = exc_type("injected GIG failure")
+
+        def fail(cls, *args, **kwargs):
+            raise error
+
+        monkeypatch.setattr(GIG, "from_expectation", classmethod(fail))
+        if exc_type in (ValueError, SolverDidNotConverge):
+            actual = model.m_step_subordinator(eta, backend="cpu")
+            for got, expected in zip(jax.tree.leaves(actual), jax.tree.leaves(model)):
+                np.testing.assert_array_equal(got, expected)
+        else:
+            with pytest.raises(exc_type, match="injected GIG failure") as caught:
+                model.m_step_subordinator(eta, backend="cpu")
+            assert caught.value is error
+
     def test_real_gig_domain_error_follows_solver_failure(self):
         """An eager GIG moment-domain ValueError uses the item-2 paths."""
         from types import SimpleNamespace
