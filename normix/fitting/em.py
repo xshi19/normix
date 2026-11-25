@@ -17,7 +17,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.exponential_family import _check_backend
+from normix.exponential_family import _check_backend, _normalize_sample_weight, _weighted_mean
 from normix.fitting.solvers import SolverDidNotConverge
 from normix.fitting.eta import _pack_gig_eta
 
@@ -40,88 +40,50 @@ def _materialize_incremental_subkeys(key: jax.Array, max_steps: int) -> jax.Arra
 
 
 def _translate_location_moments(eta, center: jax.Array):
-    """Shift :math:`(s_4, s_5, s_6)` into coordinates where :math:`X` lost ``center``.
-
-    :math:`s_1, s_2, s_3` are invariant. Applied to a shrinkage target
-    before a centered fit; the η pytree gains no center field.
-    """
-    r = jnp.asarray(center, dtype=jnp.float64)
-    s1 = eta.E_inv_Y
-    s4 = eta.E_X - r
-    s5 = eta.E_X_inv_Y - s1 * r
-    s6 = (
-        eta.E_XXT_inv_Y
-        - jnp.outer(eta.E_X_inv_Y, r)
-        - jnp.outer(r, eta.E_X_inv_Y)
-        + s1 * jnp.outer(r, r)
-    )
-    return eqx.tree_at(
-        lambda e: (e.E_X, e.E_X_inv_Y, e.E_XXT_inv_Y),
-        eta,
-        (s4, s5, s6),
-    )
-
-
-def _same_eta(a, b) -> bool:
-    """True when two η pytrees have the same structure and the same values."""
-    leaves_a, treedef_a = jax.tree_util.tree_flatten(a)
-    leaves_b, treedef_b = jax.tree_util.tree_flatten(b)
-    if treedef_a != treedef_b:
-        return False
-    for x, y in zip(leaves_a, leaves_b):
-        if getattr(x, "shape", None) != getattr(y, "shape", None):
-            return False
-        if not bool(jnp.array_equal(jnp.asarray(x), jnp.asarray(y))):
-            return False
-    return True
+    """Express moments of the shifted observation in coordinates about zero."""
+    shifted = eqx.tree_at(lambda e: e.origin, eta, eta.origin - center)
+    return shifted.rebase(jnp.zeros_like(eta.origin))
 
 
 def _recenter_eta_update(model, rule, center: jax.Array):
-    """Return ``rule`` with its prior η in the centered coordinates.
+    """Translate a prior into the fit coordinates using its explicit origin.
 
-    ``model`` has already had ``center`` subtracted from ``mu``. A target
-    equal to that model's own ``compute_eta_from_model`` (before the
-    shift) is rebuilt from the centered model. Rebuilding is required
-    when the store is about :math:`\\mu`: those moments do not contain
-    :math:`\\mu`, and translating them by the sample mean puts
-    :math:`s_1 c c^\\top` back into :math:`s_6`. Any other target is
-    shifted as a population moment. Factor latent statistics on that
-    path are recomputed from the shifted six. Rules without an ``eta0``
-    are unchanged.
+    Factor latent moments are recomputed from the translated six statistics
+    at the centered model. Rules without an ``eta0`` are unchanged.
     """
     if rule is None or not hasattr(rule, "eta0"):
         return rule
-    origin = model.replace(mu=model.mu + center)
-    if _same_eta(rule.eta0, origin.compute_eta_from_model()):
-        eta0 = model.compute_eta_from_model()
-    else:
-        eta0 = _translate_location_moments(rule.eta0, center)
-        if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
-            s7, s8, s9, s10 = model._z_stats_from_six(
-                eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
-                eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
-            )
-            eta0 = eqx.tree_at(
-                lambda e: (
-                    e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
-                ),
-                eta0,
-                (s7, s8, s9, s10),
-            )
+    eta0 = _translate_location_moments(rule.eta0, center)
+    if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
+        s7, s8, s9, s10 = model._z_stats_from_six(
+            eta0.E_inv_Y, eta0.E_Y, eta0.E_X,
+            eta0.E_X_inv_Y, eta0.E_XXT_inv_Y,
+        )
+        eta0 = eqx.tree_at(
+            lambda e: (
+                e.E_XZT_inv_sqrtY, e.E_Z_inv_sqrtY, e.E_Z_sqrtY, e.E_ZZT,
+            ),
+            eta0,
+            (s7, s8, s9, s10),
+        )
     return type(rule)(rule.base, eta0, rule.tau)
 
 
-def _validate_fit_data(X: jax.Array) -> None:
+def _validate_fit_data(
+    X: jax.Array, sample_weight: Optional[jax.Array] = None,
+) -> Optional[jax.Array]:
     """Reject an empty or non-finite sample at the host boundary.
 
-    A traced ``X`` skips the check so ``jit`` of ``fit`` still traces.
+    Return normalized weights. A traced ``X`` skips the data check;
+    traced weights retain a runtime domain check.
     """
     if isinstance(X, jax.core.Tracer):
-        return
+        return _normalize_sample_weight(sample_weight, X.shape[0])
     if X.ndim == 0 or X.size == 0 or X.shape[0] == 0:
         raise ValueError("fit received an empty sample")
     if not bool(jnp.all(jnp.isfinite(X))):
         raise ValueError("fit requires every observation to be finite")
+    return _normalize_sample_weight(sample_weight, X.shape[0])
 
 
 def _inexact_finite(tree) -> jax.Array:
@@ -299,7 +261,9 @@ class BatchEMFitter:
     # Public API
     # ------------------------------------------------------------------
 
-    def fit(self, model, X: jax.Array) -> EMResult:
+    def fit(
+        self, model, X: jax.Array, *, sample_weight: Optional[jax.Array] = None,
+    ) -> EMResult:
         """
         Run batch EM or MCECM. Auto-selects lax.scan or Python loop.
 
@@ -309,6 +273,13 @@ class BatchEMFitter:
             Instance of a NormalMixture subclass, used as initial parameters.
         X : jax.Array
             Data array, shape ``(n, d)``.
+        sample_weight : jax.Array, optional
+            Finite, nonnegative observation weights, shape ``(n,)``,
+            with positive total weight. Normalized to sum to one for
+            sufficient statistics, centering, and log-likelihood.
+            Eta update rules receive the effective sample size
+            :math:`(\\sum_i w_i)^2 / \\sum_i w_i^2` as ``batch_size``.
+            ``None`` retains the unweighted path.
 
         Returns
         -------
@@ -322,8 +293,8 @@ class BatchEMFitter:
         population moment.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
-        _validate_fit_data(X)
-        center = jnp.mean(X, axis=0)
+        sample_weight = _validate_fit_data(X, sample_weight)
+        center = _weighted_mean(X, sample_weight)
         X = X - center
         model = model.replace(mu=model.mu - center)
         saved_rule = self.eta_update
@@ -351,11 +322,11 @@ class BatchEMFitter:
                         f"backend=jax, tol={self.tol:.0e}, "
                         f"max_iter={self.max_iter}"
                     )
-                result = self._fit_scan(model, X, target_log_det)
+                result = self._fit_scan(model, X, target_log_det, sample_weight)
             else:
                 if self.verbose >= 1:
                     self._print_header(dist_name)
-                result = self._fit_loop(model, X, target_log_det)
+                result = self._fit_loop(model, X, target_log_det, sample_weight)
         finally:
             self.eta_update = saved_rule
         return _restore_location(result, center)
@@ -364,7 +335,7 @@ class BatchEMFitter:
     # Pure EM / MCECM step (no prints, no float(), no list.append())
     # ------------------------------------------------------------------
 
-    def _step(self, model, X, eta_state=None, *, target_log_det=None):
+    def _step(self, model, X, eta_state=None, *, target_log_det=None, sample_weight=None):
         """One iteration (EM or MCECM).
 
         Returns ``(new_model, max_change, eta_state, objective)``.
@@ -373,24 +344,29 @@ class BatchEMFitter:
         ``_penalized_objective`` applies.
         """
         if self.algorithm == 'mcecm':
-            return self._mcecm_step(model, X, eta_state, target_log_det=target_log_det)
-        return self._em_step(model, X, eta_state, target_log_det=target_log_det)
+            return self._mcecm_step(
+                model, X, eta_state, target_log_det=target_log_det, sample_weight=sample_weight)
+        return self._em_step(
+            model, X, eta_state, target_log_det=target_log_det, sample_weight=sample_weight)
 
-    def _em_step(self, model, X, eta_state=None, *, target_log_det=None):
+    def _em_step(self, model, X, eta_state=None, *, target_log_det=None, sample_weight=None):
         """One EM iteration: E → (eta_update) → M(all) → regularize.
 
         Returns ``(model, max_change, eta_state, objective)``.
         """
         prev_params = model.em_convergence_params()
 
-        estep = model.e_step(X, backend=self.e_step_backend)
+        weight_kwargs = {} if sample_weight is None else {'sample_weight': sample_weight}
+        estep = model.e_step(X, backend=self.e_step_backend, **weight_kwargs)
         eta, log_lik = estep.eta, estep.log_lik
         objective = self._penalized_objective(model, log_lik)
 
         if eta_state is not None:
             eta_prev, rule_state, step = eta_state
             eta, rule_state = self.eta_update(
-                eta_prev, eta, step, X.shape[0], rule_state)
+                eta_prev, eta, step,
+                X.shape[0] if sample_weight is None else 1.0 / jnp.sum(sample_weight ** 2),
+                rule_state)
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step(
@@ -401,7 +377,7 @@ class BatchEMFitter:
         max_change = _param_change(model.em_convergence_params(), prev_params)
         return model, max_change, eta_state, objective
 
-    def _mcecm_step(self, model, X, eta_state=None, *, target_log_det=None):
+    def _mcecm_step(self, model, X, eta_state=None, *, target_log_det=None, sample_weight=None):
         """One MCECM iteration: E → M_normal → regularize → E → M_subordinator.
 
         Returns ``(model, max_change, eta_state, objective)``. The
@@ -409,20 +385,23 @@ class BatchEMFitter:
         """
         prev_params = model.em_convergence_params()
 
-        estep = model.e_step(X, backend=self.e_step_backend)
+        weight_kwargs = {} if sample_weight is None else {'sample_weight': sample_weight}
+        estep = model.e_step(X, backend=self.e_step_backend, **weight_kwargs)
         eta, log_lik = estep.eta, estep.log_lik
         objective = self._penalized_objective(model, log_lik)
 
         if eta_state is not None:
             eta_prev, rule_state, step = eta_state
             eta, rule_state = self.eta_update(
-                eta_prev, eta, step, X.shape[0], rule_state)
+                eta_prev, eta, step,
+                X.shape[0] if sample_weight is None else 1.0 / jnp.sum(sample_weight ** 2),
+                rule_state)
             eta_state = (eta, rule_state, step + 1)
 
         model = model.m_step_normal(eta)
         model = self._regularize(model, target_log_det)
 
-        eta = model.e_step(X, backend=self.e_step_backend).eta
+        eta = model.e_step(X, backend=self.e_step_backend, **weight_kwargs).eta
         model = model.m_step_subordinator(
             eta, backend=self.m_step_backend, method=self.m_step_method,
             **self.m_step_kwargs)
@@ -462,8 +441,8 @@ class BatchEMFitter:
         if not self._map_penalty_applies(model):
             return log_lik
         rule = self.eta_update
-        joint = model._joint
         eta0 = rule.eta0
+        joint = model.replace(mu=model.mu - eta0.origin)._joint
         eta0_flat = jnp.concatenate([
             _pack_gig_eta(E_log_Y=eta0.E_log_Y, E_inv_Y=eta0.E_inv_Y, E_Y=eta0.E_Y),
             jnp.ravel(eta0.E_X),
@@ -487,7 +466,7 @@ class BatchEMFitter:
     # lax.scan path (JIT-able, requires backend='jax')
     # ------------------------------------------------------------------
 
-    def _fit_scan(self, model, X, target_log_det) -> EMResult:
+    def _fit_scan(self, model, X, target_log_det, sample_weight=None) -> EMResult:
         """JIT-able EM loop via :func:`~jax.lax.scan`.
 
         The scan carry keeps ``converged`` and ``diverged`` as separate booleans
@@ -502,7 +481,7 @@ class BatchEMFitter:
         def body(carry, _):
             mdl, converged, diverged, solver_failed, n, ll_prev, ll_prev2 = carry
             mdl_new, max_change, _, obj = self._step(
-                mdl, X, target_log_det=target_log_det)
+                mdl, X, target_log_det=target_log_det, sample_weight=sample_weight)
             step_no = n + 1
             force_at = self._force_nonfinite_at_step
             if force_at is not None:
@@ -595,7 +574,7 @@ class BatchEMFitter:
     # Python loop path (works with any backend, supports verbose >= 2)
     # ------------------------------------------------------------------
 
-    def _fit_loop(self, model, X, target_log_det) -> EMResult:
+    def _fit_loop(self, model, X, target_log_det, sample_weight=None) -> EMResult:
         t_total = time.perf_counter()
         lls = []
         changes = []
@@ -622,7 +601,7 @@ class BatchEMFitter:
             prev_model = model
             try:
                 model, max_change, eta_state, obj = self._step(
-                    model, X, eta_state, target_log_det=target_log_det)
+                    model, X, eta_state, target_log_det=target_log_det, sample_weight=sample_weight)
             except (SolverDidNotConverge, ValueError):
                 solver_failed = True
                 model = prev_model

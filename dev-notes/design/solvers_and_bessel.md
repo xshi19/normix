@@ -387,3 +387,15 @@ nodes, normalized log probabilities, and a source moment threshold. No
 family dispatch or subordinator ABC is needed. The approved design and
 rejected alternatives are recorded in the
 [published rationale](../../docs/design/quadrature_scenarios.md).
+
+
+## Multistart retry callbacks (S2)
+
+The 2026-11-20 audit repair forwards `grad_fn` and `hess_fn` to the final CPU
+retry after all starts raise. S2 already requires these theta-space callbacks;
+the retry has the same contract as each initial attempt. Omitting them could
+replace the gradient or make CPU Newton fail for a missing Hessian.
+`test_multistart_final_retry_preserves_derivative_callbacks` forces both starts
+to fail and records the callback identities and options on every attempt.
+No successful-start numerical behavior changes. Authority: owner's audit task,
+session-reported, no durable source. Reopen with a change to the solver interface.

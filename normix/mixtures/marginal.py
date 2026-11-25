@@ -24,6 +24,7 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
+from normix.exponential_family import _normalize_sample_weight, _weighted_mean
 from normix.fitting.eta import _unpack_gig_eta
 
 
@@ -168,10 +169,16 @@ class MarginalMixture(eqx.Module):
         """Marginal :math:`f(x)` for a single observation."""
         return jnp.exp(self.log_prob(x))
 
-    def marginal_log_likelihood(self, X: jax.Array) -> jax.Array:
-        """Mean log-likelihood over a dataset."""
+    def marginal_log_likelihood(
+        self, X: jax.Array, *, sample_weight: jax.Array | None = None,
+    ) -> jax.Array:
+        """Mean log-likelihood, optionally using the observation weights from ``fit``."""
         X = jnp.asarray(X, dtype=jnp.float64)
-        return jnp.mean(jax.vmap(self.log_prob)(X))
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0])
+        if sample_weight is not None:
+            mask = sample_weight.reshape((-1,) + (1,) * (X.ndim - 1)) > 0
+            X = jnp.where(mask, X, self.mu)
+        return _weighted_mean(jax.vmap(self.log_prob)(X), sample_weight)
 
     def _conjugacy_psi_prior(self) -> jax.Array:
         r"""Prior log-partition in the GIG convention that matches
@@ -196,6 +203,7 @@ class MarginalMixture(eqx.Module):
         log_det_sigma: jax.Array,
         d: int,
         psi_prior: jax.Array,
+        sample_weight: jax.Array | None = None,
     ) -> jax.Array:
         r"""Mean :math:`\log f(x) = \log h(x) + \psi_{\mathrm{post}} - \psi`.
 
@@ -210,14 +218,17 @@ class MarginalMixture(eqx.Module):
             - 0.5 * log_det_sigma
             + zw
         )
-        return jnp.mean(log_h + psi_post) - psi_prior
+        return _weighted_mean(log_h + psi_post, sample_weight) - psi_prior
 
     # ------------------------------------------------------------------
     # EM hooks (stats type chosen by subclass)
     # ------------------------------------------------------------------
 
     @abc.abstractmethod
-    def e_step(self, X: jax.Array, *, backend: str = 'jax') -> Any:
+    def e_step(
+        self, X: jax.Array, *, backend: str = 'jax',
+        sample_weight: jax.Array | None = None,
+    ) -> Any:
         """E-step: :class:`~normix.fitting.eta.EStepResult` ``(eta, log_lik)``."""
 
     @abc.abstractmethod
@@ -270,13 +281,14 @@ class MarginalMixture(eqx.Module):
         self,
         X: jax.Array,
         *,
+        sample_weight: jax.Array | None = None,
         alpha_min: "float | str | None" = None,
         **fitter_kwargs,
     ) -> "EMResult":
         r"""Fit using ``self`` as initialisation. Returns
         :class:`~normix.fitting.em.EMResult`.
 
-        Keyword arguments other than ``alpha_min`` are forwarded to
+        Other keyword arguments are forwarded to
         :class:`~normix.fitting.em.BatchEMFitter` (``algorithm``,
         ``track_ll``, ``eta_update``, ``m_step_kwargs``, backends, …).
         Family-specific defaults come from ``_fit_defaults`` and are
@@ -284,6 +296,13 @@ class MarginalMixture(eqx.Module):
 
         Parameters
         ----------
+        sample_weight : jax.Array, optional
+            Finite, nonnegative observation weights of shape ``(n,)``,
+            with positive total weight. Normalized internally to sum to
+            one for sufficient statistics, centering, and log-likelihood.
+            Eta update rules receive the effective sample size
+            :math:`(\sum_i w_i)^2 / \sum_i w_i^2`. ``None`` retains
+            the unweighted path. Use the same weights in ``default_init``.
         alpha_min : float, 'density' or 'inverse_moment', optional
             Opt-in lower bound on the Gamma subordinator shape :math:`\alpha`
             (Variance Gamma only — the unique family whose marginal
@@ -308,7 +327,7 @@ class MarginalMixture(eqx.Module):
             m_step_kwargs = dict(kwargs.get('m_step_kwargs') or {})
             m_step_kwargs['alpha_min'] = resolved
             kwargs['m_step_kwargs'] = m_step_kwargs
-        return BatchEMFitter(**kwargs).fit(self, X)
+        return BatchEMFitter(**kwargs).fit(self, X, sample_weight=sample_weight)
 
     def _resolve_alpha_min(
         self, alpha_min: "float | str | None",
@@ -538,7 +557,7 @@ class NormalMixture(MarginalMixture):
     def compute_eta_from_model(self) -> "NormalMixtureEta":
         r"""Reconstruct :math:`\eta` from the model's own parameters.
 
-        Uses the *marginal* expectations of the joint sufficient statistics:
+        At origin zero, the *marginal* expectations of the joint sufficient statistics are:
 
         .. math::
 
@@ -549,44 +568,26 @@ class NormalMixture(MarginalMixture):
 
         When :math:`\varepsilon\|\mu\|^2|E[1/Y]|` exceeds
         :data:`~normix.utils.constants.MOMENT_CANCEL_ATOL`, those three
-        moments are stored about :math:`\mu` instead. Float64 cannot hold
-        both :math:`s_1\mu\mu^\top` and :math:`\Sigma`; the centered store
-        is what the unchanged M-step needs in order to return :math:`\Sigma`.
+        moments are stored about :math:`\mu` with an explicit ``origin``.
+        The M-step restores that origin after reconstructing the covariance.
         """
-        from normix.fitting.eta import NormalMixtureEta
-
-        from normix.utils.constants import MOMENT_CANCEL_ATOL
+        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
         j = self._joint
         mu, gamma = j.mu, j.gamma
         sigma = j.sigma()
 
-        # Raw moments are the population values. When ε ‖μ‖² |E[1/Y]| exceeds
-        # MOMENT_CANCEL_ATOL a float64 store of s6 has already lost Σ, so
-        # store the same moments about μ. The M-step is unchanged and
-        # returns that Σ; there is no center field on η.
-        cancel = (jnp.finfo(jnp.float64).eps * jnp.abs(E_inv_Y)
-                  * jnp.sum(jnp.square(mu)))
-        about_mu = cancel > MOMENT_CANCEL_ATOL
-        E_X_raw = mu + gamma * E_Y
-        E_X_about = gamma * E_Y
-        E_XiY_raw = mu * E_inv_Y + gamma
-        E_XiY_about = gamma
+        origin = _moment_origin(mu, E_inv_Y)
+        mu = mu - origin
         cross = jnp.outer(mu, gamma) + jnp.outer(gamma, mu)
-        E_XXT_raw = (sigma
-                     + jnp.outer(mu, mu) * E_inv_Y
-                     + jnp.outer(gamma, gamma) * E_Y
-                     + cross)
-        E_XXT_about = sigma + jnp.outer(gamma, gamma) * E_Y
-
         return NormalMixtureEta(
-            E_log_Y=E_log_Y,
-            E_inv_Y=E_inv_Y,
-            E_Y=E_Y,
-            E_X=jnp.where(about_mu, E_X_about, E_X_raw),
-            E_X_inv_Y=jnp.where(about_mu, E_XiY_about, E_XiY_raw),
-            E_XXT_inv_Y=jnp.where(about_mu, E_XXT_about, E_XXT_raw),
+            E_log_Y=E_log_Y, E_inv_Y=E_inv_Y, E_Y=E_Y,
+            E_X=mu + gamma * E_Y,
+            E_X_inv_Y=mu * E_inv_Y + gamma,
+            E_XXT_inv_Y=(sigma + jnp.outer(mu, mu) * E_inv_Y
+                        + jnp.outer(gamma, gamma) * E_Y + cross),
+            origin=origin,
         )
 
     @abc.abstractmethod
@@ -597,7 +598,10 @@ class NormalMixture(MarginalMixture):
     # EM E-step
     # ------------------------------------------------------------------
 
-    def e_step(self, X: jax.Array, backend: str = 'jax') -> "EStepResult":
+    def e_step(
+        self, X: jax.Array, backend: str = 'jax', *,
+        sample_weight: jax.Array | None = None,
+    ) -> "EStepResult":
         r"""
         Full E-step: subordinator conditionals + batch aggregation.
 
@@ -613,11 +617,17 @@ class NormalMixture(MarginalMixture):
         backend : str
             ``'jax'`` (default): ``jax.vmap`` over ``conditional_expectations``.
             ``'cpu'``: quad forms in JAX + GIG Bessel on CPU.
+        sample_weight : jax.Array, optional
+            Observation weights as in :meth:`fit`; applied to both
+            sufficient statistics and the returned log-likelihood.
         """
         from normix.fitting.eta import EStepResult
 
+        sample_weight = _normalize_sample_weight(sample_weight, X.shape[0])
+        if sample_weight is not None:
+            X = jnp.where(sample_weight[:, None] > 0, X, self.mu)
         sub_exp = self._e_step_subordinator(X, backend=backend)
-        eta, log_lik = self._aggregate_eta(X, sub_exp)
+        eta, log_lik = self._aggregate_eta(X, sub_exp, sample_weight)
         return EStepResult(eta=eta, log_lik=log_lik)
 
     def _e_step_subordinator(
@@ -660,27 +670,34 @@ class NormalMixture(MarginalMixture):
 
     def _aggregate_eta(
         self, X: jax.Array, sub_exp: Dict[str, jax.Array],
+        sample_weight: jax.Array | None = None,
     ) -> tuple:
         """Average per-observation expectations; conjugacy mean log-likelihood."""
-        from normix.fitting.eta import NormalMixtureEta
+        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         X = jnp.asarray(X, dtype=jnp.float64)
         E_inv_Y = sub_exp['E_inv_Y']
+        origin = _moment_origin(self.mu, _weighted_mean(E_inv_Y, sample_weight))
+        X = X - origin
 
         eta = NormalMixtureEta(
-            E_log_Y=jnp.mean(sub_exp['E_log_Y']),
-            E_inv_Y=jnp.mean(E_inv_Y),
-            E_Y=jnp.mean(sub_exp['E_Y']),
-            E_X=jnp.mean(X, axis=0),
-            E_X_inv_Y=jnp.mean(X * E_inv_Y[:, None], axis=0),
+            origin=origin,
+            E_log_Y=_weighted_mean(sub_exp['E_log_Y'], sample_weight),
+            E_inv_Y=_weighted_mean(E_inv_Y, sample_weight),
+            E_Y=_weighted_mean(sub_exp['E_Y'], sample_weight),
+            E_X=_weighted_mean(X, sample_weight),
+            E_X_inv_Y=_weighted_mean(X * E_inv_Y[:, None], sample_weight),
             E_XXT_inv_Y=(
                 jnp.einsum('ni,nj,n->ij', X, X, E_inv_Y) / X.shape[0]
+                if sample_weight is None else
+                jnp.einsum('ni,nj,n->ij', X, X, sample_weight * E_inv_Y)
             ),
         )
         log_lik = self._conjugacy_mean_log_lik(
             sub_exp['psi_post'], sub_exp['zw'],
             self.log_det_sigma(), self.d,
             self._conjugacy_psi_prior(),
+            sample_weight,
         )
         return eta, log_lik
 
@@ -909,7 +926,9 @@ class NormalMixture(MarginalMixture):
     # ------------------------------------------------------------------
 
     @classmethod
-    def default_init(cls, X: jax.Array) -> "NormalMixture":
+    def default_init(
+        cls, X: jax.Array, *, sample_weight: jax.Array | None = None,
+    ) -> "NormalMixture":
         """Moment-based initialisation from data.
 
         Returns a model with:
@@ -919,12 +938,20 @@ class NormalMixture(MarginalMixture):
           subordinator = distribution-specific defaults
 
         Useful as a starting point for ``model.fit(X)``.
+        ``sample_weight`` follows :meth:`fit` and weights the sample mean
+        and population covariance (without a degrees-of-freedom correction).
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         n, d = X.shape
-        mu = jnp.mean(X, axis=0)
+        sample_weight = _normalize_sample_weight(sample_weight, n)
+        if sample_weight is not None:
+            X = jnp.where(sample_weight[:, None] > 0, X, 0.0)
+        mu = _weighted_mean(X, sample_weight)
         X_centered = X - mu
-        sigma_emp = (X_centered.T @ X_centered) / n + SIGMA_INIT_REG * jnp.eye(d)
+        sigma_emp = (
+            (X_centered.T @ X_centered) / n if sample_weight is None else
+            X_centered.T @ (sample_weight[:, None] * X_centered)
+        ) + SIGMA_INIT_REG * jnp.eye(d)
         gamma = jnp.zeros(d, dtype=jnp.float64)
         return cls._from_init_params(mu, gamma, sigma_emp)
 

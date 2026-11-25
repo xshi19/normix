@@ -31,8 +31,9 @@ methods are just automatic differentiation of the log-partition $\psi$ along the
 scaling ray $\alpha\theta$. The first-order expansion
 $H_\alpha = H - \tfrac12 V_H(\alpha-1) + \mathcal{O}((\alpha-1)^2)$ shows that
 varentropy is (twice the negative of) the slope of the Rényi spectrum at
-$\alpha = 1$. Full derivations — including the joint-mixture formulas — are in
-{doc}`../../theory/varentropy`.
+$\alpha = 1$. The formulas, including the joint-mixture identities, are in
+{doc}`../../theory/varentropy`. Derivations are in the
+[varentropy note](https://xshi19.github.io/math/normix-theory/normix-varentropy/).
 
 This tutorial validates the formulas against Monte Carlo, uses JAX to confirm the
 Rényi ↔ varentropy relationship, and shows why varentropy is an attractive
@@ -424,5 +425,5 @@ plt.show()
   informative object is the shape locus obtained by fixing the scale.
 ```
 
-Next: the {doc}`../../theory/varentropy` derivations, or revisit
-{doc}`../distributions/02_gig` for the GIG tail behavior.
+Next: the formulas in {doc}`../../theory/varentropy`, or the
+[GIG tail derivation](https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/).

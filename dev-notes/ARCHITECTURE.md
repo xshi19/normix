@@ -166,7 +166,7 @@ MarginalMixture(eqx.Module)              abstract; fitter contract
 
 `FactorNormalMixture` is a sibling of `NormalMixture`: same `MarginalMixture` contract, but stores `(μ, γ, F, D, subordinator)` directly without a joint exponential-family layer (the FA complete-data structure is over `(X, Y, Z)` with ten sufficient statistics — `FactorMixtureStats` in `fitting/eta.py` — rather than the six of `NormalMixtureEta`). All Σ-related linear algebra (`_solve`, `_quad_form`, `_log_det_sigma`, `_beta`) goes through Woodbury at `O(d r² + r³)`, never forming a dense `d × d` solve. Convergence is measured on `Σ = F Fᵀ + diag(D)` to sidestep `F`'s rotational gauge. See `docs/theory/factor_analysis.md` and `design/mixtures.md` § 6.
 
-Both `NormalMixtureEta` and `FactorMixtureStats` lay out their fields in **theory order** (`s_1 = E[Y⁻¹]`, `s_2 = E[Y]`, `s_3 = E[log Y]`, `s_4 = E[X]`, `s_5 = E[X/Y]`, `s_6 = E[X X^T/Y]`; factor stats add `s_7..s_10` for the latent `Z`). Sharing the first six fields means shrinkage targets and η-update rule weights port across the two families.
+Both `NormalMixtureEta` and `FactorMixtureStats` lay out their fields in **theory order** (`s_1 = E[Y⁻¹]`, `s_2 = E[Y]`, `s_3 = E[log Y]`, `s_4 = E[X]`, `s_5 = E[X/Y]`, `s_6 = E[X X^T/Y]`; factor stats add `s_7..s_10` for the latent `Z`). Both carry an additional `origin` array: location fields refer to $X-\mathrm{origin}$. `FactorMixtureStats` inherits the six-statistic layout and `rebase` from `NormalMixtureEta`, extending translation to the X–Z cross moment. `affine_combine` aligns origins and weights only the statistics. See [E16](design/em_framework.md#explicit-statistic-origins-e16).
 
 Key methods on `JointNormalMixture`:
 - `conditional_expectations(x)` → E[log Y|x], E[1/Y|x], E[Y|x] (EM E-step)
@@ -267,11 +267,11 @@ from there. Never define magic numbers locally in distribution files.
 | `GIG_CLAMP_LO` | `1e-6` | Lower clamp for GIG `a`, `b` in the GH M-step |
 | `GIG_CLAMP_HI` | `1e6` | Upper clamp for GIG `a`, `b` in the GH M-step |
 | `GIG_P_MAX` | `50.0` | Maximum \|p\| from GIG solver before fallback |
-| `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step (bounds the conditional inverse moment near the mode; only binds for VG) |
+| `B_POST_FLOOR` | `1e-6` | Floor for posterior GIG scale `b_post` in E-step, applied only when the prior `b = 0` (VG); positive prior scales are kept (E12) |
 | `ALPHA_MOMENT_MARGIN` | `0.1` | Floor on the `(α−1)` denominator of the VG/NInvG prior moment `β/(α−1)` in `compute_eta_from_model` (keeps it finite and positive when `α ≤ 1`) |
 | `ALPHA_MIN_MARGIN` | `0.1` | Margin ε for the opt-in VG `fit(alpha_min=…)` shape bound: `'density'`→`d/2+ε`, `'inverse_moment'`→`d/2+1+ε` |
 | `SIGMA_REG` | `1e-8` | Covariance regularisation in M-step |
-| `MOMENT_CANCEL_ATOL` | `1e-6` | `compute_eta_from_model` stores moments about μ when ε‖μ‖²\|E[1/Y]\| exceeds this |
+| `MOMENT_CANCEL_ATOL` | `1e-6` | Statistic producers set `origin = μ` (moments of X−μ) when ε‖μ‖²\|E[1/Y]\| exceeds this (E16) |
 | `SAFE_DENOMINATOR` | `1e-10` | Floor for D = 1 − E[1/Y]·E[Y] |
 | `D_FLOOR` | `1e-8` | Positivity floor for diagonal `D` in factor M-step |
 | `SIGMA_INIT_REG` | `1e-4` | Regularisation for empirical Σ during moment init |
@@ -322,8 +322,8 @@ See `tech_notes/gig_eta_to_theta.md` for derivations and benchmarks.
 | `design/em_framework.md` | Model/Fitter separation, η-rules, `Shrinkage`, covariance regularisations |
 | `design/solvers_and_bessel.md` | Bregman solver, GIG η→θ, Bessel regimes, CPU/GPU hybrid, RVS |
 | `design/agent_instructions_design.md` | How AGENTS.md, rules, skills, and design docs work together |
-| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch, gradient-fitting vs EM/MLE comparison |
-| `docs/theory/` | Mathematical derivations (MyST `.md`), including `quadrature_scenarios.md` |
+| `tech_notes/` | Deep dives: Bessel survey, EM profiling, GIG optimization, GIG RVS benchmarks, distribution conversions, VG inverse-moment singularity, VG/NInvG marginal-pdf Bessel floor mismatch, gradient-fitting vs EM/MLE comparison, GIG concentration symbol $\omega$ |
+| `docs/theory/` | Library contracts for `gig`, `gh`, `varentropy`, `em_algorithm`, and `online_em`; derivations for the other theory pages, including `quadrature_scenarios.md` |
 | `docs/research/` | Published research notes (subordinator tracking); working notes in `research/` |
 | `references/distribution_packages.md` | Survey of TFP, FlowJAX, efax, GMMX |
 | `references/gpjax_review.md` | GPJax survey: design, JAX usage, lessons for normix |

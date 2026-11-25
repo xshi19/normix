@@ -22,8 +22,10 @@ it apart from the simpler positive distributions: its **log-partition involves
 Bessel functions**, and inverting expectation parameters back to natural
 parameters requires a **multi-start Newton solver**.
 
-The moments have a closed Bessel-ratio form (see {doc}`../../theory/gig` for
-the full derivation, including the MGF and Hellinger distance):
+The moments have a closed Bessel-ratio form (the formula in
+{doc}`../../theory/gig`; the moment generating function and the expanded
+Hellinger identity are derived in the
+[GIG note](https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/)):
 
 $$
 \mathbb{E}[X^\alpha]

@@ -501,7 +501,7 @@ pd.DataFrame(rows)
 # than **kurtosis**, because kurtosis needs a finite fourth moment whereas
 # $\operatorname{Var}[-\log f]$ does not. The GIG is a clean testbed for that claim.
 #
-# *Tail behavior* (see `docs/theory/gig.md`). For $a,b>0$ the GIG density behaves like
+# *Tail behavior* (see https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/). For $a,b>0$ the GIG density behaves like
 # $f(x)\sim C\,x^{p-1}e^{-ax/2}$ as $x\to\infty$ and $C\,x^{p-1}e^{-b/(2x)}$ as $x\to0^+$:
 # an **exponential (semi-heavy) right tail** and a super-exponentially thin left tail, so
 # **all moments are finite** and the kurtosis exists. Genuine power-law heaviness appears
@@ -680,5 +680,5 @@ plt.show()
 #   kurtosis diverges at $p=-4$ and is **undefined for $-4\le p<0$**, whereas the varentropy
 #   $(p-1)^2\psi'(-p)+p-2$ stays finite and smooth — even past the mean/variance boundaries.
 #   This supports Taleb's view of varentropy as a fat-tailedness measure that does not
-#   require a finite fourth moment. GIG tail behavior is now documented in
-#   `docs/theory/gig.md`.
+#   require a finite fourth moment. GIG tail behavior is derived at
+#   https://xshi19.github.io/math/normix-theory/normix-generalized-inverse-gaussian/.

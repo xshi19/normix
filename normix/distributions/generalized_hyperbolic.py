@@ -32,6 +32,7 @@ import jax
 import jax.numpy as jnp
 
 from normix.fitting.eta import _pack_gig_eta, _unpack_gig_eta
+from normix.fitting.solvers import SolverDidNotConverge
 
 from normix.utils.bessel import log_kv
 from normix.exponential_family import ExponentialFamily
@@ -215,11 +216,10 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
         r"""Fit GIG subordinator from :math:`(E[\log Y], E[1/Y], E[Y])`.
 
         Forwards ``theta0`` (warm-start), ``backend``, ``method``, and
-        ``maxiter`` to :meth:`GIG.from_expectation`. No sanity-check
-        fallback at the classmethod level — that lives in
-        :meth:`GeneralizedHyperbolic.m_step_subordinator` for the EM
-        instance path where a sane "current" model exists to fall back
-        to.
+        ``maxiter`` to :meth:`GIG.from_expectation`. Exceptions propagate
+        from this constructor. The CPU EM instance path in
+        :meth:`GeneralizedHyperbolic.m_step_subordinator` retains its
+        previous subordinator on ``SolverDidNotConverge`` or ``ValueError``.
         """
         from normix.distributions.generalized_inverse_gaussian import GIG
         return GIG.from_expectation(
@@ -413,8 +413,8 @@ class GeneralizedHyperbolic(NormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "GeneralizedHyperbolic":
         """Warm-start the GIG solve from the current subordinator.
 
-        On CPU, a failed solve keeps this GIG and EM continues.
-        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG
+        and EM continues. Other exceptions propagate.
         A finite solve outside the clamp does the same.
         A non-finite JAX solve is left in place so EM can set
         ``solver_failed``.
@@ -435,7 +435,7 @@ class GeneralizedHyperbolic(NormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except Exception:
+            except (SolverDidNotConverge, ValueError):
                 gig_new = current_gig
             else:
                 gig_new = _cpu_gig_or_previous(gig_new, current_gig)
@@ -498,13 +498,18 @@ class GeneralizedHyperbolic(NormalMixture):
             mu=mu, gamma=gamma, sigma=sigma, p=1.0, a=1.0, b=1.0)
 
     @classmethod
-    def default_init(cls, X: jax.Array) -> "GeneralizedHyperbolic":
+    def default_init(
+        cls, X: jax.Array, *, sample_weight: jax.Array | None = None,
+    ) -> "GeneralizedHyperbolic":
         r"""Warm-start from the best of NIG / VG / NInvG sub-model fits.
 
         Runs 5 EM iterations (JAX backend, Newton method) for each special
         case, converts each to GH parametrisation, and selects the candidate
         with the highest marginal log-likelihood.  A moment-based fallback
         (:math:`p=1, a=1, b=1`) is included as a fourth candidate.
+
+        ``sample_weight`` follows :meth:`fit` and weights candidate
+        initialization, EM updates, and likelihood ranking.
 
         Fully JAX-native: no try/except, no Python branching on data values.
         """
@@ -522,33 +527,39 @@ class GeneralizedHyperbolic(NormalMixture):
         )
 
         # --- NIG: p=-0.5, a=λ/μ², b=λ ---
-        nig = fitter.fit(NormalInverseGaussian.default_init(X), X).model
+        nig = fitter.fit(
+            NormalInverseGaussian.default_init(X, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         j_nig = nig._joint
         p_nig = jnp.float64(-0.4999)
         a_nig = jnp.clip(j_nig.lam / (j_nig.mu_ig ** 2), GIG_CLAMP_LO, GIG_CLAMP_HI)
         b_nig = jnp.clip(j_nig.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_nig = nig.marginal_log_likelihood(X)
+        ll_nig = nig.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # --- VG: p=α, a=2β, b≈0 ---
-        vg = fitter.fit(VarianceGamma.default_init(X), X).model
+        vg = fitter.fit(
+            VarianceGamma.default_init(X, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         j_vg = vg._joint
         p_vg = j_vg.alpha
         a_vg = jnp.clip(2.0 * j_vg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
         b_vg = jnp.float64(1e-4)
-        ll_vg = vg.marginal_log_likelihood(X)
+        ll_vg = vg.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # --- NInvG: p=-α, a≈0, b=2β ---
-        ninvg = fitter.fit(NormalInverseGamma.default_init(X), X).model
+        ninvg = fitter.fit(
+            NormalInverseGamma.default_init(X, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         j_ninvg = ninvg._joint
         p_ninvg = -j_ninvg.alpha
         a_ninvg = jnp.float64(1e-4)
         b_ninvg = jnp.clip(2.0 * j_ninvg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_ninvg = ninvg.marginal_log_likelihood(X)
+        ll_ninvg = ninvg.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # --- Fallback: moment-based default (p=1, a=1, b=1) ---
-        fallback = super().default_init(X)
+        fallback = super().default_init(X, sample_weight=sample_weight)
         j_fb = fallback._joint
-        ll_fb = fallback.marginal_log_likelihood(X)
+        ll_fb = fallback.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # Stack candidates and select best by log-likelihood
         lls = jnp.array([ll_nig, ll_vg, ll_ninvg, ll_fb])
@@ -699,8 +710,8 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
     def m_step_subordinator(self, eta, **kwargs) -> "FactorGeneralizedHyperbolic":
         """Warm-start the GIG solve from the current subordinator.
 
-        On CPU, a failed solve keeps this GIG and EM continues.
-        That includes ``SolverDidNotConverge`` and ``ValueError``.
+        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG
+        and EM continues. Other exceptions propagate.
         A finite solve outside the clamp does the same.
         A non-finite JAX solve is left in place so EM can set
         ``solver_failed``.
@@ -720,7 +731,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
                     theta0=current_gig.natural_params(),
                     backend='cpu', method=method, maxiter=maxiter,
                 )
-            except Exception:
+            except (SolverDidNotConverge, ValueError):
                 gig_new = current_gig
             else:
                 gig_new = _cpu_gig_or_previous(gig_new, current_gig)
@@ -759,6 +770,7 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
     @classmethod
     def default_init(
         cls, X: jax.Array, *, r: int = 1,
+        sample_weight: jax.Array | None = None,
     ) -> "FactorGeneralizedHyperbolic":
         r"""Warm-start from the best of FactorNIG / FactorVG / FactorNInvG fits.
 
@@ -768,6 +780,9 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
         with the highest marginal log-likelihood. A moment-based
         fallback (:math:`p = 1, a = 1, b = 1`) is included as a fourth
         candidate.
+
+        ``sample_weight`` follows :meth:`fit` and weights candidate
+        initialization, EM updates, and likelihood ranking.
 
         Fully JAX-native: no try/except, no Python branching on data values.
         """
@@ -786,31 +801,35 @@ class FactorGeneralizedHyperbolic(FactorNormalMixture):
 
         # NIG: p=-0.5, a=λ/μ_IG², b=λ
         nig = fitter.fit(
-            FactorNormalInverseGaussian.default_init(X, r=r), X).model
+            FactorNormalInverseGaussian.default_init(X, r=r, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         p_nig = jnp.float64(-0.4999)
         a_nig = jnp.clip(nig.lam / (nig.mu_ig ** 2),
                          GIG_CLAMP_LO, GIG_CLAMP_HI)
         b_nig = jnp.clip(nig.lam, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_nig = nig.marginal_log_likelihood(X)
+        ll_nig = nig.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # VG: p=α, a=2β, b≈0
-        vg = fitter.fit(FactorVarianceGamma.default_init(X, r=r), X).model
+        vg = fitter.fit(
+            FactorVarianceGamma.default_init(X, r=r, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         p_vg = vg.alpha
         a_vg = jnp.clip(2.0 * vg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
         b_vg = jnp.float64(1e-4)
-        ll_vg = vg.marginal_log_likelihood(X)
+        ll_vg = vg.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # NInvG: p=-α, a≈0, b=2β
         ninvg = fitter.fit(
-            FactorNormalInverseGamma.default_init(X, r=r), X).model
+            FactorNormalInverseGamma.default_init(X, r=r, sample_weight=sample_weight),
+            X, sample_weight=sample_weight).model
         p_ninvg = -ninvg.alpha
         a_ninvg = jnp.float64(1e-4)
         b_ninvg = jnp.clip(2.0 * ninvg.beta, GIG_CLAMP_LO, GIG_CLAMP_HI)
-        ll_ninvg = ninvg.marginal_log_likelihood(X)
+        ll_ninvg = ninvg.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         # Moment-based fallback (p=1, a=1, b=1)
-        fallback = super().default_init(X, r=r)
-        ll_fb = fallback.marginal_log_likelihood(X)
+        fallback = super().default_init(X, r=r, sample_weight=sample_weight)
+        ll_fb = fallback.marginal_log_likelihood(X, sample_weight=sample_weight)
 
         lls = jnp.array([ll_nig, ll_vg, ll_ninvg, ll_fb])
         lls = jnp.where(jnp.isfinite(lls), lls, -jnp.inf)

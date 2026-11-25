@@ -999,11 +999,11 @@ def _multistart_loop(
             pass
 
     if best is None:
-        # All starts failed — attempt once without catching
         best = solve_bregman(
             f, eta, theta0_list[0],
             backend=backend, method=method, bounds=bounds,
             max_steps=max_steps, tol=tol,
+            grad_fn=grad_fn, hess_fn=hess_fn,
         )
     return best
 
