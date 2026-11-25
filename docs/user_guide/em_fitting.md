@@ -71,6 +71,43 @@ Key options:
 
 See {doc}`../tutorials/em/01_batch_em` for diagnostics and worked examples.
 
+### Sample weights
+
+Pass `sample_weight` to both initialization and fitting. For example,
+exponentially decaying weights give recent observations more influence:
+
+```python
+import jax.numpy as jnp
+
+weights = 0.98 ** jnp.arange(X.shape[0] - 1, -1, -1)
+model = NormalInverseGaussian.default_init(X, sample_weight=weights)
+result = model.fit(X, sample_weight=weights, track_ll=True)
+# The direct fitter accepts the same argument:
+result = fitter.fit(model, X, sample_weight=weights)
+```
+
+Weights must have shape `(n,)`, be finite and nonnegative, and contain
+at least one positive entry. Invalid weights raise `ValueError` in eager
+calls; traced weights have a runtime domain check.
+normix normalizes them to sum to one. They weight sufficient statistics,
+centering, initial moments, and mean log-likelihood. GH initialization
+also uses them when fitting and ranking its candidate models.
+The same API works for factor models, MCECM, and both E-step backends.
+`sample_weight=None` preserves the unweighted path.
+
+`result.log_likelihoods` records the weighted objective before each
+M-step. Use `result.model.marginal_log_likelihood(X, sample_weight=weights)`
+to evaluate the returned model. Scalar MAP shrinkage adds its penalty
+to the trace, as in unweighted fitting.
+
+Eta update rules receive $n_{\mathrm{eff}}=(\sum_iw_i)^2/\sum_iw_i^2$
+as `batch_size`. `Shrinkage.tau` remains a relative penalty strength.
+Integer weights match replicated data for likelihood EM; count-dependent
+eta rules instead use this effective sample size.
+See {doc}`../theory/em_algorithm` for the weighted formulas.
+Exponential families also accept `sample_weight` in `fit`, `fit_mle`, and
+`default_init`. Incremental EM keeps its existing step-weight API.
+
 ## Incremental (mini-batch) EM
 
 For streaming or very large data, `IncrementalEMFitter` updates from

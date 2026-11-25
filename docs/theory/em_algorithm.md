@@ -94,6 +94,59 @@ The GIG solver receives $(\hat s_3^{(k)}, \hat s_1^{(k)}, \hat s_2^{(k)})$.
 The reason for these six blocks is in the
 [EM note](https://xshi19.github.io/math/normix-theory/normix-em-algorithm/#e-step-in-one-statistic-order).
 
+### Observation weights
+
+Batch EM accepts finite weights $w_i \geq 0$ with $\sum_i w_i > 0$.
+Writing $\bar w_i = w_i / \sum_j w_j$, the weighted E-step is
+
+```{math}
+\widehat\eta^{(k)}
+= \sum_{i=1}^n \bar w_i\,
+E_{\theta_k}[t(X,Y)\mid X=x_i].
+```
+
+Thus every $n^{-1}\sum_j$ in {eq}`e-step` becomes
+$\sum_j \bar w_j$. For factor mixtures, this applies to all ten
+statistics of $(X,Y,Z)$, including the four latent-factor statistics.
+Both E-steps of MCECM use the same weights. The M-step formulas are
+unchanged.
+
+The conjugacy identity gives the weighted mean log-likelihood
+
+```{math}
+\ell_w(\theta)
+= \sum_{i=1}^n \bar w_i\log f(x_i\mid\theta)
+= \sum_{i=1}^n \bar w_i
+  \left[-\frac d2\log(2\pi)-\frac12\log|\Sigma|
+  +\gamma^\top\Sigma^{-1}(x_i-\mu)
+  +\psi_{\mathrm{post},i}(\theta)\right]
+  - \psi_Y(\theta).
+```
+
+Here $\psi_{\mathrm{post},i}$ and $\psi_Y$ are the posterior and prior
+GIG log-partitions, both in the GIG base-measure convention.
+The fitter uses $\ell_w$ for its Aitken convergence check and reported
+trace; scalar MAP shrinkage adds the same penalty as in the unweighted
+case. Each trace entry is evaluated before that iteration's M-step.
+
+Centering and initialization use $\sum_i\bar w_i x_i$ and the weighted
+population covariance. The same center translates shrinkage targets.
+Eta update rules receive the effective sample size
+
+```{math}
+n_{\mathrm{eff}}
+= \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+= \frac{1}{\sum_i\bar w_i^2}.
+```
+
+This makes count-dependent updates invariant to a common rescaling of
+the weights. The relative shrinkage strength $\tau$ and scale-gauge
+regularizations do not depend on sample count. Integer weights therefore
+match replicated observations for likelihood EM, but count-dependent
+eta rules use $n_{\mathrm{eff}}$, not the replicated count.
+With `sample_weight=None`, the original unweighted reductions are retained.
+Incremental EM retains its existing step-weight rules.
+
 ## M-step
 
 For a full exponential family the M-step maximizes
@@ -219,7 +272,7 @@ The regularization is `none` (the default), `det_sigma_one`,
 `det_sigma_x`, or `a_eq_b`. `det_sigma_one` applies the coupled map
 above, including $\gamma$ and the mixing parameters.
 When a statistic rule is set, it is applied to the first E-step average
-only. The fitter subtracts the sample mean from the data and from
+only. The fitter subtracts the (possibly weighted) sample mean from the data and from
 $\mu$ before these updates, and adds that mean back to $\mu$.
 $\gamma$, $\Sigma$, and the mixing parameters are unchanged by the
 shift. A shrinkage target equal to the initial model's expectation
