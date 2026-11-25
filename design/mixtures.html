@@ -758,24 +758,31 @@ unknown — committing to an interface now is the worst time.</p></li>
 <p>Both stats classes use <strong>descriptive field names</strong> in <strong>theory order</strong>
 (matching <code class="docutils literal notranslate"><span class="pre">docs/theory/shrinkage.md</span></code> and <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code>):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NormalMixtureEta</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="n">E_inv_Y</span><span class="p">:</span>     <span class="c1"># s_1 = E[Y⁻¹],    scalar</span>
-    <span class="n">E_Y</span><span class="p">:</span>         <span class="c1"># s_2 = E[Y],       scalar</span>
-    <span class="n">E_log_Y</span><span class="p">:</span>     <span class="c1"># s_3 = E[log Y],   scalar</span>
-    <span class="n">E_X</span><span class="p">:</span>         <span class="c1"># s_4 = E[X],       (d,)</span>
-    <span class="n">E_X_inv_Y</span><span class="p">:</span>   <span class="c1"># s_5 = E[X / Y],   (d,)</span>
-    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="c1"># s_6 = E[X X^T/Y], (d, d)</span>
+    <span class="n">E_inv_Y</span><span class="p">:</span>     <span class="c1"># s_1 = E[Y⁻¹],                 scalar</span>
+    <span class="n">E_Y</span><span class="p">:</span>         <span class="c1"># s_2 = E[Y],                    scalar</span>
+    <span class="n">E_log_Y</span><span class="p">:</span>     <span class="c1"># s_3 = E[log Y],                scalar</span>
+    <span class="n">E_X</span><span class="p">:</span>         <span class="c1"># s_4 = E[X−o],                  (d,)</span>
+    <span class="n">E_X_inv_Y</span><span class="p">:</span>   <span class="c1"># s_5 = E[(X−o)/Y],              (d,)</span>
+    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="c1"># s_6 = E[(X−o)(X−o)^T/Y],       (d, d)</span>
+    <span class="n">origin</span><span class="p">:</span>      <span class="c1"># o, keyword-only, default 0;     (d,)  not a statistic</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">FactorMixtureStats</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="c1"># fields s_1 … s_6 identical to NormalMixtureEta</span>
-    <span class="n">E_XZT_inv_sqrtY</span><span class="p">:</span> <span class="c1"># s_7  = E[X Z^T Y^{-1/2}], (d, r)</span>
-    <span class="n">E_Z_inv_sqrtY</span><span class="p">:</span>   <span class="c1"># s_8  = E[Z Y^{-1/2}],     (r,)</span>
-    <span class="n">E_Z_sqrtY</span><span class="p">:</span>       <span class="c1"># s_9  = E[Z Y^{1/2}],      (r,)</span>
-    <span class="n">E_ZZT</span><span class="p">:</span>           <span class="c1"># s_10 = E[Z Z^T],          (r, r)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FactorMixtureStats</span><span class="p">(</span><span class="n">NormalMixtureEta</span><span class="p">):</span>
+    <span class="c1"># inherits s_1 … s_6 and origin</span>
+    <span class="n">E_XZT_inv_sqrtY</span><span class="p">:</span> <span class="c1"># s_7  = E[(X−o) Z^T Y^{-1/2}], (d, r)</span>
+    <span class="n">E_Z_inv_sqrtY</span><span class="p">:</span>   <span class="c1"># s_8  = E[Z Y^{-1/2}],         (r,)</span>
+    <span class="n">E_Z_sqrtY</span><span class="p">:</span>       <span class="c1"># s_9  = E[Z Y^{1/2}],          (r,)</span>
+    <span class="n">E_ZZT</span><span class="p">:</span>           <span class="c1"># s_10 = E[Z Z^T],              (r, r)</span>
 </pre></div>
 </div>
 <p>Sharing the first six fields means shrinkage targets, weights, and
 tests written for the standard family port directly to the factor
 family.</p>
+<p><code class="docutils literal notranslate"><span class="pre">origin</span></code> is a pytree leaf but not a statistic. Six-field constructors
+get <code class="docutils literal notranslate"><span class="pre">origin</span> <span class="pre">=</span> <span class="pre">0</span></code>, so raw moments and per-field weight pytrees (for
+example a Σ-only <code class="docutils literal notranslate"><span class="pre">tau</span></code> for <code class="docutils literal notranslate"><span class="pre">Shrinkage</span></code>) keep working unchanged.
+<code class="docutils literal notranslate"><span class="pre">eta.rebase(o)</span></code> changes coordinates; <code class="docutils literal notranslate"><span class="pre">affine_combine</span></code> aligns the
+statistics to <code class="docutils literal notranslate"><span class="pre">eta_new.origin</span></code> before combining and ignores the
+weight pytree’s <code class="docutils literal notranslate"><span class="pre">origin</span></code>. See <a class="reference internal" href="em_framework.html"><span class="doc">EM Framework</span></a> § Statistic coordinates.</p>
 </section>
 <hr class="docutils" />
 <section id="cross-references">

@@ -445,6 +445,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">_pack_gig_eta</span><span class="p">,</span> <span class="n">_unpack_gig_eta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDidNotConverge</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.bessel</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span>
@@ -648,11 +649,10 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fit GIG subordinator from :math:`(E[\log Y], E[1/Y], E[Y])`.</span>
 
 <span class="sd">        Forwards ``theta0`` (warm-start), ``backend``, ``method``, and</span>
-<span class="sd">        ``maxiter`` to :meth:`GIG.from_expectation`. No sanity-check</span>
-<span class="sd">        fallback at the classmethod level — that lives in</span>
-<span class="sd">        :meth:`GeneralizedHyperbolic.m_step_subordinator` for the EM</span>
-<span class="sd">        instance path where a sane &quot;current&quot; model exists to fall back</span>
-<span class="sd">        to.</span>
+<span class="sd">        ``maxiter`` to :meth:`GIG.from_expectation`. Exceptions propagate</span>
+<span class="sd">        from this constructor. The CPU EM instance path in</span>
+<span class="sd">        :meth:`GeneralizedHyperbolic.m_step_subordinator` retains its</span>
+<span class="sd">        previous subordinator on ``SolverDidNotConverge`` or ``ValueError``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">normix.distributions.generalized_inverse_gaussian</span><span class="w"> </span><span class="kn">import</span> <span class="n">GIG</span>
         <span class="k">return</span> <span class="n">GIG</span><span class="o">.</span><span class="n">from_expectation</span><span class="p">(</span>
@@ -869,8 +869,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Warm-start the GIG solve from the current subordinator.</span>
 
-<span class="sd">        On CPU, a failed solve keeps this GIG and EM continues.</span>
-<span class="sd">        That includes ``SolverDidNotConverge`` and ``ValueError``.</span>
+<span class="sd">        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG</span>
+<span class="sd">        and EM continues. Other exceptions propagate.</span>
 <span class="sd">        A finite solve outside the clamp does the same.</span>
 <span class="sd">        A non-finite JAX solve is left in place so EM can set</span>
 <span class="sd">        ``solver_failed``.</span>
@@ -891,7 +891,7 @@
                     <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                     <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">SolverDidNotConverge</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_cpu_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>
@@ -1202,8 +1202,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">m_step_subordinator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Warm-start the GIG solve from the current subordinator.</span>
 
-<span class="sd">        On CPU, a failed solve keeps this GIG and EM continues.</span>
-<span class="sd">        That includes ``SolverDidNotConverge`` and ``ValueError``.</span>
+<span class="sd">        On CPU, ``SolverDidNotConverge`` or ``ValueError`` keeps this GIG</span>
+<span class="sd">        and EM continues. Other exceptions propagate.</span>
 <span class="sd">        A finite solve outside the clamp does the same.</span>
 <span class="sd">        A non-finite JAX solve is left in place so EM can set</span>
 <span class="sd">        ``solver_failed``.</span>
@@ -1223,7 +1223,7 @@
                     <span class="n">theta0</span><span class="o">=</span><span class="n">current_gig</span><span class="o">.</span><span class="n">natural_params</span><span class="p">(),</span>
                     <span class="n">backend</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span>
                 <span class="p">)</span>
-            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">SolverDidNotConverge</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">current_gig</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">gig_new</span> <span class="o">=</span> <span class="n">_cpu_gig_or_previous</span><span class="p">(</span><span class="n">gig_new</span><span class="p">,</span> <span class="n">current_gig</span><span class="p">)</span>

@@ -516,19 +516,16 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_XXT_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.origin"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.origin</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.rebase"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.rebase()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_inv_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_log_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X_inv_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XXT_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XZT_inv_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_inv_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_ZZT"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_ZZT</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.rebase"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.rebase()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.affine_combine"><code class="docutils literal notranslate"><span class="pre">affine_combine()</span></code></a></li>
@@ -1089,7 +1086,7 @@ externally if needed.</p>
 <section id="module-normix.fitting.eta">
 <span id="eta-parametrization"></span><h2><a class="toc-backref" href="#id3" role="doc-backlink">Eta Parametrization</a><a class="headerlink" href="#module-normix.fitting.eta" title="Link to this heading">#</a></h2>
 <p>NormalMixtureEta — expectation parametrization for normal variance-mean mixtures.</p>
-<p>The six fields are the batch-averaged sufficient statistics
+<p>The six statistic fields are the batch-averaged sufficient statistics
 <span class="math notranslate nohighlight">\(\hat\eta = \frac{1}{n}\sum_i E[t(X_i, Y_i) \mid X_i]\)</span>,
 in the <em>theory order</em> used in <a class="reference internal" href="../theory/shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a> and
 <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>:</p>
@@ -1097,10 +1094,11 @@ in the <em>theory order</em> used in <a class="reference internal" href="../theo
 \[s_1 = E[Y^{-1}], \;\;
 s_2 = E[Y], \;\;
 s_3 = E[\log Y], \;\;
-s_4 = E[X], \;\;
-s_5 = E[X / Y], \;\;
-s_6 = E[X X^\top / Y].\]</div>
-<p>This is the expectation parametrization of
+s_4 = E[X-o], \;\;
+s_5 = E[(X-o) / Y], \;\;
+s_6 = E[(X-o)(X-o)^\top / Y].\]</div>
+<p>Here <span class="math notranslate nohighlight">\(o\)</span> is the explicit <code class="docutils literal notranslate"><span class="pre">origin</span></code> (zero by default).
+This is the expectation parametrization in those coordinates of
 <a class="reference internal" href="mixtures.html#normix.mixtures.joint.JointNormalMixture" title="normix.mixtures.joint.JointNormalMixture"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointNormalMixture</span></code></a>.
 GIG arrays use the last-axis order <code class="docutils literal notranslate"><span class="pre">(E_log_Y,</span> <span class="pre">E_inv_Y,</span> <span class="pre">E_Y)</span></code>.
 The private packing helpers convert between these layouts by name.</p>
@@ -1138,13 +1136,17 @@ nats per observation</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">NormalMixtureEta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">NormalMixtureEta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
 <p>Aggregated expectation parameters for normal variance-mean mixtures.</p>
 <p>Fields are stored in <strong>theory order</strong> <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_6)</span></code>: the first six
 statistics are shared with <a class="reference internal" href="#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a> so that
 shrinkage targets, weights, and tests written for the standard family
 transfer unchanged.</p>
+<p>The location fields contain moments of <span class="math notranslate nohighlight">\(X-\mathrm{origin}\)</span>.
+Here <span class="math notranslate nohighlight">\(o=\mathrm{origin}\)</span>. The default origin is zero, so existing six-field constructors store
+raw moments. Use <a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta.rebase" title="normix.fitting.eta.NormalMixtureEta.rebase"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rebase()</span></code></a> to change coordinates and
+<a class="reference internal" href="#normix.fitting.eta.affine_combine" title="normix.fitting.eta.affine_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">affine_combine()</span></code></a> to combine statistics with different origins.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1154,6 +1156,7 @@ transfer unchanged.</p>
 <li><p><strong>E_X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>E_X_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>E_XXT_inv_Y</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>origin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1178,27 +1181,50 @@ transfer unchanged.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_X">
 <span class="sig-name descname"><span class="pre">E_X</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_X" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_4 = \frac{1}{n}\sum_i X_i\)</span></p>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_4 = \frac{1}{n}\sum_i (X_i-o)\)</span></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_X_inv_Y">
 <span class="sig-name descname"><span class="pre">E_X_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]\)</span></p>
+<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_5 = \frac{1}{n}\sum_i (X_i-o) \, E[1/Y_i \mid X_i]\)</span></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y">
 <span class="sig-name descname"><span class="pre">E_XXT_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d, d)\)</span>; <span class="math notranslate nohighlight">\(s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]\)</span></p>
+<dd><p>shape <span class="math notranslate nohighlight">\((d, d)\)</span>; <span class="math notranslate nohighlight">\(s_6 = \frac{1}{n}\sum_i (X_i-o)(X_i-o)^\top E[1/Y_i \mid X_i]\)</span></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.origin">
+<span class="sig-name descname"><span class="pre">origin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.origin" title="Link to this definition">#</a></dt>
+<dd><p>Coordinate origin; shape <span class="math notranslate nohighlight">\((d,)\)</span>. It is not a sufficient statistic.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta.NormalMixtureEta.rebase">
+<span class="sig-name descname"><span class="pre">rebase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#NormalMixtureEta.rebase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.NormalMixtureEta.rebase" title="Link to this definition">#</a></dt>
+<dd><p>Express the same moments about <code class="docutils literal notranslate"><span class="pre">origin</span></code>.</p>
+<p>For <span class="math notranslate nohighlight">\(r=\mathrm{origin}_{new}-\mathrm{origin}_{old}\)</span>,
+<span class="math notranslate nohighlight">\(s_4'=s_4-r\)</span>, <span class="math notranslate nohighlight">\(s_5'=s_5-s_1r\)</span>, and
+<span class="math notranslate nohighlight">\(s_6'=s_6-s_5r^\top-rs_5^\top+s_1rr^\top\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>origin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">FactorMixtureStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XZT_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_ZZT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#FactorMixtureStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.kidger.site/equinox/api/module/module/#equinox.Module" title="(in Equinox v0.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">normix.fitting.eta.</span></span><span class="sig-name descname"><span class="pre">FactorMixtureStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_log_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_X_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XXT_inv_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_XZT_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_inv_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_Z_sqrtY</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E_ZZT</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#FactorMixtureStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a></p>
 <p>Aggregated expectation parameters for factor-analysis mixtures.</p>
 <p>Fields are stored in theory order <code class="docutils literal notranslate"><span class="pre">(s_1,</span> <span class="pre">…,</span> <span class="pre">s_{10})</span></code> from
 <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor Analysis for Generalized Hyperbolic Distributions</span></a>. The first six are identical to
@@ -1219,49 +1245,14 @@ the latent factor <span class="math notranslate nohighlight">\(Z\)</span>.</p>
 <li><p><strong>E_Z_inv_sqrtY</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>E_Z_sqrtY</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>E_ZZT</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>origin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_inv_Y">
-<span class="sig-name descname"><span class="pre">E_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y" title="Link to this definition">#</a></dt>
-<dd><p>scalar; <span class="math notranslate nohighlight">\(s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_Y">
-<span class="sig-name descname"><span class="pre">E_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_Y" title="Link to this definition">#</a></dt>
-<dd><p>scalar; <span class="math notranslate nohighlight">\(s_2 = \frac{1}{n}\sum_i E[Y_i \mid X_i]\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_log_Y">
-<span class="sig-name descname"><span class="pre">E_log_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y" title="Link to this definition">#</a></dt>
-<dd><p>scalar; <span class="math notranslate nohighlight">\(s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_X">
-<span class="sig-name descname"><span class="pre">E_X</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_X" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_4 = \frac{1}{n}\sum_i X_i\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_X_inv_Y">
-<span class="sig-name descname"><span class="pre">E_X_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d,)\)</span>; <span class="math notranslate nohighlight">\(s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y">
-<span class="sig-name descname"><span class="pre">E_XXT_inv_Y</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d, d)\)</span>; <span class="math notranslate nohighlight">\(s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]\)</span></p>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY">
 <span class="sig-name descname"><span class="pre">E_XZT_inv_sqrtY</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><span class="pre">Array</span></a></span><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY" title="Link to this definition">#</a></dt>
-<dd><p>shape <span class="math notranslate nohighlight">\((d, r)\)</span>; <span class="math notranslate nohighlight">\(s_7 = \frac{1}{n}\sum_i E[X_i Z_i^\top Y_i^{-1/2} \mid X_i]\)</span></p>
+<dd><p>shape <span class="math notranslate nohighlight">\((d, r)\)</span>; <span class="math notranslate nohighlight">\(s_7 = \frac{1}{n}\sum_i E[(X_i-o) Z_i^\top Y_i^{-1/2} \mid X_i]\)</span></p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1282,6 +1273,20 @@ the latent factor <span class="math notranslate nohighlight">\(Z\)</span>.</p>
 <dd><p>shape <span class="math notranslate nohighlight">\((r, r)\)</span>; <span class="math notranslate nohighlight">\(s_{10} = \frac{1}{n}\sum_i E[Z_i Z_i^\top \mid X_i]\)</span></p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="normix.fitting.eta.FactorMixtureStats.rebase">
+<span class="sig-name descname"><span class="pre">rebase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">origin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/fitting/eta.html#FactorMixtureStats.rebase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.fitting.eta.FactorMixtureStats.rebase" title="Link to this definition">#</a></dt>
+<dd><p>Translate the location moments and the X–Z cross moment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>origin</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><em>FactorMixtureStats</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -1297,7 +1302,11 @@ block-diagonal weighting; leaf-wise multiply;</p></li>
 <li><p><strong>callable</strong> <code class="docutils literal notranslate"><span class="pre">η</span> <span class="pre">→</span> <span class="pre">η</span></code> — arbitrary linear operator on η (e.g. an
 <code class="docutils literal notranslate"><span class="pre">eqx.nn.Linear</span></code> wrapped to operate on a flattened pytree).</p></li>
 </ul>
-<p>The shift <code class="docutils literal notranslate"><span class="pre">a</span></code> is either <code class="docutils literal notranslate"><span class="pre">None</span></code> (zero) or a stats-shape pytree.</p>
+<p>The shift <code class="docutils literal notranslate"><span class="pre">a</span></code> is either <code class="docutils literal notranslate"><span class="pre">None</span></code> (zero) or a stats-shape pytree.
+<code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> is rebased to <code class="docutils literal notranslate"><span class="pre">eta_new.origin</span></code> before combining, and the
+result keeps that origin. Weights and the shift are not coordinates:
+their <code class="docutils literal notranslate"><span class="pre">origin</span></code> leaves are ignored, and <code class="docutils literal notranslate"><span class="pre">a</span></code> is added field by field
+in <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>’s coordinates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1568,7 +1577,9 @@ For time-varying schedules, subclass <a class="reference internal" href="#normix
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><em>None</em>) – Additive shift (e.g. scaled prior).</p></li>
+<li><p><strong>a</strong> (<a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a><em> or </em><em>None</em>) – Additive shift (e.g. scaled prior), added in the coordinates of the
+new batch statistic; its <code class="docutils literal notranslate"><span class="pre">origin</span></code> is ignored. Rebase a prior to
+that origin before scaling it.</p></li>
 <li><p><strong>b</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Weight on previous state.</p></li>
 <li><p><strong>c</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a>) – Weight on new batch.</p></li>
 </ul>
@@ -1635,7 +1646,7 @@ actually shrunk.</p>
 and subordinator parameters.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Six-field expectation pytree.</p>
+<dd class="field-even"><p>Six-statistic expectation pytree with an explicit origin.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
@@ -1655,7 +1666,7 @@ and subordinator parameters.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Six-field expectation pytree.</p>
+<dd class="field-even"><p>Six-statistic expectation pytree with an explicit origin.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
@@ -1676,7 +1687,7 @@ positive.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Six-field expectation pytree.</p>
+<dd class="field-even"><p>Six-statistic expectation pytree with an explicit origin.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
@@ -1702,7 +1713,7 @@ Must be positive semi-definite (not checked).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Six-field expectation pytree with <code class="docutils literal notranslate"><span class="pre">E_XXT_inv_Y</span></code> rebuilt from
+<dd class="field-even"><p>Six-statistic expectation pytree with an explicit origin with <code class="docutils literal notranslate"><span class="pre">E_XXT_inv_Y</span></code> rebuilt from
 <code class="docutils literal notranslate"><span class="pre">Sigma0</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1818,19 +1829,16 @@ Must be positive semi-definite (not checked).</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_X_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.E_XXT_inv_Y</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.origin"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.origin</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.NormalMixtureEta.rebase"><code class="docutils literal notranslate"><span class="pre">NormalMixtureEta.rebase()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_inv_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_log_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_log_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_X_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_X_inv_Y</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XXT_inv_Y"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XXT_inv_Y</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_XZT_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_XZT_inv_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_inv_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_inv_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_Z_sqrtY"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_Z_sqrtY</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.E_ZZT"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.E_ZZT</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.FactorMixtureStats.rebase"><code class="docutils literal notranslate"><span class="pre">FactorMixtureStats.rebase()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normix.fitting.eta.affine_combine"><code class="docutils literal notranslate"><span class="pre">affine_combine()</span></code></a></li>

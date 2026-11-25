@@ -3357,8 +3357,8 @@ unsane regions; both are managed by
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator">
 <span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.m_step_subordinator" title="Link to this definition">#</a></dt>
 <dd><p>Warm-start the GIG solve from the current subordinator.</p>
-<p>On CPU, a failed solve keeps this GIG and EM continues.
-That includes <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> and <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.
+<p>On CPU, <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> or <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> keeps this GIG
+and EM continues. Other exceptions propagate.
 A finite solve outside the clamp does the same.
 A non-finite JAX solve is left in place so EM can set
 <code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.</p>
@@ -3538,8 +3538,8 @@ warm-start and fall-back.</p>
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator">
 <span class="sig-name descname"><span class="pre">m_step_subordinator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eta</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.m_step_subordinator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.m_step_subordinator" title="Link to this definition">#</a></dt>
 <dd><p>Warm-start the GIG solve from the current subordinator.</p>
-<p>On CPU, a failed solve keeps this GIG and EM continues.
-That includes <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> and <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.
+<p>On CPU, <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> or <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> keeps this GIG
+and EM continues. Other exceptions propagate.
 A finite solve outside the clamp does the same.
 A non-finite JAX solve is left in place so EM can set
 <code class="docutils literal notranslate"><span class="pre">solver_failed</span></code>.</p>

@@ -1372,7 +1372,7 @@ form; this tractable joint quantity is the natural surrogate.</p>
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.compute_eta_from_model">
 <span class="sig-name descname"><span class="pre">compute_eta_from_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.compute_eta_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.compute_eta_from_model" title="Link to this definition">#</a></dt>
 <dd><p>Reconstruct <span class="math notranslate nohighlight">\(\eta\)</span> from the model’s own parameters.</p>
-<p>Uses the <em>marginal</em> expectations of the joint sufficient statistics:</p>
+<p>At origin zero, the <em>marginal</em> expectations of the joint sufficient statistics are:</p>
 <div class="math notranslate nohighlight">
 \[\eta_4 = \mu + \gamma\,E[Y], \quad
 \eta_5 = \mu\,E[1/Y] + \gamma, \quad
@@ -1380,9 +1380,8 @@ form; this tractable joint quantity is the natural surrogate.</p>
          + \mu\gamma^\top + \gamma\mu^\top\]</div>
 <p>When <span class="math notranslate nohighlight">\(\varepsilon\|\mu\|^2|E[1/Y]|\)</span> exceeds
 <a class="reference internal" href="utils.html#normix.utils.constants.MOMENT_CANCEL_ATOL" title="normix.utils.constants.MOMENT_CANCEL_ATOL"><code class="xref py py-data docutils literal notranslate"><span class="pre">MOMENT_CANCEL_ATOL</span></code></a>, those three
-moments are stored about <span class="math notranslate nohighlight">\(\mu\)</span> instead. Float64 cannot hold
-both <span class="math notranslate nohighlight">\(s_1\mu\mu^\top\)</span> and <span class="math notranslate nohighlight">\(\Sigma\)</span>; the centered store
-is what the unchanged M-step needs in order to return <span class="math notranslate nohighlight">\(\Sigma\)</span>.</p>
+moments are stored about <span class="math notranslate nohighlight">\(\mu\)</span> with an explicit <code class="docutils literal notranslate"><span class="pre">origin</span></code>.
+The M-step restores that origin after reconstructing the covariance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>

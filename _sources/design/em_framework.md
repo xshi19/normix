@@ -180,6 +180,11 @@ forms via `jax.tree.map`:
 | Stats-shape pytree | block-diagonal: leaf-wise multiply | per-field / per-element shrinkage |
 | Callable `η → η` | arbitrary linear operator | user-supplied; e.g. wrap `eqx.nn.Linear` |
 
+`eta_prev` is rebased to `eta_new.origin` first, and the result keeps that
+origin. Weight pytrees and the shift `a` are not coordinates: their `origin`
+leaves are ignored, so a six-field weight such as a Σ-only `tau` works
+unchanged. `a` is added in `eta_new`'s coordinates.
+
 We do **not** ship a flat $n \times n$ matrix form. That would force
 the public API to commit to a flatten order across $(s_1,\dots,s_6)$,
 leaking the contract into every user script. Users who want a true
@@ -432,3 +437,32 @@ backends are `'jax'` and `verbose == 0`; `inner_iter > 1` nests
 - Theory: {doc}`EM algorithm <../theory/em_algorithm>`,
   {doc}`Shrinkage <../theory/shrinkage>`,
   {doc}`Factor analysis <../theory/factor_analysis>`.
+
+
+## Statistic coordinates
+
+{class}`~normix.fitting.eta.NormalMixtureEta` stores an explicit `origin`,
+zero by default. Its location fields are moments of $X-\mathrm{origin}$.
+{class}`~normix.fitting.eta.FactorMixtureStats` shares that contract and includes
+the translated X–Z cross moment. The M-step restores the origin after computing
+the covariance. At large locations this preserves both location and dispersion.
+
+Use {meth}`~normix.fitting.eta.NormalMixtureEta.rebase` to express moments about
+another origin. Use {func}`~normix.fitting.eta.affine_combine` for statistic
+arithmetic: it aligns origins before combining the moment fields. An ordinary
+pytree sum also sums the coordinate metadata and is not a statistic combination.
+Raw moments whose covariance digits were already lost cannot be repaired by
+changing their origin afterward.
+
+Batch fitting still subtracts the weighted sample mean, or the ordinary mean
+when weights are absent. Incremental fitting uses its ordinary sample mean.
+Shrinkage targets are translated using their stored origin, including targets
+built from another model or with a custom covariance.
+
+## Posterior scale regularization
+
+The E-step applies {data}`~normix.utils.constants.B_POST_FLOOR` only when the
+prior GIG scale $b$ is exactly zero, as in variance-gamma. A positive prior
+scale is preserved even below that floor, in both mixture hierarchies and both
+backends. This keeps the existing VG mode regularization while leaving positive
+GH, NIG, and NInvG posterior scales unchanged.

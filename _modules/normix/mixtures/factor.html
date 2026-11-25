@@ -458,7 +458,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExponentialFamily</span><span class="p">,</span> <span class="n">_normalize_sample_weight</span><span class="p">,</span> <span class="n">_weighted_mean</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">_unpack_gig_eta</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactorMixtureStats</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">FactorMixtureStats</span><span class="p">,</span> <span class="n">_moment_origin</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MarginalMixture</span><span class="p">,</span>
     <span class="n">_normal_mixture_cov</span><span class="p">,</span>
@@ -721,9 +721,12 @@
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;E-step entry point: ``_posterior_gig_params`` with</span>
 <span class="sd">        :math:`b_{\mathrm{post}}` floored at</span>
 <span class="sd">        :data:`~normix.utils.constants.B_POST_FLOOR` (single chokepoint;</span>
-<span class="sd">        only binds for VG, prior :math:`b=0`).&quot;&quot;&quot;</span>
+<span class="sd">        applied only when the prior has :math:`b=0`, as in VG).</span>
+<span class="sd">        Positive prior scales are preserved.&quot;&quot;&quot;</span>
         <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior_gig_params</span><span class="p">(</span><span class="n">z2</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b_post</span><span class="p">,</span> <span class="n">B_POST_FLOOR</span><span class="p">)</span>
+        <span class="n">b_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subordinator</span><span class="p">()</span><span class="o">.</span><span class="n">to_gig</span><span class="p">()</span><span class="o">.</span><span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+                           <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">b_post</span><span class="p">,</span> <span class="n">B_POST_FLOOR</span><span class="p">),</span> <span class="n">b_post</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p_post</span><span class="p">,</span> <span class="n">a_post</span><span class="p">,</span> <span class="n">b_post</span>
 
     <span class="nd">@classmethod</span>
     <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
@@ -846,6 +849,8 @@
         <span class="n">s1</span> <span class="o">=</span> <span class="n">_weighted_mean</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">)</span>
         <span class="n">s2</span> <span class="o">=</span> <span class="n">_weighted_mean</span><span class="p">(</span><span class="n">E_Y</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">)</span>
         <span class="n">s3</span> <span class="o">=</span> <span class="n">_weighted_mean</span><span class="p">(</span><span class="n">E_log_Y</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">)</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">_moment_origin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">origin</span>
         <span class="n">s4</span> <span class="o">=</span> <span class="n">_weighted_mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">)</span>
         <span class="n">s5</span> <span class="o">=</span> <span class="n">_weighted_mean</span><span class="p">(</span><span class="n">X</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">sample_weight</span><span class="p">)</span>
         <span class="n">s6</span> <span class="o">=</span> <span class="p">(</span>
@@ -854,8 +859,9 @@
             <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ni,nj,n-&gt;ij&#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span> <span class="o">*</span> <span class="n">E_inv_Y</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">)</span>
+        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">)</span>
         <span class="n">eta</span> <span class="o">=</span> <span class="n">FactorMixtureStats</span><span class="p">(</span>
+            <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
             <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="o">=</span><span class="n">s3</span><span class="p">,</span>
             <span class="n">E_X</span><span class="o">=</span><span class="n">s4</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">s5</span><span class="p">,</span> <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">s6</span><span class="p">,</span>
             <span class="n">E_XZT_inv_sqrtY</span><span class="o">=</span><span class="n">s7</span><span class="p">,</span> <span class="n">E_Z_inv_sqrtY</span><span class="o">=</span><span class="n">s8</span><span class="p">,</span>
@@ -873,6 +879,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">s1</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s2</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
         <span class="n">s4</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s5</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">s6</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">]:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Deterministic relations from</span>
 <span class="sd">        ``docs/theory/factor_analysis.md`` §E-Step. Inputs are the</span>
@@ -882,7 +889,7 @@
 <span class="sd">        Computed at the *current* model parameters (μ, γ, F, β); β is</span>
 <span class="sd">        evaluated once via ``_beta``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">origin</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_beta</span><span class="p">()</span>                              <span class="c1"># (r, d)</span>
 
@@ -973,7 +980,7 @@
                   <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">)</span>
 
         <span class="n">D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">diag_R</span><span class="p">,</span> <span class="n">D_FLOOR</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span>
+        <span class="k">return</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">eta</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">D</span>
 
 <div class="viewcode-block" id="FactorNormalMixture.m_step">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.factor.FactorNormalMixture.m_step">[docs]</a>
@@ -1055,7 +1062,8 @@
 <span class="sd">        theory doc).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
-        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">_moment_origin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">-</span> <span class="n">origin</span>
         <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span>
         <span class="n">Sigma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">()</span>
 
@@ -1065,8 +1073,9 @@
               <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_inv_Y</span>
               <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">*</span> <span class="n">E_Y</span>
               <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">))</span>
-        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">)</span>
+        <span class="n">s7</span><span class="p">,</span> <span class="n">s8</span><span class="p">,</span> <span class="n">s9</span><span class="p">,</span> <span class="n">s10</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_z_stats_from_six</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span><span class="p">,</span> <span class="n">s4</span><span class="p">,</span> <span class="n">s5</span><span class="p">,</span> <span class="n">s6</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">FactorMixtureStats</span><span class="p">(</span>
+            <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
             <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span><span class="o">=</span><span class="n">E_Y</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="o">=</span><span class="n">E_log_Y</span><span class="p">,</span>
             <span class="n">E_X</span><span class="o">=</span><span class="n">s4</span><span class="p">,</span> <span class="n">E_X_inv_Y</span><span class="o">=</span><span class="n">s5</span><span class="p">,</span> <span class="n">E_XXT_inv_Y</span><span class="o">=</span><span class="n">s6</span><span class="p">,</span>
             <span class="n">E_XZT_inv_sqrtY</span><span class="o">=</span><span class="n">s7</span><span class="p">,</span> <span class="n">E_Z_inv_sqrtY</span><span class="o">=</span><span class="n">s8</span><span class="p">,</span>

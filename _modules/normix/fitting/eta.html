@@ -414,7 +414,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">NormalMixtureEta — expectation parametrization for normal variance-mean mixtures.</span>
 
-<span class="sd">The six fields are the batch-averaged sufficient statistics</span>
+<span class="sd">The six statistic fields are the batch-averaged sufficient statistics</span>
 <span class="sd">:math:`\\hat\\eta = \\frac{1}{n}\\sum_i E[t(X_i, Y_i) \\mid X_i]`,</span>
 <span class="sd">in the *theory order* used in :doc:`/theory/shrinkage` and</span>
 <span class="sd">:doc:`/theory/factor_analysis`:</span>
@@ -424,11 +424,12 @@
 <span class="sd">    s_1 = E[Y^{-1}], \\;\\;</span>
 <span class="sd">    s_2 = E[Y], \\;\\;</span>
 <span class="sd">    s_3 = E[\\log Y], \\;\\;</span>
-<span class="sd">    s_4 = E[X], \\;\\;</span>
-<span class="sd">    s_5 = E[X / Y], \\;\\;</span>
-<span class="sd">    s_6 = E[X X^\\top / Y].</span>
+<span class="sd">    s_4 = E[X-o], \\;\\;</span>
+<span class="sd">    s_5 = E[(X-o) / Y], \\;\\;</span>
+<span class="sd">    s_6 = E[(X-o)(X-o)^\\top / Y].</span>
 
-<span class="sd">This is the expectation parametrization of</span>
+<span class="sd">Here :math:`o` is the explicit ``origin`` (zero by default).</span>
+<span class="sd">This is the expectation parametrization in those coordinates of</span>
 <span class="sd">:class:`~normix.mixtures.joint.JointNormalMixture`.</span>
 <span class="sd">GIG arrays use the last-axis order ``(E_log_Y, E_inv_Y, E_Y)``.</span>
 <span class="sd">The private packing helpers convert between these layouts by name.</span>
@@ -440,6 +441,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">MOMENT_CANCEL_ATOL</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_moment_origin</span><span class="p">(</span><span class="n">mu</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose an origin before forming location moments in float64.&quot;&quot;&quot;</span>
+    <span class="n">cancel</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">E_inv_Y</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mu</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cancel</span> <span class="o">&gt;</span> <span class="n">MOMENT_CANCEL_ATOL</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mu</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_pack_gig_eta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">E_log_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="n">E_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -480,6 +489,11 @@
 <span class="sd">    statistics are shared with :class:`FactorMixtureStats` so that</span>
 <span class="sd">    shrinkage targets, weights, and tests written for the standard family</span>
 <span class="sd">    transfer unchanged.</span>
+
+<span class="sd">    The location fields contain moments of :math:`X-\mathrm{origin}`.</span>
+<span class="sd">    Here :math:`o=\mathrm{origin}`. The default origin is zero, so existing six-field constructors store</span>
+<span class="sd">    raw moments. Use :meth:`rebase` to change coordinates and</span>
+<span class="sd">    :func:`affine_combine` to combine statistics with different origins.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1">#: scalar; :math:`s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]`</span>
@@ -488,18 +502,45 @@
     <span class="n">E_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="c1">#: scalar; :math:`s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]`</span>
     <span class="n">E_log_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d,)`; :math:`s_4 = \frac{1}{n}\sum_i X_i`</span>
+    <span class="c1">#: shape :math:`(d,)`; :math:`s_4 = \frac{1}{n}\sum_i (X_i-o)`</span>
     <span class="n">E_X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d,)`; :math:`s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]`</span>
+    <span class="c1">#: shape :math:`(d,)`; :math:`s_5 = \frac{1}{n}\sum_i (X_i-o) \, E[1/Y_i \mid X_i]`</span>
     <span class="n">E_X_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d, d)`; :math:`s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]`</span>
-    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span></div>
+    <span class="c1">#: shape :math:`(d, d)`; :math:`s_6 = \frac{1}{n}\sum_i (X_i-o)(X_i-o)^\top E[1/Y_i \mid X_i]`</span>
+    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+
+    <span class="c1">#: Coordinate origin; shape :math:`(d,)`. It is not a sufficient statistic.</span>
+    <span class="n">origin</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                                       <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">E_X</span><span class="p">))</span>
+
+<div class="viewcode-block" id="NormalMixtureEta.rebase">
+<a class="viewcode-back" href="../../../api/fitting.html#normix.fitting.eta.NormalMixtureEta.rebase">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Express the same moments about ``origin``.</span>
+
+<span class="sd">        For :math:`r=\mathrm{origin}_{new}-\mathrm{origin}_{old}`,</span>
+<span class="sd">        :math:`s_4&#39;=s_4-r`, :math:`s_5&#39;=s_5-s_1r`, and</span>
+<span class="sd">        :math:`s_6&#39;=s_6-s_5r^\top-rs_5^\top+s_1rr^\top`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">origin</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span>
+        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">E_X</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">origin</span><span class="p">),</span> <span class="bp">self</span><span class="p">,</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">E_X</span> <span class="o">-</span> <span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_X_inv_Y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">r</span><span class="p">,</span>
+             <span class="bp">self</span><span class="o">.</span><span class="n">E_XXT_inv_Y</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+             <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_X_inv_Y</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_inv_Y</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span>
+             <span class="n">origin</span><span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
 <div class="viewcode-block" id="FactorMixtureStats">
 <a class="viewcode-back" href="../../../api/fitting.html#normix.fitting.eta.FactorMixtureStats">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">FactorMixtureStats</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FactorMixtureStats</span><span class="p">(</span><span class="n">NormalMixtureEta</span><span class="p">):</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Aggregated expectation parameters for factor-analysis mixtures.</span>
 
 <span class="sd">    Fields are stored in theory order ``(s_1, …, s_{10})`` from</span>
@@ -510,26 +551,26 @@
 <span class="sd">    the latent factor :math:`Z`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1">#: scalar; :math:`s_1 = \frac{1}{n}\sum_i E[1/Y_i \mid X_i]`</span>
-    <span class="n">E_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: scalar; :math:`s_2 = \frac{1}{n}\sum_i E[Y_i \mid X_i]`</span>
-    <span class="n">E_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: scalar; :math:`s_3 = \frac{1}{n}\sum_i E[\log Y_i \mid X_i]`</span>
-    <span class="n">E_log_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d,)`; :math:`s_4 = \frac{1}{n}\sum_i X_i`</span>
-    <span class="n">E_X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d,)`; :math:`s_5 = \frac{1}{n}\sum_i X_i \, E[1/Y_i \mid X_i]`</span>
-    <span class="n">E_X_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d, d)`; :math:`s_6 = \frac{1}{n}\sum_i X_i X_i^\top E[1/Y_i \mid X_i]`</span>
-    <span class="n">E_XXT_inv_Y</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
-    <span class="c1">#: shape :math:`(d, r)`; :math:`s_7 = \frac{1}{n}\sum_i E[X_i Z_i^\top Y_i^{-1/2} \mid X_i]`</span>
+    <span class="c1">#: shape :math:`(d, r)`; :math:`s_7 = \frac{1}{n}\sum_i E[(X_i-o) Z_i^\top Y_i^{-1/2} \mid X_i]`</span>
     <span class="n">E_XZT_inv_sqrtY</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="c1">#: shape :math:`(r,)`; :math:`s_8 = \frac{1}{n}\sum_i E[Z_i Y_i^{-1/2} \mid X_i]`</span>
     <span class="n">E_Z_inv_sqrtY</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="c1">#: shape :math:`(r,)`; :math:`s_9 = \frac{1}{n}\sum_i E[Z_i Y_i^{1/2} \mid X_i]`</span>
     <span class="n">E_Z_sqrtY</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
     <span class="c1">#: shape :math:`(r, r)`; :math:`s_{10} = \frac{1}{n}\sum_i E[Z_i Z_i^\top \mid X_i]`</span>
-    <span class="n">E_ZZT</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span></div>
+    <span class="n">E_ZZT</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span>
+
+<div class="viewcode-block" id="FactorMixtureStats.rebase">
+<a class="viewcode-back" href="../../../api/fitting.html#normix.fitting.eta.FactorMixtureStats.rebase">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rebase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorMixtureStats&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Translate the location moments and the X–Z cross moment.&quot;&quot;&quot;</span>
+        <span class="n">rebased</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">rebase</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">E_XZT_inv_sqrtY</span><span class="p">,</span> <span class="n">rebased</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">E_XZT_inv_sqrtY</span>
+            <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">rebased</span><span class="o">.</span><span class="n">origin</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Z_inv_sqrtY</span><span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
 
 
 
@@ -577,6 +618,10 @@
 <span class="sd">      ``eqx.nn.Linear`` wrapped to operate on a flattened pytree).</span>
 
 <span class="sd">    The shift ``a`` is either ``None`` (zero) or a stats-shape pytree.</span>
+<span class="sd">    ``eta_prev`` is rebased to ``eta_new.origin`` before combining, and the</span>
+<span class="sd">    result keeps that origin. Weights and the shift are not coordinates:</span>
+<span class="sd">    their ``origin`` leaves are ignored, and ``a`` is added field by field</span>
+<span class="sd">    in ``eta_new``&#39;s coordinates.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -591,9 +636,13 @@
 <span class="sd">    a :</span>
 <span class="sd">        Additive shift (e.g. shrinkage prior). ``None`` means zero.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta_new</span><span class="p">,</span> <span class="n">NormalMixtureEta</span><span class="p">):</span>
+        <span class="n">eta_prev</span> <span class="o">=</span> <span class="n">eta_prev</span><span class="o">.</span><span class="n">rebase</span><span class="p">(</span><span class="n">eta_new</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">_apply</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">eta_prev</span><span class="p">),</span> <span class="n">_apply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">eta_new</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta_new</span><span class="p">,</span> <span class="n">NormalMixtureEta</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">tree_at</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">eta_new</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>

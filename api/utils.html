@@ -828,10 +828,8 @@ stay above this floor.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.B_POST_FLOOR">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">B_POST_FLOOR</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-06</span></span><a class="headerlink" href="#normix.utils.constants.B_POST_FLOOR" title="Link to this definition">#</a></dt>
-<dd><p>Floor for the posterior GIG scale b_post = b + (x-μ)ᵀΣ⁻¹(x-μ) in the EM
-E-step. Bounds the conditional inverse moment E[1/Y|x] for observations near
-the mode (where (x-μ)ᵀΣ⁻¹(x-μ) → 0). Only binds for VG, whose prior b = 0;
-for GH / NIG / NInvG the prior b &gt; 0 already keeps b_post above this floor.</p>
+<dd><p>Floor for the E-step posterior scale when the prior GIG scale b = 0 (VG).
+Positive prior scales, including those below this floor, are preserved.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -867,10 +865,8 @@ at d/2 + 1 + ε (E[1/Y|x] also bounded). Opt-in only — default is no clamp.</p
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.MOMENT_CANCEL_ATOL">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">MOMENT_CANCEL_ATOL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-06</span></span><a class="headerlink" href="#normix.utils.constants.MOMENT_CANCEL_ATOL" title="Link to this definition">#</a></dt>
-<dd><p>When ε ‖μ‖² <code class="docutils literal notranslate"><span class="pre">|E[1/Y]|</span></code> exceeds this, compute_eta_from_model stores the
-location moments about μ. A float64 uncentered second moment has already
-lost Σ, and no M-step arithmetic can recover it. 1e-6 matches the
-translation check; below it the raw moments still round-trip.</p>
+<dd><p>Cancellation tolerance ε ‖μ‖² <code class="docutils literal notranslate"><span class="pre">|E[1/Y]|</span></code> for location moments.
+Above this threshold, statistic producers store moments with origin = μ.</p>
 </dd></dl>
 
 <dl class="py data">

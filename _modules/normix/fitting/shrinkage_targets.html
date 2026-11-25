@@ -449,7 +449,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="n">_moment_origin</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixture</span>
@@ -479,7 +479,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    NormalMixtureEta</span>
-<span class="sd">        Six-field expectation pytree.</span>
+<span class="sd">        Six-statistic expectation pytree with an explicit origin.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">compute_eta_from_model</span><span class="p">()</span></div>
 
@@ -510,7 +510,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    NormalMixtureEta</span>
-<span class="sd">        Six-field expectation pytree with ``E_XXT_inv_Y`` rebuilt from</span>
+<span class="sd">        Six-statistic expectation pytree with an explicit origin with ``E_XXT_inv_Y`` rebuilt from</span>
 <span class="sd">        ``Sigma0``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">Sigma0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -518,8 +518,11 @@
     <span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">j</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">j</span><span class="o">.</span><span class="n">gamma</span>
 
     <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">_moment_origin</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">origin</span>
 
     <span class="k">return</span> <span class="n">NormalMixtureEta</span><span class="p">(</span>
+        <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span>
         <span class="n">E_inv_Y</span><span class="o">=</span><span class="n">E_inv_Y</span><span class="p">,</span>
         <span class="n">E_Y</span><span class="o">=</span><span class="n">E_Y</span><span class="p">,</span>
         <span class="n">E_log_Y</span><span class="o">=</span><span class="n">E_log_Y</span><span class="p">,</span>
@@ -552,7 +555,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    NormalMixtureEta</span>
-<span class="sd">        Six-field expectation pytree.</span>
+<span class="sd">        Six-statistic expectation pytree with an explicit origin.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">d</span>
     <span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sigma2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
@@ -579,7 +582,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    NormalMixtureEta</span>
-<span class="sd">        Six-field expectation pytree.</span>
+<span class="sd">        Six-statistic expectation pytree with an explicit origin.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">diag</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">diag</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">Sigma0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span>

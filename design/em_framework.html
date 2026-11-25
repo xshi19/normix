@@ -487,6 +487,8 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#loop-dispatch-batch">6. Loop Dispatch (Batch)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">7. Cross-References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#statistic-coordinates">Statistic coordinates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#posterior-scale-regularization">Posterior scale regularization</a></li>
 </ul>
             </nav>
         </div>
@@ -749,6 +751,10 @@ forms via <code class="docutils literal notranslate"><span class="pre">jax.tree.
 </tbody>
 </table>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">eta_prev</span></code> is rebased to <code class="docutils literal notranslate"><span class="pre">eta_new.origin</span></code> first, and the result keeps that
+origin. Weight pytrees and the shift <code class="docutils literal notranslate"><span class="pre">a</span></code> are not coordinates: their <code class="docutils literal notranslate"><span class="pre">origin</span></code>
+leaves are ignored, so a six-field weight such as a Σ-only <code class="docutils literal notranslate"><span class="pre">tau</span></code> works
+unchanged. <code class="docutils literal notranslate"><span class="pre">a</span></code> is added in <code class="docutils literal notranslate"><span class="pre">eta_new</span></code>’s coordinates.</p>
 <p>We do <strong>not</strong> ship a flat <span class="math notranslate nohighlight">\(n \times n\)</span> matrix form. That would force
 the public API to commit to a flatten order across <span class="math notranslate nohighlight">\((s_1,\dots,s_6)\)</span>,
 leaking the contract into every user script. Users who want a true
@@ -1093,6 +1099,32 @@ backends are <code class="docutils literal notranslate"><span class="pre">'jax'<
 <a class="reference internal" href="../theory/factor_analysis.html"><span class="doc">Factor analysis</span></a>.</p></li>
 </ul>
 </section>
+<section id="statistic-coordinates">
+<h2>Statistic coordinates<a class="headerlink" href="#statistic-coordinates" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="../api/fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> stores an explicit <code class="docutils literal notranslate"><span class="pre">origin</span></code>,
+zero by default. Its location fields are moments of <span class="math notranslate nohighlight">\(X-\mathrm{origin}\)</span>.
+<a class="reference internal" href="../api/fitting.html#normix.fitting.eta.FactorMixtureStats" title="normix.fitting.eta.FactorMixtureStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">FactorMixtureStats</span></code></a> shares that contract and includes
+the translated X–Z cross moment. The M-step restores the origin after computing
+the covariance. At large locations this preserves both location and dispersion.</p>
+<p>Use <a class="reference internal" href="../api/fitting.html#normix.fitting.eta.NormalMixtureEta.rebase" title="normix.fitting.eta.NormalMixtureEta.rebase"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rebase()</span></code></a> to express moments about
+another origin. Use <a class="reference internal" href="../api/fitting.html#normix.fitting.eta.affine_combine" title="normix.fitting.eta.affine_combine"><code class="xref py py-func docutils literal notranslate"><span class="pre">affine_combine()</span></code></a> for statistic
+arithmetic: it aligns origins before combining the moment fields. An ordinary
+pytree sum also sums the coordinate metadata and is not a statistic combination.
+Raw moments whose covariance digits were already lost cannot be repaired by
+changing their origin afterward.</p>
+<p>Batch fitting still subtracts the weighted sample mean, or the ordinary mean
+when weights are absent. Incremental fitting uses its ordinary sample mean.
+Shrinkage targets are translated using their stored origin, including targets
+built from another model or with a custom covariance.</p>
+</section>
+<section id="posterior-scale-regularization">
+<h2>Posterior scale regularization<a class="headerlink" href="#posterior-scale-regularization" title="Link to this heading">#</a></h2>
+<p>The E-step applies <a class="reference internal" href="../api/utils.html#normix.utils.constants.B_POST_FLOOR" title="normix.utils.constants.B_POST_FLOOR"><code class="xref py py-data docutils literal notranslate"><span class="pre">B_POST_FLOOR</span></code></a> only when the
+prior GIG scale <span class="math notranslate nohighlight">\(b\)</span> is exactly zero, as in variance-gamma. A positive prior
+scale is preserved even below that floor, in both mixture hierarchies and both
+backends. This keeps the existing VG mode regularization while leaving positive
+GH, NIG, and NInvG posterior scales unchanged.</p>
+</section>
 </section>
 
 
@@ -1170,6 +1202,8 @@ backends are <code class="docutils literal notranslate"><span class="pre">'jax'<
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#loop-dispatch-batch">6. Loop Dispatch (Batch)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-references">7. Cross-References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#statistic-coordinates">Statistic coordinates</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#posterior-scale-regularization">Posterior scale regularization</a></li>
 </ul>
   </nav></div>
 

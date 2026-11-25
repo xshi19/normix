@@ -708,9 +708,7 @@
             <span class="c1"># Per-field τ: factors are leaf-wise τ/(1+τ) and 1/(1+τ).</span>
             <span class="n">factor_a</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">t</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
             <span class="n">factor_b</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">t</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
-            <span class="n">shifted_eta0</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">factor_a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eta0</span><span class="p">)</span>
-            <span class="n">scaled_base</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">factor_b</span><span class="p">,</span> <span class="n">eta_base</span><span class="p">)</span>
-            <span class="n">eta_t</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">shifted_eta0</span><span class="p">,</span> <span class="n">scaled_base</span><span class="p">)</span>
+            <span class="n">eta_t</span> <span class="o">=</span> <span class="n">affine_combine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta0</span><span class="p">,</span> <span class="n">eta_base</span><span class="p">,</span> <span class="n">factor_a</span><span class="p">,</span> <span class="n">factor_b</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Scalar τ: factors broadcast to every leaf.</span>
             <span class="n">factor_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau</span><span class="p">)</span>
@@ -732,7 +730,9 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    a : NormalMixtureEta or None</span>
-<span class="sd">        Additive shift (e.g. scaled prior).</span>
+<span class="sd">        Additive shift (e.g. scaled prior), added in the coordinates of the</span>
+<span class="sd">        new batch statistic; its ``origin`` is ignored. Rebase a prior to</span>
+<span class="sd">        that origin before scaling it.</span>
 <span class="sd">    b : float</span>
 <span class="sd">        Weight on previous state.</span>
 <span class="sd">    c : float</span>

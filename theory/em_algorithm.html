@@ -716,8 +716,9 @@ When a statistic rule is set, it is applied to the first E-step average
 only. The fitter subtracts the (possibly weighted) sample mean from the data and from
 <span class="math notranslate nohighlight">\(\mu\)</span> before these updates, and adds that mean back to <span class="math notranslate nohighlight">\(\mu\)</span>.
 <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(\Sigma\)</span>, and the mixing parameters are unchanged by the
-shift. A shrinkage target equal to the initial model’s expectation
-parameters is expressed in the centered coordinates. The penalty itself
+shift. Each shrinkage target is expressed in the centered coordinates using its
+explicit statistic origin. The stored location moments refer to
+<span class="math notranslate nohighlight">\(X-\mathrm{origin}\)</span>; the M-step restores that origin to <span class="math notranslate nohighlight">\(\mu\)</span>. The penalty itself
 is <a class="reference internal" href="shrinkage.html"><span class="doc">Shrinkage with Penalized Likelihood</span></a>.</p>
 <p>The ascent argument for an exact conditional maximization is in the
 <a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-em-algorithm/#ecm-and-multiple-cycles">EM note</a>.
