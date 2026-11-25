@@ -270,7 +270,9 @@ class AffineUpdate(AffineRule):
     Parameters
     ----------
     a : NormalMixtureEta or None
-        Additive shift (e.g. scaled prior).
+        Additive shift (e.g. scaled prior), added in the coordinates of the
+        new batch statistic; its ``origin`` is ignored. Rebase a prior to
+        that origin before scaling it.
     b : float
         Weight on previous state.
     c : float

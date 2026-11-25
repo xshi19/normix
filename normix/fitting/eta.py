@@ -188,8 +188,10 @@ def affine_combine(
       ``eqx.nn.Linear`` wrapped to operate on a flattened pytree).
 
     The shift ``a`` is either ``None`` (zero) or a stats-shape pytree.
-    Coordinate-bearing inputs are expressed about ``eta_new.origin``
-    before combining their statistic fields; the origin itself is preserved.
+    ``eta_prev`` is rebased to ``eta_new.origin`` before combining, and the
+    result keeps that origin. Weights and the shift are not coordinates:
+    their ``origin`` leaves are ignored, and ``a`` is added field by field
+    in ``eta_new``'s coordinates.
 
     Parameters
     ----------
@@ -206,8 +208,6 @@ def affine_combine(
     """
     if isinstance(eta_new, NormalMixtureEta):
         eta_prev = eta_prev.rebase(eta_new.origin)
-        if a is not None:
-            a = a.rebase(eta_new.origin)
     out = jax.tree.map(jnp.add, _apply(b, eta_prev), _apply(c, eta_new))
     if a is not None:
         out = jax.tree.map(jnp.add, out, a)

@@ -180,6 +180,11 @@ forms via `jax.tree.map`:
 | Stats-shape pytree | block-diagonal: leaf-wise multiply | per-field / per-element shrinkage |
 | Callable `η → η` | arbitrary linear operator | user-supplied; e.g. wrap `eqx.nn.Linear` |
 
+`eta_prev` is rebased to `eta_new.origin` first, and the result keeps that
+origin. Weight pytrees and the shift `a` are not coordinates: their `origin`
+leaves are ignored, so a six-field weight such as a Σ-only `tau` works
+unchanged. `a` is added in `eta_new`'s coordinates.
+
 We do **not** ship a flat $n \times n$ matrix form. That would force
 the public API to commit to a flatten order across $(s_1,\dots,s_6)$,
 leaking the contract into every user script. Users who want a true
