@@ -3417,16 +3417,21 @@ leaves the model unchanged.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#GeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="Link to this definition">#</a></dt>
 <dd><p>Warm-start from the best of NIG / VG / NInvG sub-model fits.</p>
 <p>Runs 5 EM iterations (JAX backend, Newton method) for each special
 case, converts each to GH parametrisation, and selects the candidate
 with the highest marginal log-likelihood.  A moment-based fallback
 (<span class="math notranslate nohighlight">\(p=1, a=1, b=1\)</span>) is included as a fourth candidate.</p>
+<p><code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> follows <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> and weights candidate
+initialization, EM updates, and likelihood ranking.</p>
 <p>Fully JAX-native: no try/except, no Python branching on data values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic"><em>GeneralizedHyperbolic</em></a></p>
@@ -3560,7 +3565,7 @@ A non-finite JAX solve is left in place so EM can set
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/distributions/generalized_hyperbolic.html#FactorGeneralizedHyperbolic.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.distributions.generalized_hyperbolic.FactorGeneralizedHyperbolic.default_init" title="Link to this definition">#</a></dt>
 <dd><p>Warm-start from the best of FactorNIG / FactorVG / FactorNInvG fits.</p>
 <p>Mirrors <a class="reference internal" href="#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init" title="normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeneralizedHyperbolic.default_init()</span></code></a>: runs a few
 EM iterations of each special-case factor family, converts each
@@ -3568,12 +3573,15 @@ subordinator to the GIG embedding, and selects the candidate
 with the highest marginal log-likelihood. A moment-based
 fallback (<span class="math notranslate nohighlight">\(p = 1, a = 1, b = 1\)</span>) is included as a fourth
 candidate.</p>
+<p><code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> follows <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> and weights candidate
+initialization, EM updates, and likelihood ranking.</p>
 <p>Fully JAX-native: no try/except, no Python branching on data values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

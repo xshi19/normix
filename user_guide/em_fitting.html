@@ -461,7 +461,10 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-algorithm">The algorithm</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-quick-path">The quick path</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-em">Batch EM</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-em">Batch EM</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-weights">Sample weights</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#incremental-mini-batch-em">Incremental (mini-batch) EM</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initialization-and-robustness">Initialization and robustness</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choosing-an-algorithm">Choosing an algorithm</a></li>
@@ -542,6 +545,39 @@ problem).</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">m_step_method</span></code></strong> is <code class="docutils literal notranslate"><span class="pre">'newton'</span></code>, <code class="docutils literal notranslate"><span class="pre">'lbfgs'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'bfgs'</span></code>.</p></li>
 </ul>
 <p>See <a class="reference internal" href="../tutorials/em/01_batch_em.html"><span class="doc">Batch EM in practice</span></a> for diagnostics and worked examples.</p>
+<section id="sample-weights">
+<h3>Sample weights<a class="headerlink" href="#sample-weights" title="Link to this heading">#</a></h3>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> to both initialization and fitting. For example,
+exponentially decaying weights give recent observations more influence:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="n">weights</span> <span class="o">=</span> <span class="mf">0.98</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">track_ll</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># The direct fitter accepts the same argument:</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Weights must have shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>, be finite and nonnegative, and contain
+at least one positive entry. Invalid weights raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> in eager
+calls; traced weights have a runtime domain check.
+normix normalizes them to sum to one. They weight sufficient statistics,
+centering, initial moments, and mean log-likelihood. GH initialization
+also uses them when fitting and ranking its candidate models.
+The same API works for factor models, MCECM, and both E-step backends.
+<code class="docutils literal notranslate"><span class="pre">sample_weight=None</span></code> preserves the unweighted path.</p>
+<p><code class="docutils literal notranslate"><span class="pre">result.log_likelihoods</span></code> records the weighted objective before each
+M-step. Use <code class="docutils literal notranslate"><span class="pre">result.model.marginal_log_likelihood(X,</span> <span class="pre">sample_weight=weights)</span></code>
+to evaluate the returned model. Scalar MAP shrinkage adds its penalty
+to the trace, as in unweighted fitting.</p>
+<p>Eta update rules receive <span class="math notranslate nohighlight">\(n_{\mathrm{eff}}=(\sum_iw_i)^2/\sum_iw_i^2\)</span>
+as <code class="docutils literal notranslate"><span class="pre">batch_size</span></code>. <code class="docutils literal notranslate"><span class="pre">Shrinkage.tau</span></code> remains a relative penalty strength.
+Integer weights match replicated data for likelihood EM; count-dependent
+eta rules instead use this effective sample size.
+See <a class="reference internal" href="../theory/em_algorithm.html"><span class="doc">EM Algorithm for Generalized Hyperbolic Distributions</span></a> for the weighted formulas.
+Exponential families also accept <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> in <code class="docutils literal notranslate"><span class="pre">fit</span></code>, <code class="docutils literal notranslate"><span class="pre">fit_mle</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">default_init</span></code>. Incremental EM keeps its existing step-weight API.</p>
+</section>
 </section>
 <section id="incremental-mini-batch-em">
 <h2>Incremental (mini-batch) EM<a class="headerlink" href="#incremental-mini-batch-em" title="Link to this heading">#</a></h2>
@@ -639,7 +675,10 @@ models, is in <a class="reference internal" href="../design/why_not_gradient_des
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-algorithm">The algorithm</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-quick-path">The quick path</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-em">Batch EM</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-em">Batch EM</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-weights">Sample weights</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#incremental-mini-batch-em">Incremental (mini-batch) EM</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initialization-and-robustness">Initialization and robustness</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choosing-an-algorithm">Choosing an algorithm</a></li>

@@ -981,11 +981,14 @@ storage form a model uses.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood">
-<span class="sig-name descname"><span class="pre">marginal_log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.marginal_log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood" title="Link to this definition">#</a></dt>
-<dd><p>Mean log-likelihood over a dataset.</p>
+<span class="sig-name descname"><span class="pre">marginal_log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.marginal_log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.marginal_log_likelihood" title="Link to this definition">#</a></dt>
+<dd><p>Mean log-likelihood, optionally using the observation weights from <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
@@ -995,13 +998,14 @@ storage form a model uses.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.e_step">
-<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.e_step" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.e_step" title="Link to this definition">#</a></dt>
 <dd><p>E-step: <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> <code class="docutils literal notranslate"><span class="pre">(eta,</span> <span class="pre">log_lik)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1088,10 +1092,10 @@ rotational gauge of <span class="math notranslate nohighlight">\(F\)</span>.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.MarginalMixture.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fitter_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.fit" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">fitter_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#MarginalMixture.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.MarginalMixture.fit" title="Link to this definition">#</a></dt>
 <dd><p>Fit using <code class="docutils literal notranslate"><span class="pre">self</span></code> as initialisation. Returns
 <a class="reference internal" href="fitting.html#normix.fitting.em.EMResult" title="normix.fitting.em.EMResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EMResult</span></code></a>.</p>
-<p>Keyword arguments other than <code class="docutils literal notranslate"><span class="pre">alpha_min</span></code> are forwarded to
+<p>Other keyword arguments are forwarded to
 <a class="reference internal" href="fitting.html#normix.fitting.em.BatchEMFitter" title="normix.fitting.em.BatchEMFitter"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchEMFitter</span></code></a> (<code class="docutils literal notranslate"><span class="pre">algorithm</span></code>,
 <code class="docutils literal notranslate"><span class="pre">track_ll</span></code>, <code class="docutils literal notranslate"><span class="pre">eta_update</span></code>, <code class="docutils literal notranslate"><span class="pre">m_step_kwargs</span></code>, backends, …).
 Family-specific defaults come from <code class="docutils literal notranslate"><span class="pre">_fit_defaults</span></code> and are
@@ -1099,6 +1103,12 @@ overridden by any explicitly supplied kwarg.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Finite, nonnegative observation weights of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>,
+with positive total weight. Normalized internally to sum to
+one for sufficient statistics, centering, and log-likelihood.
+Eta update rules receive the effective sample size
+<span class="math notranslate nohighlight">\((\sum_i w_i)^2 / \sum_i w_i^2\)</span>. <code class="docutils literal notranslate"><span class="pre">None</span></code> retains
+the unweighted path. Use the same weights in <code class="docutils literal notranslate"><span class="pre">default_init</span></code>.</p></li>
 <li><p><strong>alpha_min</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><em>float</em></a><em>, </em><em>'density'</em><em> or </em><em>'inverse_moment'</em><em>, </em><em>optional</em>) – Opt-in lower bound on the Gamma subordinator shape <span class="math notranslate nohighlight">\(\alpha\)</span>
 (Variance Gamma only — the unique family whose marginal
 likelihood is unbounded at <span class="math notranslate nohighlight">\(x=\mu\)</span>). Restricts the
@@ -1382,7 +1392,7 @@ is what the unchanged M-step needs in order to return <span class="math notransl
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.e_step">
-<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.e_step" title="Link to this definition">#</a></dt>
 <dd><p>Full E-step: subordinator conditionals + batch aggregation.</p>
 <p>Returns <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> with aggregated
 <a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><code class="xref py py-class docutils literal notranslate"><span class="pre">NormalMixtureEta</span></code></a> and the mean
@@ -1395,6 +1405,8 @@ log-likelihood <span class="math notranslate nohighlight">\(\ell_n(\theta)\)</sp
 <li><p><strong>X</strong> (<em>(</em><em>n</em><em>, </em><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture.d" title="normix.mixtures.marginal.NormalMixture.d"><em>d</em></a><em>) </em><em>data array</em>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'jax'</span></code> (default): <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over <code class="docutils literal notranslate"><span class="pre">conditional_expectations</span></code>.
 <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>: quad forms in JAX + GIG Bessel on CPU.</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em>, </em><em>optional</em>) – Observation weights as in <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code>; applied to both
+sufficient statistics and the returned log-likelihood.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1564,7 +1576,7 @@ this pytree. Subordinator parameters are excluded here.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.marginal.NormalMixture.default_init">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.default_init" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/marginal.html#NormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.marginal.NormalMixture.default_init" title="Link to this definition">#</a></dt>
 <dd><p>Moment-based initialisation from data.</p>
 <dl class="simple">
 <dt>Returns a model with:</dt><dd><p>mu    = sample mean
@@ -1573,10 +1585,15 @@ Sigma = empirical covariance (regularized)
 subordinator = distribution-specific defaults</p>
 </dd>
 </dl>
-<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.</p>
+<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.
+<code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> follows <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> and weights the sample mean
+and population covariance (without a degrees-of-freedom correction).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
@@ -1781,7 +1798,7 @@ Stopping uses the Aitken remaining gap of <span class="math notranslate nohighli
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.e_step">
-<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.e_step" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">e_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'jax'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.e_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.e_step" title="Link to this definition">#</a></dt>
 <dd><p>Full E-step: posterior <span class="math notranslate nohighlight">\(Y\)</span> expectations + deterministic
 <span class="math notranslate nohighlight">\(Z\)</span> reductions.</p>
 <p>Returns <a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">EStepResult</span></code></a> whose <code class="docutils literal notranslate"><span class="pre">eta</span></code> is
@@ -1790,12 +1807,15 @@ fields are batch averages of the standard mixture statistics;
 the four <span class="math notranslate nohighlight">\(Z\)</span>-fields follow
 <code class="docutils literal notranslate"><span class="pre">docs/theory/factor_analysis.md</span></code> §E-Step) and whose
 <code class="docutils literal notranslate"><span class="pre">log_lik</span></code> is the conjugacy mean log-likelihood at the current
-parameters.</p>
+parameters.
+<code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> follows <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code>; it weights all ten
+statistics and the returned log-likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1930,18 +1950,21 @@ and
 
 <dl class="py method">
 <dt class="sig sig-object py" id="normix.mixtures.factor.FactorNormalMixture.default_init">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.default_init" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">default_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/normix/mixtures/factor.html#FactorNormalMixture.default_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#normix.mixtures.factor.FactorNormalMixture.default_init" title="Link to this definition">#</a></dt>
 <dd><p>Moment-based initialisation from data with <code class="docutils literal notranslate"><span class="pre">r</span></code> factors.</p>
 <p>Sets <span class="math notranslate nohighlight">\(\mu = \bar X\)</span>, <span class="math notranslate nohighlight">\(\gamma = 0\)</span>, and splits the
 empirical covariance into a rank-<code class="docutils literal notranslate"><span class="pre">r</span></code> factor block (top-<code class="docutils literal notranslate"><span class="pre">r</span></code>
 eigenvectors scaled by <span class="math notranslate nohighlight">\(\sqrt{\lambda - \bar\lambda}\)</span>)
 plus a positive diagonal residual.</p>
-<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.</p>
+<p>Useful as a starting point for <code class="docutils literal notranslate"><span class="pre">model.fit(X)</span></code>.
+<code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> follows <code class="xref py py-meth docutils literal notranslate"><span class="pre">fit()</span></code> and weights the sample mean
+and population covariance before the factor decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>r</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><em>int</em></a>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

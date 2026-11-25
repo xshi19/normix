@@ -969,13 +969,18 @@
 <div class="viewcode-block" id="GeneralizedHyperbolic.default_init">
 <a class="viewcode-back" href="../../../api/distributions.html#normix.distributions.generalized_hyperbolic.GeneralizedHyperbolic.default_init">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_weight</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Warm-start from the best of NIG / VG / NInvG sub-model fits.</span>
 
 <span class="sd">        Runs 5 EM iterations (JAX backend, Newton method) for each special</span>
 <span class="sd">        case, converts each to GH parametrisation, and selects the candidate</span>
 <span class="sd">        with the highest marginal log-likelihood.  A moment-based fallback</span>
 <span class="sd">        (:math:`p=1, a=1, b=1`) is included as a fourth candidate.</span>
+
+<span class="sd">        ``sample_weight`` follows :meth:`fit` and weights candidate</span>
+<span class="sd">        initialization, EM updates, and likelihood ranking.</span>
 
 <span class="sd">        Fully JAX-native: no try/except, no Python branching on data values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -993,33 +998,39 @@
         <span class="p">)</span>
 
         <span class="c1"># --- NIG: p=-0.5, a=λ/μ², b=λ ---</span>
-        <span class="n">nig</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">nig</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">NormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">j_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">p_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4999</span><span class="p">)</span>
         <span class="n">a_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
         <span class="n">b_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">j_nig</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-        <span class="n">ll_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># --- VG: p=α, a=2β, b≈0 ---</span>
-        <span class="n">vg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">VarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">vg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">VarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">j_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">p_vg</span> <span class="o">=</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">alpha</span>
         <span class="n">a_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j_vg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
         <span class="n">b_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
-        <span class="n">ll_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># --- NInvG: p=-α, a≈0, b=2β ---</span>
-        <span class="n">ninvg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">NormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">ninvg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">NormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">j_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">p_ninvg</span> <span class="o">=</span> <span class="o">-</span><span class="n">j_ninvg</span><span class="o">.</span><span class="n">alpha</span>
         <span class="n">a_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
         <span class="n">b_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">j_ninvg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-        <span class="n">ll_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># --- Fallback: moment-based default (p=1, a=1, b=1) ---</span>
-        <span class="n">fallback</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">fallback</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
         <span class="n">j_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">_joint</span>
-        <span class="n">ll_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># Stack candidates and select best by log-likelihood</span>
         <span class="n">lls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ll_nig</span><span class="p">,</span> <span class="n">ll_vg</span><span class="p">,</span> <span class="n">ll_ninvg</span><span class="p">,</span> <span class="n">ll_fb</span><span class="p">])</span>
@@ -1257,6 +1268,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_init</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">sample_weight</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FactorGeneralizedHyperbolic&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Warm-start from the best of FactorNIG / FactorVG / FactorNInvG fits.</span>
 
@@ -1266,6 +1278,9 @@
 <span class="sd">        with the highest marginal log-likelihood. A moment-based</span>
 <span class="sd">        fallback (:math:`p = 1, a = 1, b = 1`) is included as a fourth</span>
 <span class="sd">        candidate.</span>
+
+<span class="sd">        ``sample_weight`` follows :meth:`fit` and weights candidate</span>
+<span class="sd">        initialization, EM updates, and likelihood ranking.</span>
 
 <span class="sd">        Fully JAX-native: no try/except, no Python branching on data values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1284,31 +1299,35 @@
 
         <span class="c1"># NIG: p=-0.5, a=λ/μ_IG², b=λ</span>
         <span class="n">nig</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-            <span class="n">FactorNormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+            <span class="n">FactorNormalInverseGaussian</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">p_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4999</span><span class="p">)</span>
         <span class="n">a_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">lam</span> <span class="o">/</span> <span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">mu_ig</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span>
                          <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
         <span class="n">b_nig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">nig</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-        <span class="n">ll_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_nig</span> <span class="o">=</span> <span class="n">nig</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># VG: p=α, a=2β, b≈0</span>
-        <span class="n">vg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">FactorVarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">vg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">FactorVarianceGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">p_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">alpha</span>
         <span class="n">a_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">vg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
         <span class="n">b_vg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
-        <span class="n">ll_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_vg</span> <span class="o">=</span> <span class="n">vg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># NInvG: p=-α, a≈0, b=2β</span>
         <span class="n">ninvg</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-            <span class="n">FactorNormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">),</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
+            <span class="n">FactorNormalInverseGamma</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">),</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span><span class="o">.</span><span class="n">model</span>
         <span class="n">p_ninvg</span> <span class="o">=</span> <span class="o">-</span><span class="n">ninvg</span><span class="o">.</span><span class="n">alpha</span>
         <span class="n">a_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">)</span>
         <span class="n">b_ninvg</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">GIG_CLAMP_LO</span><span class="p">,</span> <span class="n">GIG_CLAMP_HI</span><span class="p">)</span>
-        <span class="n">ll_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">ll_ninvg</span> <span class="o">=</span> <span class="n">ninvg</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="c1"># Moment-based fallback (p=1, a=1, b=1)</span>
-        <span class="n">fallback</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">)</span>
-        <span class="n">ll_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">fallback</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default_init</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
+        <span class="n">ll_fb</span> <span class="o">=</span> <span class="n">fallback</span><span class="o">.</span><span class="n">marginal_log_likelihood</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="n">sample_weight</span><span class="p">)</span>
 
         <span class="n">lls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ll_nig</span><span class="p">,</span> <span class="n">ll_vg</span><span class="p">,</span> <span class="n">ll_ninvg</span><span class="p">,</span> <span class="n">ll_fb</span><span class="p">])</span>
         <span class="n">lls</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lls</span><span class="p">),</span> <span class="n">lls</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>

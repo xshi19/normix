@@ -461,7 +461,10 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-distribution">Conditional distribution</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-moments">Conditional moments</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-step</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-step</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-weights">Observation weights</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#m-step">M-step</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scale-normalization">Scale normalization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ecm-cycles">ECM cycles</a></li>
@@ -559,6 +562,48 @@ This page keeps the stored order <a class="reference internal" href="#equation-e
 The GIG solver receives <span class="math notranslate nohighlight">\((\hat s_3^{(k)}, \hat s_1^{(k)}, \hat s_2^{(k)})\)</span>.
 The reason for these six blocks is in the
 <a class="reference external" href="https://xshi19.github.io/math/normix-theory/normix-em-algorithm/#e-step-in-one-statistic-order">EM note</a>.</p>
+<section id="observation-weights">
+<h3>Observation weights<a class="headerlink" href="#observation-weights" title="Link to this heading">#</a></h3>
+<p>Batch EM accepts finite weights <span class="math notranslate nohighlight">\(w_i \geq 0\)</span> with <span class="math notranslate nohighlight">\(\sum_i w_i &gt; 0\)</span>.
+Writing <span class="math notranslate nohighlight">\(\bar w_i = w_i / \sum_j w_j\)</span>, the weighted E-step is</p>
+<div class="math notranslate nohighlight">
+\[\widehat\eta^{(k)}
+= \sum_{i=1}^n \bar w_i\,
+E_{\theta_k}[t(X,Y)\mid X=x_i].\]</div>
+<p>Thus every <span class="math notranslate nohighlight">\(n^{-1}\sum_j\)</span> in <a class="reference internal" href="#equation-e-step">(2)</a> becomes
+<span class="math notranslate nohighlight">\(\sum_j \bar w_j\)</span>. For factor mixtures, this applies to all ten
+statistics of <span class="math notranslate nohighlight">\((X,Y,Z)\)</span>, including the four latent-factor statistics.
+Both E-steps of MCECM use the same weights. The M-step formulas are
+unchanged.</p>
+<p>The conjugacy identity gives the weighted mean log-likelihood</p>
+<div class="math notranslate nohighlight">
+\[\ell_w(\theta)
+= \sum_{i=1}^n \bar w_i\log f(x_i\mid\theta)
+= \sum_{i=1}^n \bar w_i
+  \left[-\frac d2\log(2\pi)-\frac12\log|\Sigma|
+  +\gamma^\top\Sigma^{-1}(x_i-\mu)
+  +\psi_{\mathrm{post},i}(\theta)\right]
+  - \psi_Y(\theta).\]</div>
+<p>Here <span class="math notranslate nohighlight">\(\psi_{\mathrm{post},i}\)</span> and <span class="math notranslate nohighlight">\(\psi_Y\)</span> are the posterior and prior
+GIG log-partitions, both in the GIG base-measure convention.
+The fitter uses <span class="math notranslate nohighlight">\(\ell_w\)</span> for its Aitken convergence check and reported
+trace; scalar MAP shrinkage adds the same penalty as in the unweighted
+case. Each trace entry is evaluated before that iteration’s M-step.</p>
+<p>Centering and initialization use <span class="math notranslate nohighlight">\(\sum_i\bar w_i x_i\)</span> and the weighted
+population covariance. The same center translates shrinkage targets.
+Eta update rules receive the effective sample size</p>
+<div class="math notranslate nohighlight">
+\[n_{\mathrm{eff}}
+= \frac{(\sum_i w_i)^2}{\sum_i w_i^2}
+= \frac{1}{\sum_i\bar w_i^2}.\]</div>
+<p>This makes count-dependent updates invariant to a common rescaling of
+the weights. The relative shrinkage strength <span class="math notranslate nohighlight">\(\tau\)</span> and scale-gauge
+regularizations do not depend on sample count. Integer weights therefore
+match replicated observations for likelihood EM, but count-dependent
+eta rules use <span class="math notranslate nohighlight">\(n_{\mathrm{eff}}\)</span>, not the replicated count.
+With <code class="docutils literal notranslate"><span class="pre">sample_weight=None</span></code>, the original unweighted reductions are retained.
+Incremental EM retains its existing step-weight rules.</p>
+</section>
 </section>
 <section id="m-step">
 <h2>M-step<a class="headerlink" href="#m-step" title="Link to this heading">#</a></h2>
@@ -668,7 +713,7 @@ the selected regularization, then a second E-step, then
 <code class="docutils literal notranslate"><span class="pre">det_sigma_x</span></code>, or <code class="docutils literal notranslate"><span class="pre">a_eq_b</span></code>. <code class="docutils literal notranslate"><span class="pre">det_sigma_one</span></code> applies the coupled map
 above, including <span class="math notranslate nohighlight">\(\gamma\)</span> and the mixing parameters.
 When a statistic rule is set, it is applied to the first E-step average
-only. The fitter subtracts the sample mean from the data and from
+only. The fitter subtracts the (possibly weighted) sample mean from the data and from
 <span class="math notranslate nohighlight">\(\mu\)</span> before these updates, and adds that mean back to <span class="math notranslate nohighlight">\(\mu\)</span>.
 <span class="math notranslate nohighlight">\(\gamma\)</span>, <span class="math notranslate nohighlight">\(\Sigma\)</span>, and the mixing parameters are unchanged by the
 shift. A shrinkage target equal to the initial model’s expectation
@@ -851,7 +896,10 @@ Direct maximization of the observed likelihood is compared in
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-distribution">Conditional distribution</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conditional-moments">Conditional moments</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-step</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#e-step">E-step</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#observation-weights">Observation weights</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#m-step">M-step</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scale-normalization">Scale normalization</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ecm-cycles">ECM cycles</a></li>
