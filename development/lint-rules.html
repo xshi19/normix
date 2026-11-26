@@ -1,0 +1,791 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Lint rules and numerical checks &#8212; normix 0.4.5 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/normix.css?v=b7905d79" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=0a60860d"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js?v=b8b12719"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'development/lint-rules';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Changelog" href="../changelog.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.4" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">normix 0.4.5 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../index.html">
+                    normix
+                </a>
+            </li>
+        </ul>
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/first_model.html">Your first model, step by step</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../user_guide/index.html">User guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/exponential_family.html">Exponential-family structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/capabilities.html">Autodiff surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cdf_ppf.html">CDF and PPF accuracy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/em_fitting.html">Fitting with EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/divergences.html">Divergences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gpu_performance.html">GPU performance</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Distributions</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions/index.html">Distribution gallery</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gig.html">GIG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/gamma.html">Gamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gamma.html">InverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/inverse_gaussian.html">InverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/multivariate_normal.html">MultivariateNormal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/variance_gamma.html">VarianceGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gamma.html">NormalInverseGamma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/normal_inverse_gaussian.html">NormalInverseGaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/generalized_hyperbolic.html">GeneralizedHyperbolic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/factor_variants.html">Factor variants</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/01_exponential_family.html">The exponential family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/02_gh_family_tour.html">A tour of the GH family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/03_bessel_and_log_kv.html">Bessel functions and <code class="docutils literal notranslate"><span class="pre">log_kv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/core/04_random_sampling.html">Random sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/01_univariate_positive.html">Univariate positive distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/02_gig.html">The Generalized Inverse Gaussian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/03_multivariate_normal.html">The multivariate normal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/04_normal_mixtures.html">Normal variance-mean mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/distributions/05_factor_mixtures.html">Factor mixtures for high dimensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/01_batch_em.html">Batch EM in practice</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/02_incremental_em.html">Incremental (mini-batch) EM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/03_initialization_and_multistart.html">Initialization and multi-start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/em/04_em_vs_mcecm.html">EM vs MCECM Algorithm Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/01_divergences.html">Divergences between models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/02_goodness_of_fit.html">Goodness of fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/stats/03_varentropy.html">Entropy, varentropy, and fat tails</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/01_univariate_index.html">A heavy-tailed index series</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/02_multivariate_stocks.html">A multivariate stock basket</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/03_factor_mixture_portfolios.html">Factor mixtures for a Dow Jones 30 portfolio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/04_cvar_optimization.html">Portfolio CVaR and its derivatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/05_mean_risk_optimization.html">Mean-risk optimization and the efficient surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/06_transaction_costs.html">Transaction costs and local-quadratic rebalancing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/07_diversification.html">Diversification: variance ENB vs CVaR ENB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/finance/08_quadrature_scenarios.html">Quadrature scenarios for portfolio CVaR</a></li>
+</ul>
+</details></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../theory/index.html">Mathematical Background</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gig.html">The Generalized Inverse Gaussian Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/gh.html">The Generalized Hyperbolic Distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/varentropy.html">Entropy, Varentropy, and Rényi Entropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/em_algorithm.html">EM Algorithm for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/online_em.html">Online EM Algorithm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/shrinkage.html">Shrinkage with Penalized Likelihood</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/factor_analysis.html">Factor Analysis for Generalized Hyperbolic Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/mean_risk_optimization.html">Mean-Risk Optimization for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/cvar_derivatives.html">CVaR Derivatives for Normal Mixture Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/quadrature_scenarios.html">Quadrature scenarios for mixture CVaR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/transaction_costs.html">Portfolio Optimization with Transaction Costs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/enb.html">Effective Number of Bets and Minimum Torsion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../theory/generalized_enb.html">Generalized Effective Number of Bets</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../design/index.html">Design Rationale</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../design/exponential_family.html">Exponential Family Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/mixtures.html">Mixture Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/em_framework.html">EM Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/solvers_and_bessel.html">Solvers and Bessel Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/why_not_gradient_descent.html">Why not gradient descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../design/quadrature_scenarios.html">Probability measures for portfolio scenarios</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../research/index.html">Research notes</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking.html">Subordinator-tracking portfolios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/subordinator_tracking_empirics.html">Subordinator tracking on the S&amp;P 500</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../research/mixture_gauges.html">Gauges for normal mean–variance mixtures</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/distributions.html">Distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/mixtures.html">Mixtures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/fitting.html">Fitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/finance.html">Finance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/utils.html">Utilities</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../asv.html">Benchmark trends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Lint rules and numerical checks</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/xshi19/normix/issues/new?title=Issue%20on%20page%20%2Fdevelopment/lint-rules.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/development/lint-rules.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Lint rules and numerical checks</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reading-a-ruff-finding">Reading a Ruff finding</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#four-numerical-checks">Four numerical checks</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bessel-functions-in-production">Bessel functions in production</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#an-exponential-times-a-normal-probability">An exponential times a normal probability</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#precision-in-standalone-examples">Precision in standalone examples</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-on-every-solver-attempt">Derivatives on every solver attempt</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-project-instructions-have-a-check">Which project instructions have a check?</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="lint-rules-and-numerical-checks">
+<h1>Lint rules and numerical checks<a class="headerlink" href="#lint-rules-and-numerical-checks" title="Link to this heading">#</a></h1>
+<p>Run these commands from the repository root. Ruff reads the Python source and
+reports a file, line, and rule code for each finding. The second command also
+checks numerical patterns that have caused bugs in normix.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>normix/<span class="w"> </span>tests/
+uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_lint_contracts.py
+</pre></div>
+</div>
+<p>Continuous integration (CI), the checks that run on every pull request, runs
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">ruff</span> <span class="pre">check</span> <span class="pre">normix/</span> <span class="pre">tests/</span></code> as its own step before the tests, so a lint
+finding fails the job early. Both checks also run in the default
+<code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">pytest</span> <span class="pre">tests/</span></code> suite. The project’s lint scope is the package and its
+tests.</p>
+<section id="reading-a-ruff-finding">
+<h2>Reading a Ruff finding<a class="headerlink" href="#reading-a-ruff-finding" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Rule</p></th>
+<th class="head"><p>What can go wrong</p></th>
+<th class="head"><p>Example to avoid</p></th>
+<th class="head"><p>Correction</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>F (names and imports)</p></td>
+<td><p>A misspelled name can fail at runtime. An unresolved return annotation can hide a missing type dependency. Unused imports, repeated definitions, unused locals and empty formatting are also reported.</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">&quot;EMResult&quot;</span></code> without importing the type anywhere in the module. Write <code class="docutils literal notranslate"><span class="pre">f&quot;failed&quot;</span></code> with nothing to format.</p></td>
+<td><p>Import <code class="docutils literal notranslate"><span class="pre">EMResult</span></code> inside <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">TYPE_CHECKING:</span></code> if importing it at runtime would create a cycle. Write <code class="docutils literal notranslate"><span class="pre">&quot;failed&quot;</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>E9 (source file errors)</p></td>
+<td><p>Ruff must be able to read a file to check it. E902 reports a missing or unreadable input.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ruff</span> <span class="pre">check</span> <span class="pre">missing.py</span></code></p></td>
+<td><p>Give Ruff the existing file or restore read access.</p></td>
+</tr>
+<tr class="row-even"><td><p>B (likely bugs)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">zip</span></code> normally stops at the shorter input. A test that expects any exception can pass for the wrong reason.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">zip(lower,</span> <span class="pre">upper)</span></code> for coordinate bounds. <code class="docutils literal notranslate"><span class="pre">pytest.raises(Exception)</span></code> for assignment to a frozen result.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">zip(lower,</span> <span class="pre">upper,</span> <span class="pre">strict=True)</span></code> checks both lengths. <code class="docutils literal notranslate"><span class="pre">pytest.raises(FrozenInstanceError)</span></code> tests immutability.</p></td>
+</tr>
+<tr class="row-odd"><td><p>BLE001 (broad exception handler)</p></td>
+<td><p>Catching <code class="docutils literal notranslate"><span class="pre">Exception</span></code> can turn a programming error into an apparently successful fit.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception:</span> <span class="pre">return</span> <span class="pre">previous</span></code></p></td>
+<td><p>Catch <code class="docutils literal notranslate"><span class="pre">(SolverDidNotConverge,</span> <span class="pre">ValueError)</span></code> at a solver boundary that can recover from those failures.</p></td>
+</tr>
+<tr class="row-even"><td><p>S110 (discarded error)</p></td>
+<td><p>A broad handler containing only <code class="docutils literal notranslate"><span class="pre">pass</span></code> hides the cause of failure.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception:</span> <span class="pre">pass</span></code></p></td>
+<td><p>Let the error propagate, or handle the specific numerical failure.</p></td>
+</tr>
+<tr class="row-odd"><td><p>S112 (silent retry)</p></td>
+<td><p>A broad handler containing only <code class="docutils literal notranslate"><span class="pre">continue</span></code> can skip every start after a programming error.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception:</span> <span class="pre">continue</span></code></p></td>
+<td><p>In the multistart loop, retry on <code class="docutils literal notranslate"><span class="pre">SolverDidNotConverge</span></code> or <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Other errors reach the caller.</p></td>
+</tr>
+<tr class="row-even"><td><p>NPY (NumPy APIs)</p></td>
+<td><p>Legacy random calls use shared state. Reseeding it in a test can change the samples another test sees.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">np.random.seed(42)</span></code> followed by <code class="docutils literal notranslate"><span class="pre">np.random.gamma(3.0)</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rng</span> <span class="pre">=</span> <span class="pre">np.random.default_rng(42)</span></code> followed by <code class="docutils literal notranslate"><span class="pre">rng.gamma(3.0)</span></code> gives the test its own repeatable draws.</p></td>
+</tr>
+<tr class="row-odd"><td><p>TID251 (banned API)</p></td>
+<td><p>A direct SciPy Bessel import in the package bypasses the shared numerical implementation.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">scipy.special</span> <span class="pre">import</span> <span class="pre">kve</span></code> in a distribution</p></td>
+<td><p>Import <code class="docutils literal notranslate"><span class="pre">log_kv</span></code> or <code class="docutils literal notranslate"><span class="pre">log_kv_moments</span></code> from <code class="docutils literal notranslate"><span class="pre">normix.utils.bessel</span></code>. Tests may use SciPy for comparison.</p></td>
+</tr>
+<tr class="row-even"><td><p>RUF100 (unused suppression)</p></td>
+<td><p>A <code class="docutils literal notranslate"><span class="pre">noqa</span></code> comment tells Ruff to ignore a warning. A leftover suppression makes the reader look for an exception that no longer exists.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">value</span>&#160; <span class="pre">#</span> <span class="pre">noqa:</span> <span class="pre">F401</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">value</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The F checks would have flagged four unused imports removed from the joint
+mixture module. The broad-handler rule would also have flagged two Generalized
+Hyperbolic fallbacks that swallowed unrelated exceptions. Decision E17 limits
+which failures can preserve a previous fit. The CPU multistart loop also used
+to discard unexpected exceptions while trying other starts.
+<a class="reference external" href="https://github.com/xshi19/normix/commit/15a90ab34ac352a936c7258281bf8a08bbe35954">Joint import cleanup</a>
+and <a class="reference external" href="https://github.com/xshi19/normix/commit/7c5deac890c9d63db7e85137c9cde7753fbcffa7">GH exception repair in #173</a>.</p>
+</section>
+<section id="four-numerical-checks">
+<h2>Four numerical checks<a class="headerlink" href="#four-numerical-checks" title="Link to this heading">#</a></h2>
+<section id="bessel-functions-in-production">
+<h3>Bessel functions in production<a class="headerlink" href="#bessel-functions-in-production" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">scipy.special.kv</span></code> returns a Bessel value and <code class="docutils literal notranslate"><span class="pre">kve</span></code> returns a scaled
+value. Production callers usually need the logarithm or moments. For example,
+replace <code class="docutils literal notranslate"><span class="pre">np.log(kve(v,</span> <span class="pre">z))</span> <span class="pre">-</span> <span class="pre">z</span></code> with <code class="docutils literal notranslate"><span class="pre">log_kv(v,</span> <span class="pre">z,</span> <span class="pre">backend=&quot;cpu&quot;)</span></code>.
+The <a class="reference external" href="https://docs.scipy.org/doc/scipy/">SciPy</a> implementation remains an
+independent reference in tests. Ruff enforces both banned names. Pytest
+checks that the same import fails inside the package and passes inside a test.
+The old CPU implementation imported <code class="docutils literal notranslate"><span class="pre">kve</span></code> before the shared kernel landed.
+<a class="reference external" href="https://github.com/xshi19/normix/commit/acdad613ca73e39bc2d88f9e13692e328cd6a881">Kernel replacement in acdad61</a>.</p>
+</section>
+<section id="an-exponential-times-a-normal-probability">
+<h3>An exponential times a normal probability<a class="headerlink" href="#an-exponential-times-a-normal-probability" title="Link to this heading">#</a></h3>
+<p>A normal cumulative distribution function (CDF) gives the probability of
+a value at or below a threshold. In the inverse Gaussian CDF, a large scale
+times a tiny probability can be finite even when the computer evaluates the
+two factors as infinity and zero. The check recognizes multiplication in
+either order. Add the logarithms, then exponentiate once.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Can produce infinity times zero</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+<span class="c1"># log_ndtr(t) computes the log probability directly</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">log_ndtr</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The inverse Gaussian implementation used the first expression before the
+repair. <a class="reference external" href="https://github.com/xshi19/normix/commit/02d2a8e307bbf6667ef1a8824706e5d2e6fb53b5">CDF fix in 02d2a8e</a>.</p>
+</section>
+<section id="precision-in-standalone-examples">
+<h3>Precision in standalone examples<a class="headerlink" href="#precision-in-standalone-examples" title="Link to this heading">#</a></h3>
+<p>A doctest is a Python example with <code class="docutils literal notranslate"><span class="pre">&gt;&gt;&gt;</span></code> prompts in a docstring. Readers
+can run one outside the test suite. An example that starts with
+<code class="docutils literal notranslate"><span class="pre">&gt;&gt;&gt;</span> <span class="pre">from</span> <span class="pre">normix</span> <span class="pre">import</span> <span class="pre">log_kv</span></code> can inherit 32-bit arithmetic. Enable
+64-bit arithmetic in the example before its first normix import.</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;jax_enable_x64&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">normix</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_kv</span>
+</pre></div>
+</div>
+<p>The check reads the example statements in order. The Bessel symmetry example
+compares two values to <code class="docutils literal notranslate"><span class="pre">1e-10</span></code>. In 32-bit arithmetic their difference was about
+<code class="docutils literal notranslate"><span class="pre">2e-7</span></code>. <a class="reference external" href="https://docs.jax.dev/en/latest/default_dtypes.html">JAX precision settings</a>
+and <a class="reference external" href="https://github.com/xshi19/normix/commit/8bfcaa1fec620e424a3e50f2f4df6da0ee8cee6b">doctest fix in 8bfcaa1</a>.</p>
+</section>
+<section id="derivatives-on-every-solver-attempt">
+<h3>Derivatives on every solver attempt<a class="headerlink" href="#derivatives-on-every-solver-attempt" title="Link to this heading">#</a></h3>
+<p>A multistart solver tries several initial guesses. The caller can supply the
+gradient (first derivatives) and Hessian (second derivatives) as functions.
+Dropping them changes the problem the solver can evaluate. For example, CPU
+Newton requires a Hessian. Every call in the retry loop must receive both
+functions, including the last call after all starts fail.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Loses the caller&#39;s derivative functions</span>
+<span class="n">solve_bregman</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">starts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+<span class="c1"># options contains the other solver settings</span>
+<span class="n">solve_bregman</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">starts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">grad_fn</span><span class="o">=</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="o">=</span><span class="n">hess_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The last attempt at <code class="docutils literal notranslate"><span class="pre">e51c1a7</span></code> omitted both arguments. The source check
+inspects every call in the loop. A separate test forces a retry through the
+public entry point and compares the actual functions by identity.
+<a class="reference external" href="https://github.com/xshi19/normix/commit/7c5deac890c9d63db7e85137c9cde7753fbcffa7">Final retry fix in #173</a>.</p>
+</section>
+</section>
+<section id="which-project-instructions-have-a-check">
+<h2>Which project instructions have a check?<a class="headerlink" href="#which-project-instructions-have-a-check" title="Link to this heading">#</a></h2>
+<p>The repository’s instructions cover both executable contracts and matters
+of judgment. “Partial” means that specific cases have a test.
+<a class="reference external" href="https://github.com/xshi19/normix/blob/master/AGENTS.md">AGENTS.md</a>.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>AGENTS.md instruction or reading route</p></th>
+<th class="head"><p>Enforcing check</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Follow Python coding conventions</p></td>
+<td><p>Lint in pytest: F, E9, B and NPY check selected Python and <a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a> errors. RUF100 checks suppression comments.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Use the shared Bessel implementation</p></td>
+<td><p>Lint: TID251 in <code class="docutils literal notranslate"><span class="pre">normix/</span></code>. Pytest checks the production ban and the independent test-reference exception.</p></td>
+</tr>
+<tr class="row-even"><td><p>Use log-space arithmetic at extreme parameters</p></td>
+<td><p>Pytest checks the scaled normal CDF expression. Numerical tests cover particular tail values.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Use float64 for distribution calculations</p></td>
+<td><p>Pytest checks the order and value of the precision setting in standalone doctests.</p></td>
+</tr>
+<tr class="row-even"><td><p>Keep solver derivatives in natural parameter space</p></td>
+<td><p>Pytest checks callback forwarding on every retry. Solver tests check the coordinate transformation numerically.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Preserve numerical failures and honor solver status (E17)</p></td>
+<td><p>Lint: BLE001, S110 and S112. Pytest exercises recovery and propagation through actual solver calls.</p></td>
+</tr>
+<tr class="row-even"><td><p>Write specific tests and run the default suite before committing</p></td>
+<td><p>Lint: B017 checks broad exception assertions. Pytest enforces strict markers and excludes slow, stress, integration and GPU tests by default. CI runs the default suite.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Remove debug prints and annotate public methods</p></td>
+<td><p>None for complete coverage. T20 is disabled and CI does not run mypy. F821 catches unresolved annotation names.</p></td>
+</tr>
+<tr class="row-even"><td><p>Keep comments accurate and prose clear (unslop)</p></td>
+<td><p>None for meaning, clarity or mathematical accuracy.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Preserve parameter conversions, derivatives, special cases, immutable updates and single-observation APIs</p></td>
+<td><p>Partial pytest coverage through distribution, solver, marginal API and transformation tests. The <a class="reference internal" href="../user_guide/capabilities.html"><span class="doc">capability matrix</span></a> specifies which backends support compilation.</p></td>
+</tr>
+<tr class="row-even"><td><p>Respect published documentation boundaries and build the tutorials</p></td>
+<td><p>Docs CI runs <code class="docutils literal notranslate"><span class="pre">check_doc_links.sh</span></code> and builds Sphinx with warnings as errors. Its routine external link check is advisory. Scratch notebooks have no equivalent gate.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Verify mathematical claims and review numerical changes</p></td>
+<td><p>Partial pytest coverage for numerical properties, formal coverage records and host callbacks. Mutation testing and external review are separate activities.</p></td>
+</tr>
+<tr class="row-even"><td><p>Keep plans, architecture, rules and skills current. Follow design, reading and review workflows.</p></td>
+<td><p>None for completeness, documentation freshness or whether a review happened. The final tree also cannot establish that a regression test was run before the fix.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Use conventional commits and the release workflow</p></td>
+<td><p>Release automation consumes commit history. There is no mandatory local commit-message check.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../changelog.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Changelog</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reading-a-ruff-finding">Reading a Ruff finding</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#four-numerical-checks">Four numerical checks</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bessel-functions-in-production">Bessel functions in production</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#an-exponential-times-a-normal-probability">An exponential times a normal probability</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#precision-in-standalone-examples">Precision in standalone examples</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#derivatives-on-every-solver-attempt">Derivatives on every solver attempt</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#which-project-instructions-have-a-check">Which project instructions have a check?</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By normix developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024–2026, normix developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

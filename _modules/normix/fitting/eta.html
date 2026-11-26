@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -578,10 +582,6 @@
 <span class="c1"># Generalised affine combination</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="c1"># A weight on a stats pytree may be:</span>
-<span class="c1">#   - a scalar (Python float / int / 0-d jax.Array) — broadcast to every leaf;</span>
-<span class="c1">#   - a stats-shape pytree (e.g. NormalMixtureEta) — leaf-wise multiply;</span>
-<span class="c1">#   - a callable ``η → η`` — arbitrary linear map.</span>
 <span class="n">Weight</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;NormalMixtureEta&quot;</span><span class="p">]]</span>
 
 

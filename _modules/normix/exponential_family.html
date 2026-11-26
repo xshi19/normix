@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -1205,9 +1209,7 @@
 
 <span class="sd">        Host-side only. A traced ``X`` (``jit``, ``vmap``) skips the</span>
 <span class="sd">        check so those transforms still run; eager calls raise.</span>
-<span class="sd">        Multivariate families leave this as a no-op: their support is</span>
-<span class="sd">        :math:`\\mathbb{R}^d`, and a constant sample still has a</span>
-<span class="sd">        (singular) normal MLE.</span>
+<span class="sd">        This check applies only to families with positive support.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_on_positive_support</span><span class="p">():</span>
             <span class="k">return</span>

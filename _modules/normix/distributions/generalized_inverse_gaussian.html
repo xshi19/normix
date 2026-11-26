@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -523,21 +527,6 @@
     <span class="n">use_invg</span> <span class="o">=</span> <span class="n">use_limit</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">p</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">b</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">use_gamma</span><span class="p">,</span> <span class="n">use_invg</span><span class="p">,</span> <span class="n">off_theta</span><span class="p">,</span> <span class="n">z</span>
 
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Random variate generation helpers (Devroye TDR + PINV wrappers)</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#</span>
-<span class="c1"># Two GIG sampling methods, neither requiring Bessel evaluation:</span>
-<span class="c1">#</span>
-<span class="c1"># 1. ``_gig_rvs_devroye`` — Devroye TDR on :math:`u = w - w_0` in</span>
-<span class="c1">#    :math:`(p,z,s)` coordinates. Envelope tangents sit at the</span>
-<span class="c1">#    :math:`e^{-1}` level of :math:`\psi`; ``lax.while_loop`` redraws</span>
-<span class="c1">#    unaccepted columns (acceptance :math:`\ge e^{-1}` uniformly).</span>
-<span class="c1">#</span>
-<span class="c1"># 2. ``build_pinv_table`` + ``rvs_pinv`` — Numerical inverse CDF via</span>
-<span class="c1">#    :func:`normix.utils.rvs.build_pinv_table` seeded at</span>
-<span class="c1">#    ``_gig_log_mode(p-1, a, b)``.</span>
 
 <span class="n">_GIG_RVS_TINY64</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span>
 <span class="n">_GIG_TDR_DOUBLE_ITERS</span> <span class="o">=</span> <span class="mi">8</span>
@@ -953,7 +942,7 @@
 <span class="sd">            s_{-}(1+E[s_1]),\; s_{+}(1+E[s_2])\bigr),</span>
 <span class="sd">            \qquad H = D\,\mathrm{cov}(s)\,D,</span>
 
-<span class="sd">        where :math:`s_{\mp}=\exp(\tfrac12\log(a/b)\mp u_0)` and</span>
+<span class="sd">        where :math:`s_{-}=\sqrt{a/b}\exp(-u_0)`, :math:`s_{+}=\sqrt{b/a}\exp(u_0)` and</span>
 <span class="sd">        :math:`D=\mathrm{diag}(1,s_{-},s_{+})`. No Bessel ratios, no</span>
 <span class="sd">        :math:`p\pm 1` evaluations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -976,8 +965,8 @@
 <span class="sd">        :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` from</span>
 <span class="sd">        one :func:`~normix.utils.bessel.log_kv_moments` call.</span>
 
-<span class="sd">        Clamping :math:`a, b` to ``LOG_EPS`` keeps the Bessel kernel in its</span>
-<span class="sd">        stated domain. The default ``jax.grad`` path fails because</span>
+<span class="sd">        Flooring :math:`a, b` at ``LOG_EPS`` keeps the logarithms finite</span>
+<span class="sd">        and the Bessel argument positive. The default ``jax.grad`` path fails because</span>
 <span class="sd">        ``jnp.where`` evaluates all branches and</span>
 <span class="sd">        :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1555,7 +1544,7 @@
                 <span class="s2">&quot;E[X] * E[1/X] &gt; 1&quot;</span><span class="p">,</span> <span class="s2">&quot;-log(E[1/X]) &lt; E[log X]&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;E[log X] &lt; log(E[X])&quot;</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">satisfied</span><span class="p">,</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">conditions</span><span class="p">),</span> <span class="n">requirements</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">satisfied</span><span class="p">,</span> <span class="n">requirement</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">conditions</span><span class="p">),</span> <span class="n">requirements</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">satisfied</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GIG.from_expectation requires </span><span class="si">{</span><span class="n">requirement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_expectation_unchecked</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1613,9 +1602,6 @@
             <span class="n">theta0_scaled</span> <span class="o">=</span> <span class="n">theta0_scaled</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
                 <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">theta0_scaled</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">THETA_FLOOR</span><span class="p">))</span>
 
-            <span class="c1"># Hot path: stable jitted Newton with cached XLA executable.</span>
-            <span class="c1"># Avoids the per-call retrace incurred by solve_bregman&#39;s</span>
-            <span class="c1"># fresh Python closures (key bottleneck in GH JAX/JAX EM).</span>
             <span class="k">if</span> <span class="n">backend</span> <span class="o">==</span> <span class="s2">&quot;jax&quot;</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">theta_scaled</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">grad_norm</span><span class="p">,</span> <span class="n">converged</span> <span class="o">=</span> <span class="n">_gig_jax_newton_jit</span><span class="p">(</span>
                     <span class="n">eta_scaled</span><span class="p">,</span> <span class="n">theta0_scaled</span><span class="p">,</span>
@@ -1724,21 +1710,9 @@
 
 
 
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Stable jitted GIG Newton solver</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1">#</span>
-<span class="c1"># Hoisted so ``GIG.log_partition`` / EM conjugacy does not re-run eager</span>
-<span class="c1"># ``log_kv`` quadrature on every E-step. Same pattern as the Newton kernel</span>
-<span class="c1"># below: a module-level jit, not a fresh closure per call.</span>
 <span class="n">_gig_log_partition_jit</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span>
     <span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_log_partition_from_theta</span>
 <span class="p">)</span>
-
-<span class="c1"># Hoisted to module level so that JAX caches the compiled XLA executable</span>
-<span class="c1"># across all GIG.from_expectation(jax/newton) calls. Without this, every</span>
-<span class="c1"># warm-started solve inside an EM loop builds fresh Python closures and</span>
-<span class="c1"># forces JAX to re-trace the same Newton kernel, dominating GH M-step time.</span>
 
 <span class="n">_gig_jax_newton_jit</span> <span class="o">=</span> <span class="n">make_jit_newton_solver</span><span class="p">(</span>
     <span class="n">f</span><span class="o">=</span><span class="n">GeneralizedInverseGaussian</span><span class="o">.</span><span class="n">_log_partition_from_theta</span><span class="p">,</span>

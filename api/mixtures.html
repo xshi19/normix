@@ -268,6 +268,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -1384,7 +1388,7 @@ moments are stored about <span class="math notranslate nohighlight">\(\mu\)</spa
 The M-step restores that origin after reconstructing the covariance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta">NormalMixtureEta</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1409,7 +1413,7 @@ sufficient statistics and the returned log-likelihood.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult">EStepResult</a></p>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><em>EStepResult</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1433,7 +1437,7 @@ subordinator’s <code class="docutils literal notranslate"><span class="pre">fr
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1452,7 +1456,7 @@ may override to inject a warm-start <span class="math notranslate nohighlight">\
 <dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1467,7 +1471,7 @@ may override to inject a warm-start <span class="math notranslate nohighlight">\
 <dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1485,7 +1489,7 @@ or sanity-check fallbacks.</p>
 <dd class="field-odd"><p><strong>eta</strong> (<a class="reference internal" href="fitting.html#normix.fitting.eta.NormalMixtureEta" title="normix.fitting.eta.NormalMixtureEta"><em>NormalMixtureEta</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture">NormalMixture</a></p>
+<dd class="field-even"><p><a class="reference internal" href="#normix.mixtures.marginal.NormalMixture" title="normix.mixtures.marginal.NormalMixture"><em>NormalMixture</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1812,13 +1816,13 @@ statistics and the returned log-likelihood.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a>)</p></li>
+<li><p><strong>X</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a>)</p></li>
 <li><p><strong>backend</strong> (<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><em>str</em></a>)</p></li>
-<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>jax.Array</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>sample_weight</strong> (<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult">EStepResult</a></p>
+<dd class="field-even"><p><a class="reference internal" href="fitting.html#normix.fitting.eta.EStepResult" title="normix.fitting.eta.EStepResult"><em>EStepResult</em></a></p>
 </dd>
 </dl>
 </dd></dl>

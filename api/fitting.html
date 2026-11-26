@@ -268,6 +268,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -873,7 +877,7 @@ that <code class="docutils literal notranslate"><span class="pre">solve_bregman<
 <section id="backends-methods">
 <h3>Backends × methods<a class="headerlink" href="#backends-methods" title="Link to this heading">#</a></h3>
 <p>backend=’jax’, method=’newton’  custom lax.while_loop Newton, autodiff or analytical Hessian
-backend=’jax’, method=’lbfgs’   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
+backend=’jax’, method=’lbfgs’   jaxopt LBFGS with reparameterization for bounds
 backend=’jax’, method=’bfgs’    jaxopt BFGS with reparameterization for bounds
 backend=’cpu’, method=’lbfgs’   scipy L-BFGS-B (native bounds)
 backend=’cpu’, method=’bfgs’    scipy BFGS; bounds via the same reparametrization

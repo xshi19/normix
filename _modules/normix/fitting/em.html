@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -890,11 +894,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_fit_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">target_log_det</span><span class="p">,</span> <span class="n">sample_weight</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EMResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;JIT-able EM loop via :func:`~jax.lax.scan`.</span>
 
-<span class="sd">        The scan carry keeps ``converged`` and ``diverged`` as separate booleans</span>
-<span class="sd">        rather than a single status code: convergence accepts the new model,</span>
-<span class="sd">        divergence reverts to the previous one, and ``done = converged | diverged``</span>
-<span class="sd">        freezes both paths. Two flags also map directly onto :class:`EMResult`</span>
-<span class="sd">        and compose cleanly with ``jnp.where`` / ``|`` inside the scanned body.</span>
+<span class="sd">        The scan accepts the converging model. A non-finite mixing update</span>
+<span class="sd">        sets ``solver_failed``. A non-finite change or objective with finite</span>
+<span class="sd">        mixing parameters sets ``diverged``. Both failures keep the previous</span>
+<span class="sd">        model. Any of the three flags freezes the carry on later iterations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
         <span class="n">track_ll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">track_ll</span>
@@ -1560,7 +1563,7 @@
     <span class="n">leaves_old</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">old_params</span><span class="p">)</span>
     <span class="n">rels</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span>
         <span class="n">_rms</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">o</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">_rms</span><span class="p">(</span><span class="n">o</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">leaves_new</span><span class="p">,</span> <span class="n">leaves_old</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">leaves_new</span><span class="p">,</span> <span class="n">leaves_old</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="p">])</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rels</span><span class="p">)</span>
 </pre></div>

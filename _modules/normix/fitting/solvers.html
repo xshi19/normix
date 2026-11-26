@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -436,7 +440,7 @@
 <span class="sd">Backends × methods</span>
 <span class="sd">------------------</span>
 <span class="sd">backend=&#39;jax&#39;, method=&#39;newton&#39;  custom lax.while_loop Newton, autodiff or analytical Hessian</span>
-<span class="sd">backend=&#39;jax&#39;, method=&#39;lbfgs&#39;   jaxopt LBFGSB (bounds native) or LBFGS (reparam)</span>
+<span class="sd">backend=&#39;jax&#39;, method=&#39;lbfgs&#39;   jaxopt LBFGS with reparameterization for bounds</span>
 <span class="sd">backend=&#39;jax&#39;, method=&#39;bfgs&#39;    jaxopt BFGS with reparameterization for bounds</span>
 <span class="sd">backend=&#39;cpu&#39;, method=&#39;lbfgs&#39;   scipy L-BFGS-B (native bounds)</span>
 <span class="sd">backend=&#39;cpu&#39;, method=&#39;bfgs&#39;    scipy BFGS; bounds via the same reparametrization</span>
@@ -862,14 +866,12 @@
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Infinity norm of :math:`g_\theta` after dropping bound-active components.</span>
 
 <span class="sd">    A coordinate within ``gap`` of a finite bound is active when the</span>
-<span class="sd">    gradient points out of the feasible set: :math:`g_i \le 0` on an</span>
+<span class="sd">    descent direction points out of the feasible set: :math:`g_i \le 0` on an</span>
 <span class="sd">    upper bound, :math:`g_i \ge 0` on a lower bound. That entry is the</span>
 <span class="sd">    multiplier. The free residual is what can still be driven to ``tol``.</span>
 
 <span class="sd">    The iteration uses ``gap = -THETA_FLOOR``. ``from_expectation`` also</span>
-<span class="sd">    consults :data:`~normix.utils.constants.KKT_NEAR_GAP`, because a</span>
-<span class="sd">    20-step budget reaches the multiplier regime before :math:`\theta`</span>
-<span class="sd">    is within ``10^{-8}`` of the bound.</span>
+<span class="sd">    consults :data:`~normix.utils.constants.KKT_NEAR_GAP` for acceptance.</span>
 
 <span class="sd">    The reported ``grad_norm`` stays :math:`\lVert g_\theta\rVert_\infty`,</span>
 <span class="sd">    multiplier included. Stopping on :math:`\lVert g_\phi\rVert_\infty`</span>
@@ -891,10 +893,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_inversion_converged</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;True when the free residual met ``tol`` or :data:`BREGMAN_INVERT_ATOL`.</span>
 
-<span class="sd">    The second clause uses :data:`KKT_NEAR_GAP`. It is what lets a</span>
-<span class="sd">    trust-exact stop at :math:`\\sim 10^{-9}` and a short Newton budget</span>
-<span class="sd">    on a bound-active GIG return a model. A residual of :math:`O(1)`</span>
-<span class="sd">    does not pass.</span>
+<span class="sd">    The absolute tolerance uses :data:`~normix.utils.constants.KKT_NEAR_GAP`</span>
+<span class="sd">    when deciding which coordinates are bound-active.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">kkt</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
     <span class="n">near</span> <span class="o">=</span> <span class="n">_kkt_residual</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">gap</span><span class="o">=</span><span class="n">KKT_NEAR_GAP</span><span class="p">)</span>
@@ -1207,7 +1207,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># JAX quasi-Newton  (jaxopt LBFGS / BFGS / LBFGSB)</span>
+<span class="c1"># JAX quasi-Newton (jaxopt LBFGS / BFGS)</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_jax_quasi_newton</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BregmanResult</span><span class="p">:</span>
@@ -1341,7 +1341,7 @@
         <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">lo_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
             <span class="n">hi_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-            <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">lo_np</span><span class="p">,</span> <span class="n">hi_np</span><span class="p">))</span>
+            <span class="n">scipy_bounds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">lo_np</span><span class="p">,</span> <span class="n">hi_np</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy_bounds</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">][</span><span class="s2">&quot;ftol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tol</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;newton&quot;</span><span class="p">:</span>
@@ -1409,25 +1409,26 @@
                 <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>
                 <span class="n">grad_fn</span><span class="o">=</span><span class="n">grad_fn</span><span class="p">,</span> <span class="n">hess_fn</span><span class="o">=</span><span class="n">hess_fn</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="c1"># A start that met tol outranks a lower objective that did not.</span>
-            <span class="c1"># A non-finite objective must not block a later finite start.</span>
-            <span class="n">res_fin</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">)))</span>
-            <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">SolverDidNotConverge</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># A start that met tol outranks a lower objective that did not.</span>
+        <span class="c1"># A non-finite objective must not block a later finite start.</span>
+        <span class="n">res_fin</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">best_fin</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">fun</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">res_fin</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">best_fin</span><span class="p">:</span>
                 <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">best_fin</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">fun</span><span class="p">)))</span>
-                <span class="k">if</span> <span class="n">res_fin</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">best_fin</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">res_fin</span> <span class="ow">and</span> <span class="n">best_fin</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">converged</span><span class="p">):</span>
                     <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
-                <span class="k">elif</span> <span class="n">res_fin</span> <span class="ow">and</span> <span class="n">best_fin</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">converged</span><span class="p">):</span>
-                        <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
-                    <span class="k">elif</span> <span class="p">(</span>
-                        <span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">fun</span> <span class="o">&lt;</span> <span class="n">best</span><span class="o">.</span><span class="n">fun</span>
-                    <span class="p">):</span>
-                        <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">pass</span>
+                <span class="k">elif</span> <span class="p">(</span>
+                    <span class="nb">bool</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">(</span><span class="n">best</span><span class="o">.</span><span class="n">converged</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">fun</span> <span class="o">&lt;</span> <span class="n">best</span><span class="o">.</span><span class="n">fun</span>
+                <span class="p">):</span>
+                    <span class="n">best</span> <span class="o">=</span> <span class="n">res</span>
 
     <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">best</span> <span class="o">=</span> <span class="n">solve_bregman</span><span class="p">(</span>

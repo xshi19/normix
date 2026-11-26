@@ -268,6 +268,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -584,6 +588,11 @@ contract that fitters and downstream code depend on:</p>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code> (full Σ) and <code class="docutils literal notranslate"><span class="pre">FactorNormalMixture</span></code> are the two
 implementations. Fitters depend only on this ABC.</p>
+<p>On <code class="docutils literal notranslate"><span class="pre">NormalMixture</span></code>, <code class="docutils literal notranslate"><span class="pre">joint_entropy</span></code>, <code class="docutils literal notranslate"><span class="pre">joint_varentropy</span></code> and <code class="docutils literal notranslate"><span class="pre">joint_renyi</span></code>
+describe the observation and its mixing variable together. The joint
+exponential family supplies these in closed form. For the observation
+alone, the logarithm contains an integral over the mixing variable, and
+the corresponding information measures generally have no closed form.</p>
 </section>
 <hr class="docutils" />
 <section id="parameter-facade-on-normalmixture">

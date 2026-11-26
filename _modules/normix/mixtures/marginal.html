@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -431,18 +435,22 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.exponential_family</span><span class="w"> </span><span class="kn">import</span> <span class="n">_normalize_sample_weight</span><span class="p">,</span> <span class="n">_weighted_mean</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">_unpack_gig_eta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">EStepResult</span><span class="p">,</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="n">_moment_origin</span><span class="p">,</span> <span class="n">_unpack_gig_eta</span>
 
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">SIGMA_INIT_REG</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">normix.utils.rvs</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantileTable</span><span class="p">,</span> <span class="n">build_pinv_table</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.em</span><span class="w"> </span><span class="kn">import</span> <span class="n">EMResult</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">normix.mixtures.joint</span><span class="w"> </span><span class="kn">import</span> <span class="n">JointNormalMixture</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normal_mixture_mean</span><span class="p">(</span>
@@ -977,14 +985,6 @@
         <span class="k">return</span> <span class="n">kurt</span></div>
 
 
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Information-theoretic quantities of the joint (X, Y)</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># The marginal information measures of X involve</span>
-    <span class="c1"># -log ∫ f(x,y) dy and have no closed form. The joint (X, Y) is a</span>
-    <span class="c1"># constant-base-measure exponential family, so its entropy, varentropy,</span>
-    <span class="c1"># and Rényi entropy are tractable and delegated to self._joint.</span>
-
 <div class="viewcode-block" id="NormalMixture.joint_entropy">
 <a class="viewcode-back" href="../../../api/mixtures.html#normix.mixtures.marginal.NormalMixture.joint_entropy">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">joint_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
@@ -1066,7 +1066,6 @@
 <span class="sd">        moments are stored about :math:`\mu` with an explicit ``origin``.</span>
 <span class="sd">        The M-step restores that origin after reconstructing the covariance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="n">_moment_origin</span>
 
         <span class="n">E_log_Y</span><span class="p">,</span> <span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">E_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subordinator_expectations</span><span class="p">()</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
@@ -1119,7 +1118,6 @@
 <span class="sd">            Observation weights as in :meth:`fit`; applied to both</span>
 <span class="sd">            sufficient statistics and the returned log-likelihood.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">EStepResult</span>
 
         <span class="n">sample_weight</span> <span class="o">=</span> <span class="n">_normalize_sample_weight</span><span class="p">(</span><span class="n">sample_weight</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">sample_weight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1172,7 +1170,6 @@
         <span class="n">sample_weight</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Average per-observation expectations; conjugacy mean log-likelihood.&quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">normix.fitting.eta</span><span class="w"> </span><span class="kn">import</span> <span class="n">NormalMixtureEta</span><span class="p">,</span> <span class="n">_moment_origin</span>
 
         <span class="n">X</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">E_inv_Y</span> <span class="o">=</span> <span class="n">sub_exp</span><span class="p">[</span><span class="s1">&#39;E_inv_Y&#39;</span><span class="p">]</span>

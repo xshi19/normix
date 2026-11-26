@@ -268,6 +268,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -790,21 +794,13 @@ the KKT residual.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.KKT_NEAR_GAP">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">KKT_NEAR_GAP</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></span><a class="headerlink" href="#normix.utils.constants.KKT_NEAR_GAP" title="Link to this definition">#</a></dt>
-<dd><p>Wider gap used only to decide whether from_expectation may return a
-model. A GIG coordinate within this distance of θ = 0, with the
-gradient pointing out of the feasible set, is the bound multiplier
-(O(10⁻³)), not an uninverted free coordinate. The iteration itself
-still stops on the tighter THETA_FLOOR gap.</p>
+<dd><p>Distance to a finite bound used to identify active coordinates at acceptance.</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.BREGMAN_INVERT_ATOL">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">BREGMAN_INVERT_ATOL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-05</span></span><a class="headerlink" href="#normix.utils.constants.BREGMAN_INVERT_ATOL" title="Link to this definition">#</a></dt>
-<dd><p>Free residual at which η counts as inverted for from_expectation.
-Trust-exact status 2 stalls near 10⁻⁹ with success=False; a 20-step
-Newton budget on a gamma-limit GIG leaves a free residual ~10⁻⁶ and
-a multiplier ~10⁻³. Residuals of O(1) — the φ-gradient false stop —
-stay above this floor.</p>
+<dd><p>Absolute tolerance on the free θ-space gradient residual at acceptance.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -848,12 +844,7 @@ other finite moment keep their exact closed forms.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.ALPHA_MIN_MARGIN">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">ALPHA_MIN_MARGIN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span><a class="headerlink" href="#normix.utils.constants.ALPHA_MIN_MARGIN" title="Link to this definition">#</a></dt>
-<dd><p>Margin ε used by the opt-in VG α-lower-bound sentinels in <cite>fit(alpha_min=…)</cite>.
-The VG marginal density is unbounded at x=μ for α ≤ d/2, and E[1/Y|x] is
-unbounded for α ≤ d/2 + 1; the floored b_post keeps EM finite but cannot stop
-it parking near that spike. When <cite>alpha_min=’density’</cite> the M-step clamps the
-Gamma shape at d/2 + ε (density bounded); <cite>alpha_min=’inverse_moment’</cite> clamps
-at d/2 + 1 + ε (E[1/Y|x] also bounded). Opt-in only — default is no clamp.</p>
+<dd><p>Shape margin above the VG density or inverse-moment threshold in <code class="docutils literal notranslate"><span class="pre">fit(alpha_min=...)</span></code>.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -947,12 +938,8 @@ projected to zero. Relative so daily vs annualized returns share one value.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="normix.utils.constants.MEAN_RISK_REACH_ATOL">
 <span class="sig-prename descclassname"><span class="pre">normix.utils.constants.</span></span><span class="sig-name descname"><span class="pre">MEAN_RISK_REACH_ATOL</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.15)"><span class="pre">float</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-08</span></span><a class="headerlink" href="#normix.utils.constants.MEAN_RISK_REACH_ATOL" title="Link to this definition">#</a></dt>
-<dd><p>Infinity-norm tolerance on the constraint residual Mᵀw − c.
-A reduced target inside this gap is a portfolio; a larger gap is not.
-Attainable residuals sit at roundoff (~1e-16). The unattainable gaps
-in the symmetric (γ̃ = 0.1) and rank-1 (μ̃ = 0.05) examples are 0.1
-and 0.03. The same absolute gap decides whether expected return is
-constant along a rank-2 reachable line.</p>
+<dd><p>Absolute tolerance on the largest portfolio constraint residual and on
+return variation along a reachable line.</p>
 </dd></dl>
 
 </section>

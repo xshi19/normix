@@ -265,6 +265,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../development/lint-rules.html">Lint rules and numerical checks</a></li>
+</ul>
 
     </div>
 </nav></div>
@@ -653,11 +657,10 @@
 
 <span class="sd">        :math:`E[\log Y] = \log\beta - \psi(\alpha)` and</span>
 <span class="sd">        :math:`E[1/Y] = \alpha/\beta` are exact and finite for all</span>
-<span class="sd">        :math:`\alpha &gt; 0`. The forward moment :math:`E[Y] = \beta/(\alpha-1)`</span>
-<span class="sd">        diverges as :math:`\alpha \downarrow 1` (and is *negative* for</span>
-<span class="sd">        :math:`\alpha &lt; 1`), so its denominator is floored at</span>
-<span class="sd">        :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` — the symmetric</span>
-<span class="sd">        analogue of the VG inverse-moment floor.</span>
+<span class="sd">        :math:`\alpha &gt; 0`. For :math:`\alpha &gt; 1` the forward moment is</span>
+<span class="sd">        :math:`E[Y] = \beta/(\alpha-1)`. It is infinite for :math:`\alpha \le 1`.</span>
+<span class="sd">        Reconstruction uses a finite surrogate whenever the denominator falls</span>
+<span class="sd">        below :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_joint</span>
         <span class="n">E_log_Y</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
@@ -838,7 +841,7 @@
             <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">eta</span><span class="o">.</span><span class="n">E_inv_Y</span><span class="p">,</span> <span class="n">eta</span><span class="o">.</span><span class="n">E_log_Y</span><span class="p">]),</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_rescaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">gamma_new</span><span class="p">,</span> <span class="n">F_new</span><span class="p">,</span> <span class="n">D_new</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
-        <span class="c1"># InverseGamma(α, β): Y → Y/s ⇒ β → β/s, α unchanged.</span>
+        <span class="c1"># Scaling Y by s multiplies the inverse Gamma scale β by s.</span>
         <span class="k">return</span> <span class="n">FactorNormalInverseGamma</span><span class="p">(</span>
             <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma_new</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="n">F_new</span><span class="p">,</span> <span class="n">D</span><span class="o">=</span><span class="n">D_new</span><span class="p">,</span>
             <span class="n">alpha</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span>
