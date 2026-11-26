@@ -9,9 +9,11 @@ uv run ruff check normix/ tests/
 uv run pytest tests/test_lint_contracts.py
 ```
 
-Both checks run in the default `uv run pytest tests/` suite, including in
-continuous integration (CI), the tests that run on a pull request. The
-project's lint scope is the package and its tests.
+Continuous integration (CI), the checks that run on every pull request, runs
+`uv run ruff check normix/ tests/` as its own step before the tests, so a lint
+finding fails the job early. Both checks also run in the default
+`uv run pytest tests/` suite. The project's lint scope is the package and its
+tests.
 
 ## Reading a Ruff finding
 
