@@ -46,7 +46,7 @@ def _model(family):
 
 def _assert_tree_close(actual, expected, *, rtol=2e-10, atol=2e-11):
     assert jax.tree.structure(actual) == jax.tree.structure(expected)
-    for a, b in zip(jax.tree.leaves(actual), jax.tree.leaves(expected)):
+    for a, b in zip(jax.tree.leaves(actual), jax.tree.leaves(expected), strict=True):
         np.testing.assert_allclose(a, b, rtol=rtol, atol=atol)
 
 

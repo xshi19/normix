@@ -152,3 +152,11 @@ asv
 references
 changelog
 ```
+
+```{toctree}
+:maxdepth: 1
+:caption: Development
+:hidden:
+
+development/lint-rules
+```

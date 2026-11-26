@@ -67,7 +67,7 @@ def test_integer_weights_equal_repeated_atoms_and_zero_mass_bracket():
     Q = DiscreteMeasure.from_weights(Y, jnp.array([2.0, 3.0, 1.0]))
     repeated = jnp.array([0.2, 0.2, 1.0, 1.0, 1.0, 4.0])
     for a, b in zip(risk.value_grad_hess_w(model, w, Q),
-                    risk.value_grad_hess_w(model, w, repeated)):
+                    risk.value_grad_hess_w(model, w, repeated), strict=True):
         np.testing.assert_allclose(a, b, rtol=2e-13, atol=2e-14)
     Q0 = DiscreteMeasure.from_weights(jnp.array([1.0, 1e100]), jnp.array([1.0, 0.0]))
     lo, hi = bracket_raw(0.05, 0.0, -0.5, 1.0, Q0)

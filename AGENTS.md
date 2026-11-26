@@ -6,6 +6,7 @@ Built on Equinox. Deps: `jax`, `equinox`, `jaxopt`, `numpy`, `scipy`; `matplotli
 ## Commands
 
 - Install: `uv sync`
+- Lint the package and tests: `uv run ruff check normix/ tests/`
 - Tests: `uv run pytest tests/` (fast default: excludes `slow`, `stress`, `integration`, `gpu`)
 - Slow/stress/integration suite: `uv run pytest tests/ -m "slow or stress or integration"`
 - Single test file: `uv run pytest tests/test_bessel_contract.py -v`
@@ -47,12 +48,11 @@ Before committing:
 
 Published website source → `docs/` (built to https://xshi19.github.io/normix/)
 
-Agent/dev internal knowledge → `dev-notes/` (not published; index at `dev-notes/README.md`)
-
-Architecture and module hierarchy → `dev-notes/ARCHITECTURE.md`
+Internal index → `dev-notes/README.md`. Module hierarchy → `dev-notes/ARCHITECTURE.md`.
 
 | Area | Doc |
 |---|---|
+| Rules enforced by Ruff, numerical pytest checks, and CI | [Lint rules and numerical checks](docs/development/lint-rules.md) |
 | Published design rationale | `docs/design/` (exponential_family, mixtures, em_framework, solvers_and_bessel, why_not_gradient_descent) |
 | Internal design | `dev-notes/design/design.md`, `dev-notes/design/index.md`, `dev-notes/design/agent_instructions_design.md` |
 | Theory and research | `docs/theory/` (MyST, [Shi2016]); `docs/research/`; working notes in `dev-notes/research/` |

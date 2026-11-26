@@ -18,18 +18,22 @@ NormalMixture provides:
 from __future__ import annotations
 
 import abc
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import _normalize_sample_weight, _weighted_mean
-from normix.fitting.eta import _unpack_gig_eta
+from normix.fitting.eta import EStepResult, NormalMixtureEta, _moment_origin, _unpack_gig_eta
 
 
 from normix.utils.constants import SIGMA_INIT_REG
 from normix.utils.rvs import QuantileTable, build_pinv_table
+
+if TYPE_CHECKING:
+    from normix.fitting.em import EMResult
+    from normix.mixtures.joint import JointNormalMixture
 
 
 def _normal_mixture_mean(
@@ -502,14 +506,6 @@ class NormalMixture(MarginalMixture):
             self.gamma, sigma_diag, m1, m2, m3, m4)
         return kurt
 
-    # ------------------------------------------------------------------
-    # Information-theoretic quantities of the joint (X, Y)
-    # ------------------------------------------------------------------
-    # The marginal information measures of X involve
-    # -log ∫ f(x,y) dy and have no closed form. The joint (X, Y) is a
-    # constant-base-measure exponential family, so its entropy, varentropy,
-    # and Rényi entropy are tractable and delegated to self._joint.
-
     def joint_entropy(self) -> jax.Array:
         r"""Entropy of the joint :math:`(X, Y)`,
         :math:`H(X,Y) = C_\Sigma + H(Y) + \tfrac{d}{2}E[\log Y] + \tfrac{d}{2}`.
@@ -571,7 +567,6 @@ class NormalMixture(MarginalMixture):
         moments are stored about :math:`\mu` with an explicit ``origin``.
         The M-step restores that origin after reconstructing the covariance.
         """
-        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
         j = self._joint
@@ -621,7 +616,6 @@ class NormalMixture(MarginalMixture):
             Observation weights as in :meth:`fit`; applied to both
             sufficient statistics and the returned log-likelihood.
         """
-        from normix.fitting.eta import EStepResult
 
         sample_weight = _normalize_sample_weight(sample_weight, X.shape[0])
         if sample_weight is not None:
@@ -673,7 +667,6 @@ class NormalMixture(MarginalMixture):
         sample_weight: jax.Array | None = None,
     ) -> tuple:
         """Average per-observation expectations; conjugacy mean log-likelihood."""
-        from normix.fitting.eta import NormalMixtureEta, _moment_origin
 
         X = jnp.asarray(X, dtype=jnp.float64)
         E_inv_Y = sub_exp['E_inv_Y']

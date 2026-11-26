@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from normix import ExponentialFamily, Gamma, InverseGamma, InverseGaussian, GIG
+from normix import Gamma, InverseGamma, InverseGaussian, GIG
 
 class TestExponentialFamilyContract:
     """Verify the EF contract using Gamma as a concrete subclass."""
@@ -54,7 +54,6 @@ class TestExponentialFamilyContract:
         assert jnp.all(jnp.isfinite(FI))
 
     def test_fit_mle_recovers_params(self):
-        key = jax.random.PRNGKey(0)
         alpha_true, beta_true = 3.0, 2.0
         g_true = Gamma(alpha=alpha_true, beta=beta_true)
         data = g_true.rvs(5000, seed=42)
@@ -107,7 +106,7 @@ class TestExponentialFamilyInvariants:
     def test_hessian_log_partition_finite_gig(self, dist):
         """GIG Hessian (numerical) should be finite and symmetric."""
         FI = np.array(dist.fisher_information())
-        assert np.all(np.isfinite(FI)), f"GIG Fisher info not finite"
+        assert np.all(np.isfinite(FI)), "GIG Fisher info not finite"
         np.testing.assert_allclose(FI, FI.T, rtol=1e-6)
 
     @pytest.mark.parametrize("dist,rtol", [

@@ -18,7 +18,6 @@ from __future__ import annotations
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pytest
 
 from normix import NormalInverseGaussian, VarianceGamma
 from normix.finance import (

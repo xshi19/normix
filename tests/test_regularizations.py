@@ -299,8 +299,6 @@ def test_factor_gh_default_init_beats_moment_fallback():
     init = FactorGeneralizedHyperbolic.default_init(Xn, r=2)
     ll_init = float(init.marginal_log_likelihood(Xn))
 
-    # The new default_init runs short EM fits, so it should never lose
-    # to the cold moment-based fallback.
     assert ll_init >= ll_fallback - 1e-6, (
         f"default_init LL={ll_init:.6f} worse than moment fallback "
         f"LL={ll_fallback:.6f}")

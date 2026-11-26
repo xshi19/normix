@@ -266,7 +266,6 @@ def solve_transaction_cost_qp(
         raise RuntimeError(f"transaction-cost QP failed: {res.message}")
 
     v = jnp.asarray(res.x, dtype=jnp.float64)
-    # Numerical noise can leave tiny complementary buy/sell pairs.
     v = jnp.maximum(v, 0.0)
     w_star = qp.weights_from_v(v)
     hold_obj = qp.hold_objective()

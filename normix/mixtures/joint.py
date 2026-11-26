@@ -78,7 +78,7 @@ from typing import Dict, Tuple
 import jax
 import jax.numpy as jnp
 
-from normix.fitting.eta import _unpack_gig_eta
+from normix.fitting.eta import NormalMixtureEta, _unpack_gig_eta
 
 from normix.exponential_family import ExponentialFamily, _check_backend
 
@@ -716,8 +716,6 @@ class JointNormalMixture(ExponentialFamily):
             ``maxiter``, ``theta0`` for warm-starting GIG).
             For the flat-array path: forwarded to the parent solver.
         """
-        from normix.fitting.eta import NormalMixtureEta
-
         if isinstance(eta, NormalMixtureEta):
             mu, gamma, L_Sigma = cls._mstep_normal_params(eta)
             sub = cls._subordinator_from_eta(eta, **kwargs)

@@ -210,7 +210,7 @@ def test_estep_marginal_backend_parity(name):
     # The jax and cpu GIG-Bessel paths differ by O(1e-9) near the VG floor
     # (large E[1/Y|x]); cross-backend agreement to rtol=1e-7 is the guarantee.
     for a, b in zip(jax.tree_util.tree_leaves(eta_jax),
-                    jax.tree_util.tree_leaves(eta_cpu)):
+                    jax.tree_util.tree_leaves(eta_cpu), strict=True):
         np.testing.assert_allclose(np.asarray(a), np.asarray(b),
                                    rtol=1e-7, atol=1e-8)
 
@@ -222,6 +222,6 @@ def test_estep_factor_backend_parity(name):
     eta_jax = model.e_step(X, backend="jax")
     eta_cpu = model.e_step(X, backend="cpu")
     for a, b in zip(jax.tree_util.tree_leaves(eta_jax),
-                    jax.tree_util.tree_leaves(eta_cpu)):
+                    jax.tree_util.tree_leaves(eta_cpu), strict=True):
         np.testing.assert_allclose(np.asarray(a), np.asarray(b),
                                    rtol=1e-7, atol=1e-8)

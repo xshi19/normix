@@ -88,6 +88,16 @@ Stated domain: $z\ge 10^{-10}$, $|\nu|\le 300$. $(0,10^{-300})$ unresolved at
 192 nodes. `log_kv(1,10^{-50})\approx 115.129$ (the old small-$z$ branch
 clipped $z$ to `LOG_EPS` and returned $\sim 69$).
 
+Near a Gamma limit, a 20-step GIG Newton solve can leave a free
+$\theta$-gradient of order $10^{-6}$ and a bound multiplier of order
+$10^{-3}$. During iteration, the active-bound gap is $10^{-8}$. For
+acceptance, `KKT_NEAR_GAP` widens this gap to $10^{-2}$ and
+`BREGMAN_INVERT_ATOL` admits a free residual below $10^{-5}$.
+This also admits SciPy trust-exact status 2 near $10^{-9}$.
+A small transformed gradient can hide a free $\theta$-gradient of order
+one, which still fails this test. `grad_norm` reports the full gradient,
+including the multiplier.
+
 ## What was deleted
 
 Four-regime `lax.cond` (Hankel / Olver / small-$z$ / 64-point half-line GL),

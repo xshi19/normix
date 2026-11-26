@@ -17,7 +17,6 @@ Cover the Phase D contract:
 """
 from __future__ import annotations
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest

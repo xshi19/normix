@@ -35,10 +35,6 @@ from normix.distributions import (
     InverseGaussian,
     GIG,
     GeneralizedHyperbolic,
-    JointGeneralizedHyperbolic,
-    JointNormalInverseGamma,
-    JointNormalInverseGaussian,
-    JointVarianceGamma,
     NormalInverseGamma,
     NormalInverseGaussian,
     VarianceGamma,
@@ -117,7 +113,7 @@ class TestGIGProjectionMomentMatch:
         eta = gig.expectation_params()
         g = gig.to_gamma()
         eta_g = g.expectation_params()
-        # Gamma matches E[log X] and E[X] to its precision; clamps the unused stat.
+        # Gamma matches E[log X] and E[X] to its precision.
         assert_allclose(float(eta_g[0]), float(eta[0]), rtol=1e-6, atol=1e-7)
         assert_allclose(float(eta_g[1]), float(eta[2]), rtol=1e-6, atol=1e-7)
 

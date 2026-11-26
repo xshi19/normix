@@ -23,7 +23,7 @@ make_jit_newton_solver
 Backends × methods
 ------------------
 backend='jax', method='newton'  custom lax.while_loop Newton, autodiff or analytical Hessian
-backend='jax', method='lbfgs'   jaxopt LBFGSB (bounds native) or LBFGS (reparam)
+backend='jax', method='lbfgs'   jaxopt LBFGS with reparameterization for bounds
 backend='jax', method='bfgs'    jaxopt BFGS with reparameterization for bounds
 backend='cpu', method='lbfgs'   scipy L-BFGS-B (native bounds)
 backend='cpu', method='bfgs'    scipy BFGS; bounds via the same reparametrization
@@ -434,14 +434,12 @@ def _kkt_residual(
     r"""Infinity norm of :math:`g_\theta` after dropping bound-active components.
 
     A coordinate within ``gap`` of a finite bound is active when the
-    gradient points out of the feasible set: :math:`g_i \le 0` on an
+    descent direction points out of the feasible set: :math:`g_i \le 0` on an
     upper bound, :math:`g_i \ge 0` on a lower bound. That entry is the
     multiplier. The free residual is what can still be driven to ``tol``.
 
     The iteration uses ``gap = -THETA_FLOOR``. ``from_expectation`` also
-    consults :data:`~normix.utils.constants.KKT_NEAR_GAP`, because a
-    20-step budget reaches the multiplier regime before :math:`\theta`
-    is within ``10^{-8}`` of the bound.
+    consults :data:`~normix.utils.constants.KKT_NEAR_GAP` for acceptance.
 
     The reported ``grad_norm`` stays :math:`\lVert g_\theta\rVert_\infty`,
     multiplier included. Stopping on :math:`\lVert g_\phi\rVert_\infty`
@@ -463,10 +461,8 @@ def _kkt_residual(
 def _inversion_converged(g, theta, bounds, tol) -> jax.Array:
     """True when the free residual met ``tol`` or :data:`BREGMAN_INVERT_ATOL`.
 
-    The second clause uses :data:`KKT_NEAR_GAP`. It is what lets a
-    trust-exact stop at :math:`\\sim 10^{-9}` and a short Newton budget
-    on a bound-active GIG return a model. A residual of :math:`O(1)`
-    does not pass.
+    The absolute tolerance uses :data:`~normix.utils.constants.KKT_NEAR_GAP`
+    when deciding which coordinates are bound-active.
     """
     kkt = _kkt_residual(g, theta, bounds)
     near = _kkt_residual(g, theta, bounds, gap=KKT_NEAR_GAP)
@@ -776,7 +772,7 @@ def _multistart_jax(
 
 
 # ---------------------------------------------------------------------------
-# JAX quasi-Newton  (jaxopt LBFGS / BFGS / LBFGSB)
+# JAX quasi-Newton (jaxopt LBFGS / BFGS)
 # ---------------------------------------------------------------------------
 
 def _jax_quasi_newton(f, eta, theta0, bounds, max_steps, tol, method) -> BregmanResult:
@@ -910,7 +906,7 @@ def _cpu_solve(
         if bounds is not None:
             lo_np = np.asarray(bounds[0], dtype=np.float64)
             hi_np = np.asarray(bounds[1], dtype=np.float64)
-            scipy_bounds = list(zip(lo_np, hi_np))
+            scipy_bounds = list(zip(lo_np, hi_np, strict=True))
         kwargs["bounds"] = scipy_bounds
         kwargs["options"]["ftol"] = tol ** 2
     if method == "newton":
@@ -978,25 +974,26 @@ def _multistart_loop(
                 max_steps=max_steps, tol=tol,
                 grad_fn=grad_fn, hess_fn=hess_fn,
             )
-            # A start that met tol outranks a lower objective that did not.
-            # A non-finite objective must not block a later finite start.
-            res_fin = bool(np.isfinite(float(res.fun)))
-            if best is None:
+        except (SolverDidNotConverge, ValueError):
+            continue
+
+        # A start that met tol outranks a lower objective that did not.
+        # A non-finite objective must not block a later finite start.
+        res_fin = bool(np.isfinite(float(res.fun)))
+        if best is None:
+            best = res
+        else:
+            best_fin = bool(np.isfinite(float(best.fun)))
+            if res_fin and not best_fin:
                 best = res
-            else:
-                best_fin = bool(np.isfinite(float(best.fun)))
-                if res_fin and not best_fin:
+            elif res_fin and best_fin:
+                if bool(res.converged) and not bool(best.converged):
                     best = res
-                elif res_fin and best_fin:
-                    if bool(res.converged) and not bool(best.converged):
-                        best = res
-                    elif (
-                        bool(res.converged) == bool(best.converged)
-                        and res.fun < best.fun
-                    ):
-                        best = res
-        except Exception:
-            pass
+                elif (
+                    bool(res.converged) == bool(best.converged)
+                    and res.fun < best.fun
+                ):
+                    best = res
 
     if best is None:
         best = solve_bregman(

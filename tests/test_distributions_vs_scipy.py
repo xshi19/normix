@@ -14,7 +14,6 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.special import digamma
 
 from normix.distributions.gamma import Gamma
 from normix.distributions.inverse_gamma import InverseGamma
@@ -283,7 +282,7 @@ class TestGIGVsScipy:
         """GIG Hessian (via jax.hessian) should be finite and symmetric."""
         gig = GIG(p=p, a=a, b=b)
         FI = np.array(gig.fisher_information())
-        assert np.all(np.isfinite(FI)), f"Fisher info not finite"
+        assert np.all(np.isfinite(FI)), "Fisher info not finite"
         np.testing.assert_allclose(FI, FI.T, rtol=1e-6)
 
     def test_rvs_moments(self):

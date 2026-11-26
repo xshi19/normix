@@ -100,6 +100,12 @@ class MarginalMixture(eqx.Module):
 `NormalMixture` (full Σ) and `FactorNormalMixture` are the two
 implementations. Fitters depend only on this ABC.
 
+On `NormalMixture`, `joint_entropy`, `joint_varentropy` and `joint_renyi`
+describe the observation and its mixing variable together. The joint
+exponential family supplies these in closed form. For the observation
+alone, the logarithm contains an integral over the mixing variable, and
+the corresponding information measures generally have no closed form.
+
 ---
 
 ## 4. Parameter Facade on `NormalMixture`

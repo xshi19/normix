@@ -17,7 +17,6 @@ Cover the reduced-coordinate reduction of the mean-risk problem:
 """
 from __future__ import annotations
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest

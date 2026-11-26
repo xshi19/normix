@@ -150,10 +150,6 @@ class FactorMixtureStats(NormalMixtureEta):
 # Generalised affine combination
 # ---------------------------------------------------------------------------
 
-# A weight on a stats pytree may be:
-#   - a scalar (Python float / int / 0-d jax.Array) — broadcast to every leaf;
-#   - a stats-shape pytree (e.g. NormalMixtureEta) — leaf-wise multiply;
-#   - a callable ``η → η`` — arbitrary linear map.
 Weight = Union[float, jax.Array, "NormalMixtureEta", Callable[..., "NormalMixtureEta"]]
 
 

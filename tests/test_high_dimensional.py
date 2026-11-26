@@ -7,7 +7,6 @@ Verifies that joint distributions work correctly in higher dimensions:
 - Log-likelihood computation
 """
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest

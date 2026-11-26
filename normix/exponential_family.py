@@ -715,9 +715,7 @@ class ExponentialFamily(eqx.Module):
 
         Host-side only. A traced ``X`` (``jit``, ``vmap``) skips the
         check so those transforms still run; eager calls raise.
-        Multivariate families leave this as a no-op: their support is
-        :math:`\\mathbb{R}^d`, and a constant sample still has a
-        (singular) normal MLE.
+        This check applies only to families with positive support.
         """
         if not cls._on_positive_support():
             return

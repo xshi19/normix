@@ -393,7 +393,7 @@ def test_em_convergence_params_invariant_to_F_rotation(small_factor_setup):
 
     p1 = fa.em_convergence_params()
     p2 = fa_rot.em_convergence_params()
-    for a, b in zip(jax.tree.leaves(p1), jax.tree.leaves(p2)):
+    for a, b in zip(jax.tree.leaves(p1), jax.tree.leaves(p2), strict=True):
         np.testing.assert_allclose(np.asarray(a), np.asarray(b),
                                    atol=1e-10)
 
@@ -424,7 +424,7 @@ def test_shrinkage_tau_zero_equals_base_on_factor_stats(small_factor_setup):
                            shrunk.initial_state())
 
     for lb, ls in zip(jax.tree.leaves(out_base),
-                      jax.tree.leaves(out_shrunk)):
+                      jax.tree.leaves(out_shrunk), strict=True):
         np.testing.assert_allclose(np.asarray(lb), np.asarray(ls),
                                    rtol=1e-10, atol=1e-12)
 

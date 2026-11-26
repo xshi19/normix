@@ -214,11 +214,10 @@ class NormalInverseGamma(NormalMixture):
 
         :math:`E[\log Y] = \log\beta - \psi(\alpha)` and
         :math:`E[1/Y] = \alpha/\beta` are exact and finite for all
-        :math:`\alpha > 0`. The forward moment :math:`E[Y] = \beta/(\alpha-1)`
-        diverges as :math:`\alpha \downarrow 1` (and is *negative* for
-        :math:`\alpha < 1`), so its denominator is floored at
-        :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` — the symmetric
-        analogue of the VG inverse-moment floor.
+        :math:`\alpha > 0`. For :math:`\alpha > 1` the forward moment is
+        :math:`E[Y] = \beta/(\alpha-1)`. It is infinite for :math:`\alpha \le 1`.
+        Reconstruction uses a finite surrogate whenever the denominator falls
+        below :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN`.
         """
         j = self._joint
         E_log_Y = jnp.log(j.beta) - jax.scipy.special.digamma(j.alpha)
@@ -381,7 +380,7 @@ class FactorNormalInverseGamma(FactorNormalMixture):
             jnp.array([-eta.E_inv_Y, eta.E_log_Y]), backend=backend)
 
     def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # InverseGamma(α, β): Y → Y/s ⇒ β → β/s, α unchanged.
+        # Scaling Y by s multiplies the inverse Gamma scale β by s.
         return FactorNormalInverseGamma(
             mu=mu, gamma=gamma_new, F=F_new, D=D_new,
             alpha=self.alpha, beta=self.beta * scale,

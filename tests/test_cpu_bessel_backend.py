@@ -62,7 +62,7 @@ def test_log_kv_cpu_vectorized():
     zs = np.array([1.0, 2.0, 3.0, 4.0])
     result_cpu = log_kv(vs, zs, backend='cpu')
     assert result_cpu.shape == (4,)
-    for i, (v, z) in enumerate(zip(vs, zs)):
+    for i, (v, z) in enumerate(zip(vs, zs, strict=True)):
         expected = float(log_kv(v, z, backend='jax'))
         assert abs(float(result_cpu[i]) - expected) < 1e-9, (
             f"CPU vectorized log_kv({v},{z}): got {result_cpu[i]}, expected {expected}"

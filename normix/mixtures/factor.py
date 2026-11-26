@@ -43,9 +43,7 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily, _normalize_sample_weight, _weighted_mean
-from normix.fitting.eta import _unpack_gig_eta
-
-from normix.fitting.eta import FactorMixtureStats, _moment_origin
+from normix.fitting.eta import EStepResult, FactorMixtureStats, _moment_origin, _unpack_gig_eta
 from normix.mixtures.marginal import (
     MarginalMixture,
     _normal_mixture_cov,
@@ -346,7 +344,6 @@ class FactorNormalMixture(MarginalMixture):
         ``sample_weight`` follows :meth:`fit`; it weights all ten
         statistics and the returned log-likelihood.
         """
-        from normix.fitting.eta import EStepResult
 
         sample_weight = _normalize_sample_weight(sample_weight, X.shape[0])
         if sample_weight is not None:

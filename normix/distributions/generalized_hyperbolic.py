@@ -26,7 +26,7 @@ b + (x-\\mu)^\\top\\Sigma^{-1}(x-\\mu))`.
 from __future__ import annotations
 
 import math
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -40,8 +40,12 @@ from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 
-
 from normix.utils.constants import LOG_EPS, GIG_CLAMP_LO, GIG_CLAMP_HI, GIG_P_MAX
+
+if TYPE_CHECKING:
+    from normix.distributions.normal_inverse_gamma import JointNormalInverseGamma, NormalInverseGamma
+    from normix.distributions.normal_inverse_gaussian import JointNormalInverseGaussian, NormalInverseGaussian
+    from normix.distributions.variance_gamma import JointVarianceGamma, VarianceGamma
 
 
 def _gig_or_previous(gig_new, current):
@@ -96,7 +100,6 @@ class JointGeneralizedHyperbolic(JointNormalMixture):
     b: jax.Array
 
     def __init__(self, mu, gamma, L_Sigma, p, a, b):
-        # eqx.Module fields must be set via object.__setattr__ before freeze
         object.__setattr__(self, 'mu', jnp.asarray(mu, dtype=jnp.float64))
         object.__setattr__(self, 'gamma', jnp.asarray(gamma, dtype=jnp.float64))
         object.__setattr__(self, 'L_Sigma', jnp.asarray(L_Sigma, dtype=jnp.float64))
@@ -327,25 +330,6 @@ class GeneralizedHyperbolic(NormalMixture):
         A = j.a + w2
         # Bessel order in posterior: p_post = p - d/2
         p_post = j.p - d / 2.0
-
-        # log f(x) = log C + (p-d/2)/2 * log((Q+b)/A) + ... (skewness) + log K_{p_post}(...)
-        #
-        # Precise formula (see e.g. Protassov 2004):
-        #   log f(x) = ½ log(A) - ½ log(Q+b) ... wait, let me derive carefully.
-        #
-        # From Barndorff-Nielsen (1978) the marginal density is:
-        #
-        # f(x) = (2π)^{-d/2} |Σ|^{-1/2} · (a/b)^{p/2} / K_p(√(ab))
-        #        · (A / (Q(x)+b))^{(d/2-p)/2}
-        #        · K_{p-d/2}(√(A(Q(x)+b)))
-        #        · exp((x-μ)ᵀΣ⁻¹γ)
-        #
-        # log f(x) = -d/2 log(2π) - ½ log|Σ|
-        #            + p/2 (log a - log b)
-        #            - log K_p(√(ab))
-        #            + (d/2-p)/2 · log(A/(Q+b))
-        #            + log K_{p-d/2}(√(A(Q+b)))
-        #            + γᵀΣ⁻¹(x-μ)                ← = wᵀz (inner product)
 
         log_det_sigma = j.log_det_sigma()
         sqrt_ab = jnp.sqrt(j.a * j.b)
