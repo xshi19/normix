@@ -122,7 +122,7 @@ class TestGIGFitting:
         gig = GIG(p=-1.0, a=0.1, b=4.0)
         gig_fit = gig.fit(data)
         ll = float(jax.vmap(gig_fit.log_prob)(data).mean())
-        assert np.isfinite(ll), f"Non-finite log-likelihood"
+        assert np.isfinite(ll), "Non-finite log-likelihood"
 
     def test_fit_gamma_data_ll(self):
         """GIG fitted to Gamma samples should achieve good log-likelihood."""
@@ -131,4 +131,4 @@ class TestGIGFitting:
         gig = GIG(p=2.0, a=3.0, b=0.1)
         gig_fit = gig.fit(data)
         ll = float(jax.vmap(gig_fit.log_prob)(data).mean())
-        assert np.isfinite(ll), f"Non-finite log-likelihood"
+        assert np.isfinite(ll), "Non-finite log-likelihood"

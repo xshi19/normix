@@ -297,7 +297,7 @@ class TestMstepDenominatorSign:
             _consistent_eta(mu_t, gam_t, eta2, -1e-8))
         got = JointNormalMixture._mstep_normal_params(
             _consistent_eta(mu_t, gam_t, eta2, D))
-        for a, b in zip(ref[:2], got[:2]):
+        for a, b in zip(ref[:2], got[:2], strict=True):
             assert np.all(np.sign(np.array(a)) == np.sign(np.array(b)))
 
     def test_positive_D_roundoff_uses_negative_floor(self):
@@ -372,8 +372,7 @@ class TestEMMonotoneLL:
         assert not result.diverged
         changes = result.param_changes
         dll = jnp.diff(result.log_likelihoods)
-        # Only check iterations that actually updated the model (scan freezes
-        # post-convergence with change=0). Allow float64 slack in floored VG EM.
+        # Exclude scan padding. The VG posterior floor makes this an approximate E-step.
         active = changes[:-1] > 0
         assert jnp.all(dll[active] >= -1e-5)
 
@@ -550,7 +549,7 @@ class TestEMSolverFailure:
         assert result.converged is False
         assert result.n_iter == 1
         _assert_model_finite(result.model)
-        for got, ref in zip(jax.tree.leaves(result.model), jax.tree.leaves(init)):
+        for got, ref in zip(jax.tree.leaves(result.model), jax.tree.leaves(init), strict=True):
             np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
 
     @pytest.mark.parametrize("exc", [
@@ -576,7 +575,7 @@ class TestEMSolverFailure:
         assert result.converged is False
         assert result.n_iter == 1
         for got, ref in zip(
-            jax.tree.leaves(result.model._inner), jax.tree.leaves(init),
+            jax.tree.leaves(result.model._inner), jax.tree.leaves(init), strict=True,
         ):
             np.testing.assert_array_equal(np.asarray(got), np.asarray(ref))
 
@@ -639,7 +638,7 @@ class TestEMSolverFailure:
         monkeypatch.setattr(GIG, "from_expectation", classmethod(fail))
         if exc_type in (ValueError, SolverDidNotConverge):
             actual = model.m_step_subordinator(eta, backend="cpu")
-            for got, expected in zip(jax.tree.leaves(actual), jax.tree.leaves(model)):
+            for got, expected in zip(jax.tree.leaves(actual), jax.tree.leaves(model), strict=True):
                 np.testing.assert_array_equal(got, expected)
         else:
             with pytest.raises(exc_type, match="injected GIG failure") as caught:

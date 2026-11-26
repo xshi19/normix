@@ -200,13 +200,11 @@ class VarianceGamma(NormalMixture):
         r"""Prior Gamma moments :math:`(E[\log Y], E[1/Y], E[Y])`.
 
         :math:`E[\log Y] = \psi(\alpha) - \log\beta` and :math:`E[Y] = \alpha/\beta`
-        are exact and finite for all :math:`\alpha > 0`. The inverse moment
-        :math:`E[1/Y] = \beta/(\alpha-1)` diverges as :math:`\alpha \downarrow 1`
-        (and is *negative* for :math:`\alpha < 1`), so its denominator is floored
-        at :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` — a
-        distribution-specific regularisation that keeps it finite, positive, and
-        continuous without routing the well-conditioned moments through the GIG
-        Bessel path.
+        are exact and finite for all :math:`\alpha > 0`. For :math:`\alpha > 1`
+        the inverse moment is :math:`E[1/Y] = \beta/(\alpha-1)`. It is infinite
+        for :math:`\alpha \le 1`. Reconstruction floors the denominator at
+        :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN` to obtain a finite,
+        continuous surrogate. The other two moments keep their closed forms.
         """
         j = self._joint
         E_log_Y = jax.scipy.special.digamma(j.alpha) - jnp.log(j.beta)
@@ -378,8 +376,7 @@ class FactorVarianceGamma(FactorNormalMixture):
             backend=backend, alpha_min=kwargs.get('alpha_min'))
 
     def _build_rescaled(self, mu, gamma_new, F_new, D_new, scale):
-        # Σ → Σ/s pairs with subordinator Y → s·Y so that Y·Σ keeps the
-        # dispersion. For Gamma(α, β), Y/s ⇒ β → β·s, α unchanged.
+        # Scaling Y by s divides the Gamma rate β by s.
         return FactorVarianceGamma(
             mu=mu, gamma=gamma_new, F=F_new, D=D_new,
             alpha=self.alpha, beta=self.beta / scale,

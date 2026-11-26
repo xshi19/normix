@@ -10,7 +10,6 @@ Covers:
     per-field τ, composition with running rules
   - LL improves (or at least stays finite) after incremental EM
 """
-from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -249,7 +248,7 @@ def test_affine_combine_weight_pytree_origin_is_not_a_weight():
     c = jax.tree.map(lambda x: jnp.full_like(x, 0.7), eta1)
     actual = affine_combine(eta1, eta2, b=b, c=c)
     expected = affine_combine(eta1, eta2, b=0.3, c=0.7)
-    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected)):
+    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected), strict=True):
         np.testing.assert_array_equal(got, ref)
 
 # ---------------------------------------------------------------------------

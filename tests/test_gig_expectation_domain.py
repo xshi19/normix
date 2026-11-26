@@ -35,7 +35,7 @@ def test_gig_valid_natural_rates_jit_vmap_grad():
         return jnp.array([model.p, model.a, model.b])
 
     expected = jnp.stack((theta[:, 0] + 1.0, -2.0 * theta[:, 2], -2.0 * theta[:, 1]), axis=-1)
-    for row, reference in zip(theta, expected):
+    for row, reference in zip(theta, expected, strict=True):
         np.testing.assert_array_equal(classical(row), reference)
     np.testing.assert_array_equal(jax.jit(jax.vmap(classical))(theta), expected)
     np.testing.assert_array_equal(

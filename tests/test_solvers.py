@@ -6,6 +6,8 @@ Tests the new solve_bregman / solve_bregman_multistart API across:
   - Gamma distribution (closed-form ψ, verify against from_expectation)
   - GIG distribution (all solver variants and multi-start)
 """
+from dataclasses import FrozenInstanceError
+
 import numpy as np
 import pytest
 import jax
@@ -53,7 +55,7 @@ class TestBregmanResult:
     def test_immutable(self):
         r = BregmanResult(theta=jnp.zeros(2), fun=0.0,
                           grad_norm=0.0, num_steps=0, converged=True)
-        with pytest.raises(Exception):
+        with pytest.raises(FrozenInstanceError):
             r.fun = 1.0  # frozen dataclass
 
 
@@ -85,6 +87,22 @@ def test_multistart_final_retry_preserves_derivative_callbacks(monkeypatch):
         assert kwargs.get("grad_fn") is quadratic_grad
         assert kwargs.get("hess_fn") is hess
         assert kwargs == calls[0][1]
+
+
+@pytest.mark.contract
+def test_multistart_propagates_unexpected_failure(monkeypatch):
+    attempts = []
+
+    def fail(f, eta, theta0, **kwargs):
+        attempts.append(theta0)
+        raise RuntimeError("unexpected solver failure")
+
+    monkeypatch.setattr(solvers, "solve_bregman", fail)
+    starts = [jnp.array([0.0]), jnp.array([1.0])]
+    with pytest.raises(RuntimeError, match="unexpected solver failure"):
+        solve_bregman_multistart(quadratic_f, jnp.array([2.0]), starts, backend="cpu")
+    assert len(attempts) == 1
+
 
 # ---------------------------------------------------------------------------
 # bregman_objective

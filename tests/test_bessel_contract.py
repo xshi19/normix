@@ -229,7 +229,7 @@ def test_geometry_matches_all_tilt_edges(v, z, tilt):
         np.testing.assert_allclose(x_hi, ref_hi, rtol=0.0, atol=atol)
         assert np.all(x_lo <= ref_lo + atol)
         assert np.all(x_hi >= ref_hi - atol)
-    for cpu_edge, jax_edge in zip(cpu_window, jax_window):
+    for cpu_edge, jax_edge in zip(cpu_window, jax_window, strict=True):
         np.testing.assert_allclose(cpu_edge, jax_edge, rtol=0.0, atol=atol)
 
 
@@ -376,7 +376,7 @@ def test_vmap_matches_scalar_loop():
     vs = jnp.array([0.0, 0.5, 2.5, -1.0, 25.0])
     zs = jnp.array([1.0, 1.0, 0.3, 2.0, 1.0])
     batched = jax.jit(jax.vmap(_log_kv_quad_jax))(vs, zs)
-    loop = jnp.array([_log_kv_quad_jax(v, z) for v, z in zip(vs, zs)])
+    loop = jnp.array([_log_kv_quad_jax(v, z) for v, z in zip(vs, zs, strict=True)])
     np.testing.assert_allclose(np.asarray(batched), np.asarray(loop), rtol=1e-14)
 
 
@@ -414,7 +414,7 @@ def test_batched_covariance_matches_scalar():
     batched = np.asarray(log_kv_moments(vs, zs, backend="cpu").cov)
     rows = [
         np.asarray(log_kv_moments(float(v), float(z), backend="cpu").cov)
-        for v, z in zip(vs, zs)
+        for v, z in zip(vs, zs, strict=True)
     ]
     np.testing.assert_allclose(batched, np.stack(rows), rtol=1e-12, atol=1e-14)
 

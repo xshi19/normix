@@ -30,10 +30,6 @@ if not jax.config.jax_enable_x64:
         stacklevel=2,
     )
 
-# jaxopt is unmaintained upstream and emits a DeprecationWarning on import.
-# We use it intentionally for JAX-native LBFGS/BFGS in fitting/solvers.py
-# and suppress the warning here so library users are not affected.
-# Migration path: see exponential_family design doc § jaxopt migration (D4).
 warnings.filterwarnings(
     "ignore",
     message="JAXopt is no longer maintained",
@@ -159,7 +155,6 @@ __all__ = [
     "eta0_isotropic",
     "eta0_diagonal",
     "eta0_with_sigma",
-    # Finance subpackage
     "finance",
     # Divergences
     "squared_hellinger",

@@ -41,7 +41,6 @@ class TestGamma:
 
     def test_log_partition(self):
         g = Gamma(alpha=2.0, beta=1.0)
-        from scipy.special import gammaln
         psi = float(g.log_partition())
         # ψ(θ) = log Γ(2) - 2*log(1) = 0
         assert abs(psi) < 1e-10
@@ -74,11 +73,9 @@ class TestGamma:
             assert abs(our - ref) < 1e-9, f"x={x}: ours={our}, scipy={ref}"
 
     def test_fit_mle(self):
-        key = jax.random.PRNGKey(1)
         alpha_true, beta_true = 3.0, 2.0
-        # Draw samples using a fixed method
-        np.random.seed(42)
-        X = np.random.gamma(shape=alpha_true, scale=1.0/beta_true, size=5000)
+        rng = np.random.default_rng(42)
+        X = rng.gamma(shape=alpha_true, scale=1.0/beta_true, size=5000)
         X = jnp.array(X)
         g = Gamma.fit_mle(X)
         np.testing.assert_allclose(float(g.alpha), alpha_true, rtol=0.05)

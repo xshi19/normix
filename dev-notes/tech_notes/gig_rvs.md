@@ -51,8 +51,8 @@ The PINV method builds $F^{-1}$ numerically:
 2. **Sampling (GPU, ~1–3 ms):** Draw $U \sim \text{Uniform}(0,1)$ and
    interpolate $X = F^{-1}(U)$ via `jnp.interp`.
 
-**Bessel-free:** the CDF is normalised by dividing the cumulative integral by the
-total, so the Bessel normalising constant $K_p(\sqrt{ab})$ is never needed.
+The cumulative integral is divided by its total. The normalizing constant
+cancels in this ratio, although the table builder calls `log_prob`.
 
 **Generic:** the PINV infrastructure in `utils/rvs.py` accepts any univariate
 log-kernel callable. `InverseGaussian.ppf` and the univariate Bessel-mixture

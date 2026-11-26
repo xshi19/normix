@@ -120,7 +120,6 @@ def test_smallz_regime(v, z):
 
 def test_no_scipy_callback():
     """Verify that log_kv works without importing scipy (pure JAX)."""
-    import sys
     result = float(log_kv(jnp.array(1.0), jnp.array(2.0)))
     assert np.isfinite(result)
 
@@ -154,7 +153,7 @@ def test_log_kv_vectorized():
     zs = jnp.array([1.0, 2.0, 3.0, 4.0])
     results = log_kv(vs, zs)
     assert results.shape == (4,)
-    for i, (v, z) in enumerate(zip(vs, zs)):
+    for i, (v, z) in enumerate(zip(vs, zs, strict=True)):
         _check_against_scipy(float(v), float(z), float(results[i]),
                              rel=1e-8, abs_=1e-8)
 
@@ -164,7 +163,7 @@ def test_log_kv_vectorized_mixed_regimes():
     zs = jnp.array([1.0, 50.0, 30.0, 100.0])
     results = log_kv(vs, zs)
     assert results.shape == (4,)
-    for i, (v, z) in enumerate(zip(vs, zs)):
+    for i, (v, z) in enumerate(zip(vs, zs, strict=True)):
         _check_against_scipy(float(v), float(z), float(results[i]),
                              rel=1e-8, abs_=1e-8)
 

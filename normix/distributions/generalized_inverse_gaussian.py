@@ -111,21 +111,6 @@ def _gig_degeneracy_flags(p, a, b, xp):
     return use_gamma, use_invg, off_theta, z
 
 
-# ---------------------------------------------------------------------------
-# Random variate generation helpers (Devroye TDR + PINV wrappers)
-# ---------------------------------------------------------------------------
-#
-# Two GIG sampling methods, neither requiring Bessel evaluation:
-#
-# 1. ``_gig_rvs_devroye`` — Devroye TDR on :math:`u = w - w_0` in
-#    :math:`(p,z,s)` coordinates. Envelope tangents sit at the
-#    :math:`e^{-1}` level of :math:`\psi`; ``lax.while_loop`` redraws
-#    unaccepted columns (acceptance :math:`\ge e^{-1}` uniformly).
-#
-# 2. ``build_pinv_table`` + ``rvs_pinv`` — Numerical inverse CDF via
-#    :func:`normix.utils.rvs.build_pinv_table` seeded at
-#    ``_gig_log_mode(p-1, a, b)``.
-
 _GIG_RVS_TINY64 = jnp.finfo(jnp.float64).tiny
 _GIG_TDR_DOUBLE_ITERS = 8
 _GIG_TDR_MAX_ROUNDS = 256
@@ -523,7 +508,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             s_{-}(1+E[s_1]),\; s_{+}(1+E[s_2])\bigr),
             \qquad H = D\,\mathrm{cov}(s)\,D,
 
-        where :math:`s_{\mp}=\exp(\tfrac12\log(a/b)\mp u_0)` and
+        where :math:`s_{-}=\sqrt{a/b}\exp(-u_0)`, :math:`s_{+}=\sqrt{b/a}\exp(u_0)` and
         :math:`D=\mathrm{diag}(1,s_{-},s_{+})`. No Bessel ratios, no
         :math:`p\pm 1` evaluations.
         """
@@ -546,8 +531,8 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         :math:`\nabla\psi(\theta) = [E[\log X],\; E[1/X],\; E[X]]` from
         one :func:`~normix.utils.bessel.log_kv_moments` call.
 
-        Clamping :math:`a, b` to ``LOG_EPS`` keeps the Bessel kernel in its
-        stated domain. The default ``jax.grad`` path fails because
+        Flooring :math:`a, b` at ``LOG_EPS`` keeps the logarithms finite
+        and the Bessel argument positive. The default ``jax.grad`` path fails because
         ``jnp.where`` evaluates all branches and
         :math:`\partial\sqrt{ab}/\partial a \to \infty` as :math:`a \to 0`.
         """
@@ -1078,7 +1063,7 @@ class GeneralizedInverseGaussian(ExponentialFamily):
                 "E[X] * E[1/X] > 1", "-log(E[1/X]) < E[log X]",
                 "E[log X] < log(E[X])",
             )
-            for satisfied, requirement in zip(np.asarray(conditions), requirements):
+            for satisfied, requirement in zip(np.asarray(conditions), requirements, strict=True):
                 if not satisfied:
                     raise ValueError(f"GIG.from_expectation requires {requirement}")
             return cls._from_expectation_unchecked(eta, **kwargs)
@@ -1135,9 +1120,6 @@ class GeneralizedInverseGaussian(ExponentialFamily):
             theta0_scaled = theta0_scaled.at[2].set(
                 jnp.minimum(theta0_scaled[2], THETA_FLOOR))
 
-            # Hot path: stable jitted Newton with cached XLA executable.
-            # Avoids the per-call retrace incurred by solve_bregman's
-            # fresh Python closures (key bottleneck in GH JAX/JAX EM).
             if backend == "jax" and method == "newton" and verbose <= 0:
                 theta_scaled, _, grad_norm, converged = _gig_jax_newton_jit(
                     eta_scaled, theta0_scaled,
@@ -1245,21 +1227,9 @@ class GeneralizedInverseGaussian(ExponentialFamily):
         return seeds.at[:, 1:].set(jnp.minimum(seeds[:, 1:], THETA_FLOOR))
 
 
-# ---------------------------------------------------------------------------
-# Stable jitted GIG Newton solver
-# ---------------------------------------------------------------------------
-#
-# Hoisted so ``GIG.log_partition`` / EM conjugacy does not re-run eager
-# ``log_kv`` quadrature on every E-step. Same pattern as the Newton kernel
-# below: a module-level jit, not a fresh closure per call.
 _gig_log_partition_jit = jax.jit(
     GeneralizedInverseGaussian._log_partition_from_theta
 )
-
-# Hoisted to module level so that JAX caches the compiled XLA executable
-# across all GIG.from_expectation(jax/newton) calls. Without this, every
-# warm-started solve inside an EM loop builds fresh Python closures and
-# forces JAX to re-trace the same Newton kernel, dominating GH M-step time.
 
 _gig_jax_newton_jit = make_jit_newton_solver(
     f=GeneralizedInverseGaussian._log_partition_from_theta,

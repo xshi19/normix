@@ -152,6 +152,20 @@ forkserver_warmup = "none"
 timeout_multiplier = 15.0
 timeout_constant = 10.0
 
+[tool.ruff]
+target-version = "py312"
+include = ["{normix,tests}/**/*.{py,pyi,ipynb}"]
+
+[tool.ruff.lint]
+select = ["F", "E9", "B", "BLE001", "S110", "S112", "RUF100", "TID251", "NPY"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"scipy.special.kv" = { msg = "Use normix.utils.bessel.log_kv or log_kv_moments." }
+"scipy.special.kve" = { msg = "Use normix.utils.bessel.log_kv or log_kv_moments; scipy.kve is a test oracle only." }
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["TID251"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true

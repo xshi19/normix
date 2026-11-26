@@ -29,8 +29,11 @@ Perturbed copies at scales 0.1, 0.5, 2.0, 10.0 are added for robustness.
 
 ## Solver
 
-`scipy.optimize.minimize` with `method='L-BFGS-B'` and bounds θ₂ ≤ 0, θ₃ ≤ 0.
-Not JIT-able due to multi-start control flow and scipy dependency.
+CPU cold starts use `scipy.optimize.minimize` with `method='L-BFGS-B'` and
+box bounds on the two rates. The JAX warm-start Newton solver is constructed
+once at module scope. Repeated GH M-steps with matching shapes and dtypes
+reuse the compiled solve. The GIG log-partition has its own module-level
+`jit` so repeated E-steps can also reuse its compiled quadrature.
 
 Likelihood gradient descent (Adam / L-BFGS + softplus on $(p,a,b)$) is
 compared against this solver in `gradient_fitting_comparison.md`. On the

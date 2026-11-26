@@ -102,7 +102,7 @@ def test_shrinkage_aligns_explicit_origins_under_jit(factor, per_field):
     expected = affine_combine(prior, eta.rebase(jnp.zeros(1)), 1/6, 5/6)
     actual = result.rebase(jnp.zeros(1))
     np.testing.assert_array_equal(result.origin, eta.origin)
-    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected)):
+    for got, ref in zip(jax.tree.leaves(actual), jax.tree.leaves(expected), strict=True):
         np.testing.assert_allclose(got, ref, rtol=0, atol=1e-14)
 
 

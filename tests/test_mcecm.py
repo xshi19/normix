@@ -94,7 +94,7 @@ def test_m_step_normal_preserves_subordinator(dist_name, sp500_returns):
     after_leaves = jax.tree.leaves(j_after)
     shared = {id(l) for l in [j_before.mu, j_before.gamma, j_before.L_Sigma]}
 
-    for lb, la in zip(before_leaves, after_leaves):
+    for lb, la in zip(before_leaves, after_leaves, strict=True):
         if id(lb) in shared:
             continue
         np.testing.assert_array_equal(

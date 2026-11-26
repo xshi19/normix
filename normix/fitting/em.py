@@ -469,11 +469,10 @@ class BatchEMFitter:
     def _fit_scan(self, model, X, target_log_det, sample_weight=None) -> EMResult:
         """JIT-able EM loop via :func:`~jax.lax.scan`.
 
-        The scan carry keeps ``converged`` and ``diverged`` as separate booleans
-        rather than a single status code: convergence accepts the new model,
-        divergence reverts to the previous one, and ``done = converged | diverged``
-        freezes both paths. Two flags also map directly onto :class:`EMResult`
-        and compose cleanly with ``jnp.where`` / ``|`` inside the scanned body.
+        The scan accepts the converging model. A non-finite mixing update
+        sets ``solver_failed``. A non-finite change or objective with finite
+        mixing parameters sets ``diverged``. Both failures keep the previous
+        model. Any of the three flags freezes the carry on later iterations.
         """
         t0 = time.perf_counter()
         track_ll = self.track_ll
@@ -1132,6 +1131,6 @@ def _param_change(new_params, old_params) -> jax.Array:
     leaves_old = jax.tree.leaves(old_params)
     rels = jnp.stack([
         _rms(n - o) / (1.0 + _rms(o))
-        for n, o in zip(leaves_new, leaves_old)
+        for n, o in zip(leaves_new, leaves_old, strict=True)
     ])
     return jnp.max(rels)

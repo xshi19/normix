@@ -27,18 +27,10 @@ HESSIAN_DAMPING: float = 1e-6
 #: the KKT residual.
 THETA_FLOOR: float = -1e-8
 
-#: Wider gap used only to decide whether from_expectation may return a
-#: model. A GIG coordinate within this distance of θ = 0, with the
-#: gradient pointing out of the feasible set, is the bound multiplier
-#: (O(10⁻³)), not an uninverted free coordinate. The iteration itself
-#: still stops on the tighter THETA_FLOOR gap.
+#: Distance to a finite bound used to identify active coordinates at acceptance.
 KKT_NEAR_GAP: float = 1e-2
 
-#: Free residual at which η counts as inverted for from_expectation.
-#: Trust-exact status 2 stalls near 10⁻⁹ with success=False; a 20-step
-#: Newton budget on a gamma-limit GIG leaves a free residual ~10⁻⁶ and
-#: a multiplier ~10⁻³. Residuals of O(1) — the φ-gradient false stop —
-#: stay above this floor.
+#: Absolute tolerance on the free θ-space gradient residual at acceptance.
 BREGMAN_INVERT_ATOL: float = 1e-5
 
 # ── GIG parameter clamps ──────────────────────────────────────────────
@@ -69,12 +61,7 @@ B_POST_FLOOR: float = 1e-6
 #: other finite moment keep their exact closed forms.
 ALPHA_MOMENT_MARGIN: float = 0.1
 
-#: Margin ε used by the opt-in VG α-lower-bound sentinels in `fit(alpha_min=...)`.
-#: The VG marginal density is unbounded at x=μ for α ≤ d/2, and E[1/Y|x] is
-#: unbounded for α ≤ d/2 + 1; the floored b_post keeps EM finite but cannot stop
-#: it parking near that spike. When `alpha_min='density'` the M-step clamps the
-#: Gamma shape at d/2 + ε (density bounded); `alpha_min='inverse_moment'` clamps
-#: at d/2 + 1 + ε (E[1/Y|x] also bounded). Opt-in only — default is no clamp.
+#: Shape margin above the VG density or inverse-moment threshold in ``fit(alpha_min=...)``.
 ALPHA_MIN_MARGIN: float = 0.1
 
 # ── M-step constants ──────────────────────────────────────────────────
@@ -97,8 +84,6 @@ D_FLOOR: float = 1e-8
 
 #: Regularisation added to empirical Σ during moment-based initialisation
 SIGMA_INIT_REG: float = 1e-4
-
-# ── Finite-difference steps ───────────────────────────────────────────
 
 #: Half-width of the Taylor window for Rényi entropy about α = 1
 #: (H_α = H − ½ V_H (α−1) + O((α−1)²)); keeps jax.grad(renyi) defined at α = 1
@@ -138,12 +123,8 @@ TORSION_SPECTRAL_FLOOR: float = 1e-12
 
 # ── Mean-risk reachable set ───────────────────────────────────────────
 
-#: Infinity-norm tolerance on the constraint residual Mᵀw − c.
-#: A reduced target inside this gap is a portfolio; a larger gap is not.
-#: Attainable residuals sit at roundoff (~1e-16). The unattainable gaps
-#: in the symmetric (γ̃ = 0.1) and rank-1 (μ̃ = 0.05) examples are 0.1
-#: and 0.03. The same absolute gap decides whether expected return is
-#: constant along a rank-2 reachable line.
+#: Absolute tolerance on the largest portfolio constraint residual and on
+#: return variation along a reachable line.
 MEAN_RISK_REACH_ATOL: float = 1e-8
 
 

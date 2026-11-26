@@ -53,8 +53,8 @@ jobs:
             jax-cache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}-
             jax-cache-${{ runner.os }}-py${{ matrix.python-version }}-
     
-      - name: Ruff unused-import check
-        run: uv run ruff check --select F401,F811,F841 normix/
+      - name: Ruff
+        run: uv run ruff check normix/ tests/
 
       - name: Run tests
         run: uv run pytest tests/ -q --tb=short
