@@ -169,7 +169,7 @@ the first step from the additive $1$ in the hybrid-RMS denominator.
 ## Experimental Setup
 
 - **Data**: S&P 500 daily returns, 2552 observations × 468 stocks
-- **GPU**: NVIDIA RTX 4090, JAX 0.9.1
+- **GPU**: NVIDIA desktop GPU, JAX 0.9.1
 - **Branch**: `feat/jax-native-bessel-v2`
 - **Metric**: Average time per EM iteration (iters 2–5 after warmup)
 - **GIG solver**: `solver='newton'` (JAX, scan_length=20) vs `solver='cpu'` (scipy L-BFGS-B)

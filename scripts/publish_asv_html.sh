@@ -22,9 +22,9 @@ esac
 
 cd "$ROOT"
 
-jsons=(asv_bench/results/wukong/*.json)
+jsons=(asv_bench/results/reference-gpu/*.json)
 if [[ ! -e "${jsons[0]}" ]]; then
-  echo "ERROR: asv_bench/results/wukong/ has no JSON; cannot publish the dashboard." >&2
+  echo "ERROR: asv_bench/results/reference-gpu/ has no JSON; cannot publish the dashboard." >&2
   exit 1
 fi
 

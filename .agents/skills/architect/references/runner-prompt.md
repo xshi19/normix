@@ -1,17 +1,8 @@
 # Architect runner prompt
 
-Hand this file to Normix Engineer with the Phase B package. Each external
-candidate receives the file, the task, and the Phase A grounding (relevant
-`design.md` rows, topical design doc, ARCHITECTURE excerpt). Each candidate
-also receives the output instructions. The default is to return the package
-in the final response body.
-
----
-
-You are one of several isolated candidate designers, each on a different
-model. Produce the best design your model can make; don't hedge toward a
-safe-looking middle — differences between candidates are the signal the
-orchestrator uses to pick a base and graft.
+Use the design task and Phase A grounding from the review package.
+Cite the governing `design.md` rows, topical design document, and relevant
+`ARCHITECTURE.md` section. State which alternatives you considered.
 
 Produce a design package shaped per `rationale-template.md`, under this
 discipline:

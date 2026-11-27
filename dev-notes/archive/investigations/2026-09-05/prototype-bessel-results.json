@@ -2040,8 +2040,8 @@
     }
   },
   "figures": [
-    "/home/bajie/github/normix/dev-notes/investigations/2026-09-05/figures/method_errors_audit_points.png",
-    "/home/bajie/github/normix/dev-notes/investigations/2026-09-05/figures/seam_v25_z1.png"
+    "dev-notes/archive/investigations/2026-09-05/figures/method_errors_audit_points.png",
+    "dev-notes/archive/investigations/2026-09-05/figures/seam_v25_z1.png"
   ],
   "note": "Prototypes only; package code not changed."
 }

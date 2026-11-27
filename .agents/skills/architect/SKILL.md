@@ -2,8 +2,8 @@
 name: architect
 description: >-
   Design before implementing: sketch eqx.Module fields, classmethod
-  signatures, and module boundaries before code, hand the sketch to
-  Normix Engineer, and land the decision as a dev-notes/design/design.md row.
+  signatures, and module boundaries for independent external review.
+  Record the agreed design in dev-notes/design/design.md.
   Use for structural changes or changes to backend selection, device
   placement, or transformation guarantees. Also use for an explicit
   design request. Skip routine implementations that preserve those contracts.
@@ -45,7 +45,6 @@ Completion criterion: each candidate preserves the cited constraints or names an
 
 Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
 Do not spawn candidates in this session.
-The user relays the package. This session does not call Normix Engineer.
 
 Stop when the package is ready.
 With no returned synthesis, the state is "ready for external review".

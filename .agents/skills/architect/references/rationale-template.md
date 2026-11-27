@@ -23,8 +23,8 @@ do.*
 
 ## Synthesis decision
 
-*Normix Engineer fills this section after the bake-off. Record the base,
-the grafts, and the rejections. Leave this section blank in the hand-off.*
+*Leave this section blank until independent review. Record the chosen design,
+elements adopted from other candidates, and reasons for rejecting alternatives.*
 
 ## Tradeoffs accepted
 

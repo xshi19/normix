@@ -13,7 +13,7 @@ model.
 
 ## Benchmark Results
 
-Micro-benchmark on NVIDIA RTX 4090, JAX 0.9.1. Median times after warmup.
+Micro-benchmark on the reference GPU, JAX 0.9.1. Median times after warmup.
 
 ### Layer 1: Single `log_kv(v=0.5, z=1.0)` call
 
@@ -149,7 +149,7 @@ EM iterations instead of being re-traced on every call.
 The same fix was applied to `_newton_digamma` (Gamma / InverseGamma / VG /
 NInvG) by adding `@jax.jit`.
 
-Measured impact on RTX 4090, JAX 0.9.1
+Measured impact on the reference GPU, JAX 0.9.1
 (`benchmarks/bench_jit_solvers.py`):
 
 | Path | First call (compile + run) | Cached call | Per-call speedup |

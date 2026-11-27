@@ -32,7 +32,7 @@ Observed result:
 - `1 warning`
 - total wall time: `948.18 s` (`0:15:48`)
 - JAX backend: GPU
-- visible GPU: NVIDIA GeForce RTX 4090
+- visible GPU: NVIDIA desktop GPU
 
 Resource monitoring was sampled every 3 seconds during most of the run. The
 per-process CPU metric was not reliable because the monitor initially attached
@@ -112,7 +112,7 @@ The following totals are sums of individual pytest call durations from the
 
 ### 1. GPU memory is reserved, not necessarily actively used
 
-The run showed GPU memory near full (`~21 GB` average on a `24 GB` RTX 4090)
+The run showed GPU memory near full (`~21 GB` average on a `24 GB` GPU)
 while average GPU utilization was only `9.1%`.
 
 This is expected JAX behavior. By default, JAX/XLA preallocates a large GPU
@@ -467,7 +467,7 @@ Exit criteria:
 - repeated GH/GIG JAX M-steps avoid repeated tracing/dispatch where possible
 - Robbins-Monro GH JAX/JAX test improves without changing math
 
-Result (`bench_jit_solvers`, RTX 4090, JAX 0.9.1):
+Result (`bench_jit_solvers`, desktop GPU, JAX 0.9.1):
 
 | Case | First call | Cached call | Ratio |
 |---|---:|---:|---:|
@@ -514,7 +514,7 @@ Exit criteria:
 - JAX/JAX incremental EM compiles the repeated step once
 - Python-loop overhead no longer dominates tiny mini-batch tests
 
-Result (`bench_incremental_em`, RTX 4090, JAX 0.9.1, Robbins-Monro, `max_steps=20`,
+Result (`bench_incremental_em`, desktop GPU, JAX 0.9.1, Robbins-Monro, `max_steps=20`,
 `n=200`, `d=3`, `batch=50`, both backends `'jax'`):
 
 | Distribution | Python loop (cached) | `lax.scan` (cached) | Speedup | LL gap (scan vs python) |
@@ -561,7 +561,7 @@ Exit criteria:
 - correctness tests stay fast
 - stress/performance questions are answered by explicit benchmark commands
 
-Result (`bench_gh_paths`, RTX 4090, JAX 0.9.1, GH `p=-0.5, a=2, b=1`,
+Result (`bench_gh_paths`, desktop GPU, JAX 0.9.1, GH `p=-0.5, a=2, b=1`,
 `regularization='det_sigma_one'`, batch `max_iter=10` with `tol=0` so all paths
 do the same fixed work, incremental Robbins-Monro `max_steps=20`,
 `batch_size=0.25·n`). Times are cached-call (JIT-warm) per outer EM step, with

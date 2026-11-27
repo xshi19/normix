@@ -292,8 +292,10 @@ Recorded in `asv_bench/README.md`:
 
 1. **Adopt ASV, scoped**: trends only; the deep-dive scripts remain the
    investigation tool. Do not port the SP500/MCECM benchmarks.
-2. **Desktop is the canonical machine.** Run `asv run` locally **at each
-   GitHub release** (plus an optional `asv run NEW` before a suspected
+2. **Desktop is the canonical machine.** Register the release profile with
+   `asv machine --machine reference-gpu` using the hardware fields in
+   [the ASV guide](../../../asv_bench/README.md). Run `asv run --machine reference-gpu` **at each
+   GitHub release** (plus an optional `asv run --machine reference-gpu NEW` before a suspected
    performance-sensitive merge). Commit results with the release. CI is a
    coarse PR tripwire (`.github/workflows/asv.yml`), never the trend source.
 3. **Backend via `params`, device via `env_nobuild`, machine via
@@ -355,7 +357,7 @@ Gotchas:
   (jax ≫ cpu on this problem size); do not compare the old milliseconds
   to ASV μs.
 
-Verified on wukong (RTX 4090, WSL2): `jax-cuda12-plugin==0.9.1` in the
+Verified on the reference GPU desktop: `jax-cuda12-plugin==0.9.1` in the
 ASV env; `JAX_PLATFORMS=cuda` → `CudaDevice(id=0)`; `asv publish`
 `params.env-JAX_PLATFORMS = ["cpu", "cuda"]`.
 
@@ -372,7 +374,7 @@ Gotchas:
 - Wall clock is ASV's repeat fill, not N. Default `repeat` spends ~20 s per
   param even on µs kernels. New classes use `rounds=1`,
   `repeat=(1, 3, 3.0)` so E-step/EM/compile/sampling add ~1.5 min on cpu.
-  Bessel/GIG keep the Phase 1 defaults. Isolated v0.3.0 on wukong:
+  Bessel/GIG keep the Phase 1 defaults. Isolated v0.3.0 on the reference GPU desktop:
   cpu 2.87 min, cuda 5.39 min, ~9.4 min/commit including install. Eight
   tags × both devices: 68 min. N ∈ {1000, 10000} stayed.
 - `timeraw_*` returns `(stmt, setup)` strings; the child interpreter must
@@ -408,7 +410,7 @@ Gotchas:
   `scripts/publish_asv_html.sh` creates the local ref.
 - Do not add `docs/benchmarks.md`: GitHub Pages `/benchmarks` vs
   `/benchmarks/` clash. Landing page is `docs/asv.md` → `/asv.html`.
-- `results/.gitignore` un-ignores `wukong/` + `benchmarks.json` only.
+- `results/.gitignore` un-ignores `reference-gpu/` + `benchmarks.json` only.
   Smoke runs on other machines stay untracked.
 - `asv publish --no-pull` in CI so the hidden clone is not fetched.
 
@@ -471,8 +473,8 @@ Gotchas:
   deliberate upgrade.
 - **Result cadence — per GitHub release**, not per merge. A full
   desktop run (CPU + CUDA series × the curated suite) is too expensive
-  to attach to every merge. At release: `asv run <prev-tag>..<new-tag>`
-  (or `asv run NEW` if that range is empty) on the desktop, commit
+  to attach to every merge. At release: `asv run --machine reference-gpu <prev-tag>..<new-tag>`
+  (or `asv run --machine reference-gpu NEW` if that range is empty) on the desktop, commit
   `asv_bench/results/`, publish the dashboard. For a suspected
   performance-sensitive PR, optionally run `asv continuous master HEAD`
   locally before merging — that is a two-commit compare, not a history

@@ -168,9 +168,8 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - **ASV `gh-pages` trap**: never run `asv gh-pages`. That command replaces the
   Sphinx site with only the dashboard. The dashboard is a subdirectory of the
   Sphinx tree (`/benchmarks/`), copied after `sphinx-build`.
-- **ASV results vs HTML**: commit `asv_bench/results/wukong/*.json` (release
-  cadence on the desktop). Do not commit `.asv/html`. Docs CI / `make html`
-  regenerate the dashboard. `results/.gitignore` tracks wukong only.
+- **ASV results vs HTML**: follow the [ASV guide](../../../asv_bench/README.md) to record release timings.
+  Commit `asv_bench/results/reference-gpu/*.json`. Docs CI and `make html` rebuild the dashboard from the committed results.
 - **Do not add `docs/benchmarks.md`**: GitHub Pages would clash `/benchmarks`
   (Sphinx page) with `/benchmarks/` (ASV `index.html`). Landing page is
   `docs/asv.md` → `/asv.html`.
@@ -186,7 +185,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
   `asv continuous` use the same name.
 - **ASV tripwire is not the dashboard**: `.github/workflows/asv.yml`
   times a CPU-only Bessel / GIG subset on the PR. It does not write
-  `asv_bench/results/wukong/` and must not deploy HTML.
+  `asv_bench/results/reference-gpu/` and must not deploy HTML.
 
 ## Related files
 
@@ -197,7 +196,7 @@ Do not assume the site is updated until the `pages build and deployment` run on
 - `docs/references.md` — published bibliography (`{ref}`Key <key>``)
 - `scripts/check_doc_links.sh`
 - `scripts/publish_asv_html.sh` — `asv publish --no-pull` → `_build/html/benchmarks/`
-- `asv_bench/` — suite, `asv.conf.json`, committed `results/wukong/`
+- `asv_bench/` — suite, `asv.conf.json`, committed `results/reference-gpu/`
 - `.github/workflows/asv.yml` — PR tripwire (not the dashboard)
 - `.github/workflows/docs.yml`
 - `.github/workflows/docs-full.yml`

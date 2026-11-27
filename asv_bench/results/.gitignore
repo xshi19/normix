@@ -1,7 +1,7 @@
-# Track JSON from the canonical desktop (wukong) only. Other machine
+# Track JSON from the reference GPU desktop only. Other machine
 # directories stay ignored so a smoke run cannot `git add` itself.
 *
 !.gitignore
 !benchmarks.json
-!wukong/
-!wukong/**
+!reference-gpu/
+!reference-gpu/**
