@@ -515,7 +515,7 @@ An empty value turns command buffers off.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--xla_gpu_graph_min_graph_size</span></code> is the smallest number of kernels worth
 recording. The default is 5; with 1, short sequences are recorded too.</p></li>
 </ul>
-<p>Measured effect (one RTX 4090 under WSL2, jax 0.9.1, steady-state time of
+<p>Measured effect (the reference GPU under WSL2, JAX 0.9.1, steady-state time of
 <code class="docutils literal notranslate"><span class="pre">jax.jacrev</span></code> of <code class="docutils literal notranslate"><span class="pre">GIG.from_expectation</span></code>; compile time is about 2.2 s in every
 row):</p>
 <div class="pst-scrollable-table-container"><table class="table">
