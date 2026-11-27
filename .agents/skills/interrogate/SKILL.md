@@ -5,8 +5,8 @@ description: >-
   normix/utils/bessel.py, the GIG/GH solvers, the EM fitter, or any
   @jax.custom_jvp function, and on request ("interrogate", "adversarial
   review", "stress test this", "tear this apart"). Default tier: Cursor
-  Grok 4.7 reviewers with distinct lenses. Escalation: hand off to Normix
-  Engineer. Skip for docs-only or typing-only changes.
+  Grok 4.7 reviewers with distinct lenses. Escalate cross-family reviews for independent
+  external synthesis. Skip for docs-only or typing-only changes.
 ---
 
 # Interrogate
@@ -41,7 +41,6 @@ Include these requirements in the external review package.
 Escalate for a sign error or a wrong Bessel step. A second model family
 catches that class of bug. On that tier, do not spawn reviewers here.
 Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
-The user relays it. Stop.
 The state is "ready for external review".
 
 ## Steps
@@ -80,7 +79,6 @@ The state is "ready for external review".
    That pass is not independent cross-family review.
    **Escalation, either host.** Do not spawn reviewers.
    Prepare the package in `dev-notes/design/agent_instructions_design.md` § Host support.
-   The user relays it. Stop.
    The state is "ready for external review".
 
    Completion criterion: Cursor ran three `grok-4.7-xhigh` reviewers on distinct lenses, or Codex recorded a preliminary pass.

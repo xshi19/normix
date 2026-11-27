@@ -73,4 +73,4 @@ Propagate accepted design changes through types, docs, and decision rows.
 Use [agent-maintenance](../../.agents/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake) for recurring corrections.
 In Cursor, `project-overview.mdc` loads in every session; keep it concise.
 For authorized multi-agent or worktree runs, give each writer its own output path.
-Preserve the [external hand-off contract](../design/agent_instructions_design.md#normix-engineer-hand-off) for external comparisons.
+Preserve the [external hand-off contract](../design/agent_instructions_design.md#external-review) for external comparisons.

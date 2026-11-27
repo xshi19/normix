@@ -87,7 +87,7 @@
 * **research:** subordinator-tracking S&P 500 study (Phases 0–3) ([#102](https://github.com/xshi19/normix/issues/102)) ([ef77f13](https://github.com/xshi19/normix/commit/ef77f1391cd58869e810ff699aaa4346e7c6f6cb))
 * **research:** VG κ diagnosis + gauge invariance study plan ([#104](https://github.com/xshi19/normix/issues/104)) ([282fa15](https://github.com/xshi19/normix/commit/282fa15d3221699994964633b1b7561be8131cc9))
 * **skills:** add show-me skill and harvest humanlayer loop mechanics ([#100](https://github.com/xshi19/normix/issues/100)) ([ab5d992](https://github.com/xshi19/normix/commit/ab5d992039419b1a6d896d17b8b5714bc0ec0395))
-* **skills:** hand multi-model work to Normix Engineer ([#127](https://github.com/xshi19/normix/issues/127)) ([b9fd4f1](https://github.com/xshi19/normix/commit/b9fd4f1ede56920faa6ffa5f05b824e55f1f5051))
+* **skills:** require external synthesis for multi-model reviews ([#127](https://github.com/xshi19/normix/issues/127)) ([b9fd4f1](https://github.com/xshi19/normix/commit/b9fd4f1ede56920faa6ffa5f05b824e55f1f5051))
 * **tech:** add gradient-fitting vs EM/MLE comparison study ([#106](https://github.com/xshi19/normix/issues/106)) ([2f57444](https://github.com/xshi19/normix/commit/2f574449d51627cefe8b466601378068f3fb5841))
 
 

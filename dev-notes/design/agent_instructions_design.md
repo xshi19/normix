@@ -197,11 +197,8 @@ Reopen this choice if either host stops scanning `.agents/skills/`.
   non-trigger in the body (architect: "would this add a `design.md`
   row? if not, skip"). Skills produce records; docs remain the record —
   architect *lands* a design.md row rather than replacing the table.
-- Cross-family bake-offs run outside this repo. Cursor sessions here use
-  Grok only (`grok-4.7-xhigh`). GPT runs only in Codex. Normix Engineer
-  runs one Codex GPT candidate, one Cursor Grok candidate, and its own
-  candidate. It compares the three and grafts a synthesis.
-- Architect Phase B prepares that hand-off and stops. On Cursor, the
+- Cross-family reviews require an independent written synthesis.
+  Architect Phase B prepares the review package and stops. On Cursor, the
   default interrogate tier is Grok 4.7 reviewers with distinct lenses.
   On Codex, a sequential lens pass is not that review.
   Escalation uses § Host support.
@@ -377,11 +374,9 @@ Read-only. Do not add a second copy of a normix skill.
    `arena` has no `agents/openai.yaml`.
    Codex may list `arena`.
 
-### Normix Engineer hand-off
+### External review
 
-Normix Engineer is an external assistant. This repo has no call, endpoint, or import for it.
-
-Build the package the calling skill names. Then stop.
+Prepare the evidence required by the calling skill.
 
 **Architect Phase B.** Include the design task and the Phase A grounding.
 Include `.agents/skills/architect/references/runner-prompt.md` and `.agents/skills/architect/references/rationale-template.md`.
@@ -398,17 +393,13 @@ Include the goal, constraints, proposed mechanism, and authority packet from int
 Identify the base and head revisions.
 Include pre-change decision rows, related unchanged rows, and relevant rejected alternatives.
 
-The user relays the package to Normix Engineer. Do not invent a transport.
-
-Normix Engineer returns one written synthesis.
-For a design bake-off, that note names the base, the grafts, and the rejections.
+An external reviewer provides an independent written synthesis.
+For a design comparison, it identifies the chosen design, elements adopted from other candidates, and rejected alternatives.
 For a review, it names the reviewers, reviewed revision, constraints checked, and findings.
-A draft PR, CI success, or a prepared package does not supply that return.
+A draft PR, CI success, or a prepared package is not that synthesis.
 If the diff changes afterward, identify which findings still apply and what needs renewed review.
 
-Paste that return into the session before you call the work reviewed.
-With no return, the state is "ready for external review".
-Never write "reviewed" unless that synthesis is back in the session.
+Report “ready for external review” until the written synthesis is available for the reviewed revision.
 
 `architect`, `interrogate`, and `arena` point here. Do not copy this contract into those skills.
 

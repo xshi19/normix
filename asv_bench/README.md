@@ -11,18 +11,25 @@ cd asv_bench
 uv run asv machine --yes                 # once per machine
 uv run asv check --python=same
 uv run asv run --python=same --quick     # working tree; results not saved
-uv run asv run 'HEAD^!'                  # isolated uv env, this commit only (quote so bash does not eat `!`)
+```
+
+On the reference GPU desktop, register the public profile after the initial
+machine setup. Use that profile for release results.
+
+```bash
+uv run asv machine --machine reference-gpu --cpu 'x86_64 8-core desktop CPU' \
+  --os 'Linux (WSL2)' --ram 34359738368
+uv run asv run --machine reference-gpu 'HEAD^!'   # isolated env, this commit only
 # Tag backfill: asv 0.6.6 `TAGS` records tag names, not SHAs. Resolve first:
 git tag | while read t; do git rev-list -n 1 "$t"; done > /tmp/asv-tags
-uv run asv run HASHFILE:/tmp/asv-tags
+uv run asv run --machine reference-gpu HASHFILE:/tmp/asv-tags
 uv run asv publish
 uv run asv preview
 ```
 
 `--python=same --quick` is the authoring loop. Historical / release runs
 (`asv run HASHFILE:…` of tag SHAs, `asv run <prev>..<new>`) always go through isolated envs.
-Canonical numbers come from the maintainer's Linux desktop at each GitHub
-release — not from CI, not from this smoke path.
+The reference GPU desktop supplies the timings for each GitHub release.
 
 `--python=same` cannot compare two commits (`install_project` is a no-op).
 PR tripwire (isolated uv env, CPU-only Bessel / GIGFromExpectation):
@@ -66,7 +73,7 @@ cd asv_bench && uv run asv run --python=same --quick
 | `benchmarks/gig.py` | `GIGFromExpectation` (backend × easy/hard η); `Sampling` (`GIG.rvs` Devroye) |
 | `benchmarks/em.py` | `EStep` (dist × backend × N); `EMIteration` (dist, 5 steps) |
 | `benchmarks/compile.py` | `Compile`: `timeraw_from_expectation` GIG Newton / Gamma digamma |
-| `results/` | JSON keyed by (machine, env, commit). `wukong/` + `benchmarks.json` committed |
+| `results/` | JSON keyed by (machine, env, commit). `reference-gpu/` + `benchmarks.json` committed |
 | `.asv/` | isolated envs + published HTML. gitignored |
 
 `environment_type` is `uv` (asv ≥ 0.6.6). Fall back to `virtualenv` only if

@@ -1,0 +1,9 @@
+{
+    "arch": "x86_64",
+    "cpu": "x86_64 8-core desktop CPU",
+    "machine": "reference-gpu",
+    "num_cpu": "16",
+    "os": "Linux (WSL2)",
+    "ram": "34359738368",
+    "version": 1
+}

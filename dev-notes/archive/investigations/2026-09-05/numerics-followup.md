@@ -2,8 +2,7 @@
 
 > **ARCHIVED — 2026-10-23.** This note landed in [#134](https://github.com/xshi19/normix/pull/134) (`bc8b24e`). Later follow-ups are [#135](https://github.com/xshi19/normix/pull/135) (`0bc11fc`) and [#145](https://github.com/xshi19/normix/pull/145) (`37914d0`).
 
-Scope: review items 6.4, 6.5, 9.4, and 9.2. Reproduction:
-`.venv/bin/python /workspace/reports/scratch/repro_numerics.py`.
+The reproducer for review items 6.4, 6.5, 9.4, and 9.2 was an out-of-repo scratch script.
 Targeted pytest files run serially on the shared 15 GB host.
 
 ## 6.4 Joint density powers
@@ -183,8 +182,6 @@ condition-specific `ValueError` instead of spending a solve and raising
 warm start, and 20 Newton steps gave median 2.799 ms through the public
 guard versus 2.804 ms through the unchecked solve. This shows no measurable
 overhead in that workload; it is not a general performance claim.
-Reproducer: `/workspace/reports/scratch/time_gig_boundary.py`;
-output: `/workspace/reports/scratch/gig_boundary_timing.txt`.
 
 ## Round 5: cold-start performance
 
@@ -264,11 +261,8 @@ Newton counts at $10^{-10}$ / $10^{-12}$ are 6 / 7, 6 / 6, and 9 / 9.
 The corresponding L-BFGS counts are 18 / 19, 17 / 17, and 21 / 23;
 BFGS counts are 17 / 18, 16 / 17, and 22 / 23. All are finite and converged.
 
-The external review report at
-`/workspace/reports/codex-numerics-summary.md` records validation results,
-commands, raw artifact paths, and the local commit. Profilers and timing
-scripts live under `/workspace/reports/scratch/round5_*`; the paired GH
-benchmark is `/workspace/reports/scratch/time_em_forward.py`.
+The external review report recorded the validation commands, results, and tested commit.
+The profiling scripts and paired GH benchmark were kept outside the repository.
 
 Final validation: `test_expectation_autodiff.py` 24 passed,
 `test_gig_expectation_domain.py` 31 passed, `test_solvers.py` 85 passed

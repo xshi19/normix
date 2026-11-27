@@ -147,7 +147,7 @@ vs `jax.hessian(ψ)` is `slow`.
 ## Window search cost on GPU (issue #136)
 
 The window search is serial, so on GPU its time is the number of loop steps
-times a kernel launch (about 0.17 ms per step on an RTX 4090). Applied:
+times a kernel launch (about 0.17 ms per step on the reference GPU). Applied:
 
 - Only the two extreme tilts $k=\pm T$ are searched, in one batched loop
   (PR #156; GPU steady state 0.17 s to 0.013 s, output bit-identical).

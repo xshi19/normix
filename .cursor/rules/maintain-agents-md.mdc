@@ -11,14 +11,12 @@ alwaysApply: false
 AGENTS.md is a **map**, not an encyclopedia. It tells the agent *where to look*,
 not *everything it needs to know*. Length caps are in `.cursor/rules/rule-authoring.mdc`.
 
-## Required Sections
+## Root map
 
-1. **One-line project description** — what normix is
-2. **Commands** — install, test, notebooks (copy-paste ready)
-3. **Commits** — conventional commits format + pre-commit checklist
-4. **Core design** — 5–7 bullet points summarizing the exponential family pattern
-5. **Context map** — table mapping *areas of work* → *which doc/rule to read*
-6. **Design philosophy** — four priorities: Elegancy, Numerical Efficiency & Robustness, Mathematical Clarity, Simplicity
+1. Identify the package, tests, documentation sources, and generated output.
+2. Give the root check commands and link to `docs/development/lint-rules.md` for coverage.
+3. Route each area to its governing document, rule, skill, or overlay.
+4. Keep the design priorities and analytical specialization requirement brief. Link to the canonical design decisions.
 
 ## What Does NOT Belong Here
 
@@ -31,7 +29,7 @@ not *everything it needs to know*. Length caps are in `.cursor/rules/rule-author
 ## When to Update
 
 - **New area of work** (new directory, new tool): add a row to the context map table
-- **New command** (new script, new test runner): add to Commands section
+- **Check command changes**: update the Checks section
 - **Context map target moved/renamed**: update the pointer
 
 Do **not** update AGENTS.md for every code change. Only update when the map

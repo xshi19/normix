@@ -44,7 +44,7 @@ What the flags mean:
 - `--xla_gpu_graph_min_graph_size` is the smallest number of kernels worth
   recording. The default is 5; with 1, short sequences are recorded too.
 
-Measured effect (one RTX 4090 under WSL2, jax 0.9.1, steady-state time of
+Measured effect (the reference GPU under WSL2, JAX 0.9.1, steady-state time of
 `jax.jacrev` of `GIG.from_expectation`; compile time is about 2.2 s in every
 row):
 
