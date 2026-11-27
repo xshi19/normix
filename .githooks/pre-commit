@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Repo-local pre-commit hook. Enable with:
+#   git config core.hooksPath .githooks
+# Use the local (repo) config only. Never git config --global.
+#
+# If the repo already uses the pre-commit framework (.pre-commit-config.yaml),
+# do NOT set core.hooksPath: add the two local hooks from the template
+# .pre-commit-config.yaml instead. Setting hooksPath would bypass the
+# framework's hooks (for example nbstripout).
+# Safety net: after the scans, this hook runs an existing
+# .git/hooks/pre-commit if there is one, so older hooks keep working.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+CONFIG="$ROOT/.gitleaks.toml"
+SECRETS_CONFIG="$ROOT/.gitleaks-secrets.toml"
+for f in "$CONFIG" "$SECRETS_CONFIG"; do
+  if [[ ! -f "$f" ]]; then
+    echo "leak-guard: missing $f" >&2
+    exit 1
+  fi
+done
+
+GITLEAKS=""
+if command -v gitleaks >/dev/null 2>&1; then
+  GITLEAKS="$(command -v gitleaks)"
+elif [[ -n "${LEAK_GUARD_GITLEAKS:-}" && -x "${LEAK_GUARD_GITLEAKS}" ]]; then
+  GITLEAKS="$LEAK_GUARD_GITLEAKS"
+fi
+
+if [[ -z "$GITLEAKS" ]]; then
+  echo "leak-guard: gitleaks is not installed." >&2
+  echo "Install v8.30.1 (https://github.com/gitleaks/gitleaks/releases) and retry." >&2
+  exit 1
+fi
+
+# Two passes: generic leak rules, then default secret rules.
+# The default config must not be merged into .gitleaks.toml: its global
+# allowlist would ignore every /home/... path. The second pass needs an
+# explicit --config, or gitleaks would auto-load .gitleaks.toml again.
+# Run both passes even if the first fails, then fail if either did.
+status=0
+"$GITLEAKS" git --pre-commit --staged --no-banner --redact \
+  --config "$CONFIG" "$ROOT" || status=1
+"$GITLEAKS" git --pre-commit --staged --no-banner --redact \
+  --config "$SECRETS_CONFIG" "$ROOT" || status=1
+if [[ $status -ne 0 ]]; then
+  exit 1
+fi
+
+# Chain to a hook that was in the default hook dir before hooksPath was set.
+COMMON_DIR="$(git rev-parse --git-common-dir)"
+case "$COMMON_DIR" in /*) ;; *) COMMON_DIR="$ROOT/$COMMON_DIR" ;; esac
+LEGACY_HOOK="$COMMON_DIR/hooks/pre-commit"
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+if [[ -x "$LEGACY_HOOK" && "$(readlink -f "$LEGACY_HOOK")" != "$(readlink -f "$SELF")" ]]; then
+  exec "$LEGACY_HOOK" "$@"
+fi

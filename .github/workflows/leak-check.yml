@@ -1,0 +1,66 @@
+# Copy to .github/workflows/leak-check.yml
+# Scans the current tree (what would be published), not full git history.
+# Two passes: generic leak rules (.gitleaks.toml), then default gitleaks
+# secret rules (.gitleaks-secrets.toml). They stay separate because the
+# default global allowlist ignores /home/... paths. Each pass passes
+# --config explicitly; otherwise gitleaks auto-loads .gitleaks.toml.
+name: leak-check
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  leak-check:
+    name: leak-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Install gitleaks
+        id: install
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          # From gitleaks_8.30.1_checksums.txt in the official v8.30.1 release.
+          GITLEAKS_SHA256_X64: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          GITLEAKS_SHA256_ARM64: "e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080"
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            x86_64|amd64) arch=linux_x64; sha="$GITLEAKS_SHA256_X64" ;;
+            aarch64|arm64) arch=linux_arm64; sha="$GITLEAKS_SHA256_ARM64" ;;
+            *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;;
+          esac
+          tarball="gitleaks_${GITLEAKS_VERSION}_${arch}.tar.gz"
+          tmp="$(mktemp -d)"
+          curl -sSfL -o "$tmp/$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
+          echo "${sha}  $tmp/$tarball" | sha256sum -c -
+          tar -xzf "$tmp/$tarball" -C "$tmp" gitleaks
+          mkdir -p "$HOME/.local/bin"
+          install -m 755 "$tmp/gitleaks" "$HOME/.local/bin/gitleaks"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/gitleaks" version
+
+      - name: Scan generic leak rules
+        run: |
+          gitleaks dir . \
+            --config .gitleaks.toml \
+            --no-banner \
+            --redact \
+            --exit-code 1
+
+      - name: Scan default secret rules
+        # Run even when the generic pass fails, so secrets are always checked.
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          gitleaks dir . \
+            --config .gitleaks-secrets.toml \
+            --no-banner \
+            --redact \
+            --exit-code 1
