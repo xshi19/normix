@@ -29,6 +29,7 @@
 | What does `'det_sigma_x'` regularisation do? | `em_framework.md` § 5 |
 | Why does `'a_eq_b'` matter beyond `'det_sigma_one'`? | `em_framework.md` § 5.2 |
 | Why is `Shrinkage` a combinator, not subclasses? | `em_framework.md` § 4.3 |
+| When do public moments and EM reference statistics differ? | [E13](em_framework.md#prior-moment-reconstruction-e13) |
 | Why hand-rolled Newton instead of `optimistix`? | `solvers_and_bessel.md` § 1.2 |
 | Why CPU backend for Bessel and GIG solve? | `solvers_and_bessel.md` § 3–4 |
 | Why not marimo for research notebooks? | `design.md` row C8; `../plans/docs_refactor.md` Phase 4 |

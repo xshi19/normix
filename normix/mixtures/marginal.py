@@ -25,7 +25,10 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import _normalize_sample_weight, _weighted_mean
-from normix.fitting.eta import EStepResult, NormalMixtureEta, _moment_origin, _unpack_gig_eta
+from normix.fitting.eta import (
+    EStepResult, NormalMixtureEta, _combine_split, _half_moments_exist, _moment_origin,
+    _prior_location_moments, _unpack_gig_eta,
+)
 
 
 from normix.utils.constants import SIGMA_INIT_REG
@@ -52,15 +55,10 @@ def _normal_mixture_mean(
     :math:`\mu`.
     """
     E_Y = subordinator.mean()
-    E_sqrt_Y = subordinator.raw_moment(jnp.asarray(0.5, dtype=jnp.float64))
-    loc = jnp.where(jnp.isfinite(E_sqrt_Y), mu, jnp.full_like(mu, jnp.inf))
-    # Only split on γ=0 when E[Y] diverges. Otherwise μ+γ E[Y] is finite at
-    # γ=0 (0·finite=0) and autodiff recovers E[Y], not a spurious 0.
-    return jnp.where(
-        jnp.isfinite(E_Y),
-        mu + gamma * E_Y,
-        jnp.where(gamma == 0.0, loc, jnp.full_like(mu, jnp.inf)),
-    )
+    finite = jnp.isfinite(E_Y)
+    _, half_y = _half_moments_exist(subordinator)
+    value = mu + gamma * jnp.where(finite, E_Y, 0.0)
+    return jnp.where(half_y & (finite | (gamma == 0)), value, jnp.inf)
 
 
 def _normal_mixture_cov(
@@ -250,6 +248,18 @@ class MarginalMixture(eqx.Module):
     @abc.abstractmethod
     def compute_eta_from_model(self) -> Any:
         """Reconstruct the expectation pytree from the model's own parameters."""
+
+    def _subordinator_expectations(self):
+        r"""Exact :math:`(E[\log Y],E[1/Y],E[Y])` from the subordinator's GIG layout."""
+        return _combine_split(*self.subordinator()._gig_layout_eta())
+
+    def _prior_eta(self, sigma, *, group_cross=False):
+        E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
+        origin = _moment_origin(self.mu, E_inv_Y)
+        ex, ex_inv, scatter = _prior_location_moments(
+            self.mu - origin, self.gamma, sigma, E_inv_Y, E_Y,
+            *_half_moments_exist(self.subordinator()), group_cross=group_cross)
+        return NormalMixtureEta(E_inv_Y, E_Y, E_log_Y, ex, ex_inv, scatter, origin=origin)
 
     @abc.abstractmethod
     def em_convergence_params(self) -> Any:
@@ -547,7 +557,7 @@ class NormalMixture(MarginalMixture):
         return self._joint.kl_divergence(other._joint)
 
     # ------------------------------------------------------------------
-    # Eta from model (for incremental EM initialisation)
+    # Prior moments
     # ------------------------------------------------------------------
 
     def compute_eta_from_model(self) -> "NormalMixtureEta":
@@ -565,29 +575,12 @@ class NormalMixture(MarginalMixture):
         When :math:`\varepsilon\|\mu\|^2|E[1/Y]|` exceeds
         :data:`~normix.utils.constants.MOMENT_CANCEL_ATOL`, those three
         moments are stored about :math:`\mu` with an explicit ``origin``.
-        The M-step restores that origin after reconstructing the covariance.
+        Nonexistent moments are reported as :math:`+\infty`. EM uses a
+        finite internal reference when reconstructing fitting statistics.
+        The M-step restores the origin after reconstructing the covariance.
         """
 
-        E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
-        j = self._joint
-        mu, gamma = j.mu, j.gamma
-        sigma = j.sigma()
-
-        origin = _moment_origin(mu, E_inv_Y)
-        mu = mu - origin
-        cross = jnp.outer(mu, gamma) + jnp.outer(gamma, mu)
-        return NormalMixtureEta(
-            E_log_Y=E_log_Y, E_inv_Y=E_inv_Y, E_Y=E_Y,
-            E_X=mu + gamma * E_Y,
-            E_X_inv_Y=mu * E_inv_Y + gamma,
-            E_XXT_inv_Y=(sigma + jnp.outer(mu, mu) * E_inv_Y
-                        + jnp.outer(gamma, gamma) * E_Y + cross),
-            origin=origin,
-        )
-
-    @abc.abstractmethod
-    def _subordinator_expectations(self):
-        r"""Return ``(E[log Y], E[1/Y], E[Y])`` under the subordinator prior."""
+        return self._prior_eta(self.sigma(), group_cross=True)
 
     # ------------------------------------------------------------------
     # EM E-step

@@ -68,6 +68,9 @@ For public APIs shipped on PyPI, retain one `DeprecationWarning` cycle before de
 
 ## Project workflows
 
+Record normix decisions in the [design.md table](../design/design.md) and topical sections of `dev-notes/design/`.
+Do not create `docs/decisions/`.
+
 Route structural and execution-contract changes through [architect](../../.agents/skills/architect/SKILL.md).
 Propagate accepted design changes through types, docs, and decision rows.
 Use [agent-maintenance](../../.agents/skills/agent-maintenance/SKILL.md#agent-makes-a-recurring-mistake) for recurring corrections.

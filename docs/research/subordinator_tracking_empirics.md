@@ -421,7 +421,7 @@ $\kappa_{\mathrm{lev}}$ agrees; extra $(p,a,b)$ flexibility
 does not create a linear signal.
 
 **VG $\kappa$ is smaller because the density clamp binds.**
-This is not the moment floor that keeps $E[Y]$ finite. For
+For
 Gamma mixing, $E[Y]=\alpha/\beta$ is finite for every
 $\alpha,\beta>0$. The clamp restricts the *marginal density of
 $X$*. Near $x=\mu$,
@@ -444,7 +444,7 @@ Three other VG guards are easy to confuse with it:
 
 | Guard | Where | What it does | What it does *not* do |
 |---|---|---|---|
-| `ALPHA_MOMENT_MARGIN` | prior $E[1/Y]=\beta/(\alpha-1)$ | keeps that *inverse* moment finite when $\alpha\le 1$ | does not touch $E[Y]=\alpha/\beta$; does not bound $f(x)$ |
+| `ALPHA_REFERENCE_MARGIN` | EM prior reconstruction | raises the shape of the internal reference to at least 1.1 | leaves the public moments and $f(x)$ unchanged |
 | `B_POST_FLOOR` | E-step $b_{\mathrm{post}}$ | keeps $E[1/Y\mid x]$ from overflowing | leaves the likelihood unbounded; EM can still park at a spike |
 | `alpha_min='inverse_moment'` | M-step $\alpha\ge d/2+1+\varepsilon$ | density *and* $E[1/Y\mid x]$ classically bounded | tighter than `'density'`; not used in this study |
 | `alpha_min='density'` | M-step $\alpha\ge d/2+\varepsilon$ | $f(x)$ bounded at $\mu$ | does not pin $E[Y]$ |

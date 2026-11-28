@@ -11,11 +11,15 @@ Covers:
   - LL improves (or at least stays finite) after incremental EM
 """
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 
+from scipy.special import digamma
+
+from normix import FactorNormalInverseGamma, FactorVarianceGamma, Gamma
 from normix.distributions.variance_gamma import VarianceGamma
 from normix.distributions.normal_inverse_gamma import NormalInverseGamma
 from normix.distributions.normal_inverse_gaussian import NormalInverseGaussian
@@ -132,52 +136,124 @@ def test_compute_eta_round_trip(dist_name):
         err_msg=f"{dist_name} gamma not recovered from compute_eta_from_model",
     )
 
-@pytest.mark.parametrize("alpha", [1.0, 0.8, 0.2])
-def test_compute_eta_from_model_small_alpha(alpha):
-    """B2: at α ≤ 1 the VG/NInvG prior moment β/(α−1) diverges (and the bare
-    closed form turns negative); the floored denominator keeps the
-    reconstructed η finite and positive without corrupting the exact moments.
-    """
-    from scipy.special import digamma
+@pytest.mark.parametrize("alpha", [0.05, 0.1, 0.2, 1.0, 1.01, 1.05, 1.1, 2.0])
+@pytest.mark.parametrize("full,factor", [(VarianceGamma, FactorVarianceGamma),
+                                         (NormalInverseGamma, FactorNormalInverseGamma)])
+def test_prior_moments_and_em_reference(alpha, full, factor):
+    from normix.fitting.shrinkage_targets import _em_reference_eta
 
-    d = 3
-    mu = jnp.ones(d)
-    sigma = jnp.eye(d)
-    beta = 2.0
-    for dist_name, model in {
-        "VG": VarianceGamma.from_classical(
-            mu=mu, gamma=jnp.ones(d), sigma=sigma, alpha=alpha, beta=beta),
-        "NInvG": NormalInverseGamma.from_classical(
-            mu=mu, gamma=jnp.ones(d), sigma=sigma, alpha=alpha, beta=beta),
-    }.items():
-        eta = model.compute_eta_from_model()
-        for field in ("E_log_Y", "E_inv_Y", "E_Y", "E_X", "E_X_inv_Y", "E_XXT_inv_Y"):
-            val = getattr(eta, field)
-            assert jnp.all(jnp.isfinite(val)), f"{dist_name} {field} not finite"
-        assert float(eta.E_inv_Y) > 0.0, f"{dist_name} E_inv_Y not positive"
-        assert float(eta.E_Y) > 0.0, f"{dist_name} E_Y not positive"
+    params = dict(mu=jnp.array([1.0]), gamma=jnp.array([0.5]), alpha=alpha, beta=2.0)
+    model = full.from_classical(**params, sigma=jnp.array([[2.0]]))
+    fa = factor.from_classical(**params, F=jnp.array([[1.0]]), D=jnp.array([1.0]))
 
-        # The two always-finite moments must stay exact (no GIG-Bessel detour):
-        # VG keeps E_log_Y=ψ(α)−log β and E_Y=α/β; NInvG keeps
-        # E_log_Y=log β−ψ(α) and E_inv_Y=α/β.
-        E_log_Y, E_inv_Y, E_Y = (float(v) for v in model._subordinator_expectations())
-        if dist_name == "VG":
-            assert E_log_Y == pytest.approx(float(digamma(alpha)) - np.log(beta), rel=1e-12)
-            assert E_Y == pytest.approx(alpha / beta, rel=1e-12)
-        else:
-            assert E_log_Y == pytest.approx(np.log(beta) - float(digamma(alpha)), rel=1e-12)
-            assert E_inv_Y == pytest.approx(alpha / beta, rel=1e-12)
+    def check(eta, a):
+        log_y = digamma(a) - np.log(2.0)
+        divergent = np.inf if a <= 1.0 else 2.0 / (a - 1.0)
+        expected = ((log_y, divergent, a / 2.0) if full is VarianceGamma
+                    else (-log_y, a / 2.0, divergent))
+        np.testing.assert_allclose([eta.E_log_Y, eta.E_inv_Y, eta.E_Y], expected, rtol=1e-12)
+        assert eta.E_inv_Y * eta.E_Y > 1
+        assert -jnp.log(eta.E_inv_Y) <= eta.E_log_Y <= jnp.log(eta.E_Y)
+        assert all(not np.isnan(v).any() for v in jax.tree.leaves(eta))
+
+    for m in (model, model.project(jnp.ones(1)), fa):
+        eta = m.compute_eta_from_model()
+        check(eta, alpha)
+        check(eta0_from_model(m), alpha)
+        if m is not fa:
+            for target in (eta0_with_sigma(m, jnp.eye(1)), eta0_diagonal(m, [1.0]),
+                           eta0_isotropic(m, 1.0)):
+                check(target, alpha)
+        ref = _em_reference_eta(m)
+        check(ref, max(alpha, 1.1))
+        if alpha >= 1.1:
+            for field in vars(eta):
+                np.testing.assert_array_equal(getattr(eta, field), getattr(ref, field))
+        assert all(np.isfinite(v).all() for v in jax.tree.leaves(ref))
+        for finite_eta in ([ref, eta] if alpha > 1.0 else [ref]):
+            fitted = m.m_step_normal(finite_eta)
+            np.testing.assert_allclose(fitted.mu, m.mu, atol=1e-12)
+            np.testing.assert_allclose(fitted.gamma, m.gamma, atol=1e-12)
+            np.testing.assert_allclose(fitted.sigma(), m.sigma(), atol=2e-8, rtol=0)
+
+
+@pytest.mark.parametrize("full,factor", [(VarianceGamma, FactorVarianceGamma),
+                                         (NormalInverseGamma, FactorNormalInverseGamma)])
+@pytest.mark.parametrize("alpha", [0.2, 0.5, 0.75])
+def test_half_moment_existence(full, factor, alpha):
+    params = dict(mu=jnp.array([1e9, 0.0]), gamma=jnp.array([0.0, 0.5]),
+                  alpha=alpha, beta=2.0)
+    F = jnp.array([[0.5], [1.0]])
+    D = jnp.ones(2)
+    m = full.from_classical(**params, sigma=F @ F.T + jnp.diag(D))
+    fa = factor.from_classical(**params, F=F, D=D)
+    joint_eta = m.joint.expectation_params()
+    np.testing.assert_array_equal(joint_eta[3:5], m.mean())
+    eta = fa.compute_eta_from_model()
+    np.testing.assert_array_equal(eta.origin, m.mu)
+    if full is VarianceGamma:
+        expected = np.inf if alpha <= 0.5 else 0.5
+        assert joint_eta[6] == expected
+        assert eta.E_X_inv_Y[1] == expected
+        np.testing.assert_allclose(eta.E_XZT_inv_sqrtY, F)
+        assert eta.E_Z_inv_sqrtY[0] == (np.inf if alpha <= 0.5 else 0.0)
+        np.testing.assert_allclose(eta.E_XXT_inv_Y, m.sigma() + jnp.outer(m.gamma, m.gamma)*eta.E_Y)
+    else:
+        assert eta.E_X[0] == (np.inf if alpha <= 0.5 else 0.0)
+        assert eta.E_Z_sqrtY[0] == (np.inf if alpha <= 0.5 else 0.0)
+        assert eta.E_XXT_inv_Y[0, 0] == fa.sigma()[0, 0]
+        assert eta.E_XXT_inv_Y[0, 1] == (np.inf if alpha <= 0.5 else fa.sigma()[0, 1])
+    np.testing.assert_allclose(eta.E_ZZT, jnp.eye(1))
+
+
+@pytest.mark.parametrize("factor", [FactorVarianceGamma, FactorNormalInverseGamma])
+def test_factor_public_prior_under_vmap(factor):
+    def prior(a):
+        model = factor.from_classical(mu=jnp.zeros(1), gamma=jnp.zeros(1), F=jnp.ones((1, 1)),
+                                      D=jnp.ones(1), alpha=a, beta=2.0)
+        return model.compute_eta_from_model()
+
+    shapes = jnp.array([0.2, 0.75, 1.0, 1.05, 2.0])
+    batched = jax.jit(jax.vmap(prior))(shapes)
+    for i, a in enumerate(shapes):
+        expected = prior(a)
+        for field in vars(batched):
+            np.testing.assert_allclose(getattr(batched, field)[i], getattr(expected, field),
+                                       atol=1e-14, rtol=1e-13)
+
+
+def test_zero_dispersion_target_has_no_noise_moment_requirement():
+    model = NormalInverseGamma.from_classical(
+        mu=jnp.ones(2), gamma=jnp.array([0.0, 1.0]), sigma=jnp.eye(2), alpha=0.2, beta=2.0)
+    eta = eta0_diagonal(model, [0.0, 1.0])
+    np.testing.assert_array_equal(eta.E_X, [1.0, np.inf])
+    np.testing.assert_allclose(eta.E_XXT_inv_Y, [[0.1, 1.1], [1.1, np.inf]])
+
+
+def test_gamma_negative_raw_moments():
+    sub = Gamma(alpha=0.05, beta=2.0)
+    assert np.isposinf(sub.raw_moment(-1.0))
+    np.testing.assert_array_equal(sub.raw_moments(jnp.array([-1.0, -0.05, 0.0])),
+                                  [np.inf, np.inf, 1.0])
+
+
+@pytest.mark.parametrize("full", [VarianceGamma, NormalInverseGamma])
+def test_prior_pole_under_transforms(full):
+    model = full.from_classical(mu=jnp.zeros(1), gamma=jnp.zeros(1), sigma=jnp.eye(1),
+                                alpha=2.0, beta=2.0)
+
+    def moment(alpha):
+        eta = model.replace(alpha=alpha).compute_eta_from_model()
+        return eta.E_inv_Y if full is VarianceGamma else eta.E_Y
+
+    alphas = jnp.array([0.5, 1.0, 1.05])
+    values, grads = jax.jit(jax.vmap(jax.value_and_grad(moment)))(alphas)
+    np.testing.assert_allclose(values, [np.inf, np.inf, 40.0])
+    np.testing.assert_allclose(grads, [0.0, 0.0, -800.0])
+
 
 def test_incremental_em_heavy_peaked_vg_finite():
-    """T4: IncrementalEMFitter on heavy-peaked VG (alpha_true=0.7) stays finite.
-
-    Small alpha drives the warm-start reconstruction `compute_eta_from_model`
-    into the alpha <= 1 regime, where the prior moment beta/(alpha-1) would
-    diverge (and turn negative) without the B2 denominator floor. Incremental
-    EM stitches per-minibatch estimates together with this reconstruction, so a
-    NaN/negative moment would propagate to every later step; the floored moment
-    keeps the running model finite with positive eta_2, eta_3.
-    """
+    """A finite EM reference starts the stream for heavy-peaked VG data."""
     vg_true = VarianceGamma.from_classical(
         mu=jnp.array([0.0]), gamma=jnp.array([0.2]),
         sigma=jnp.array([[1.0]]), alpha=0.7, beta=1.0,
@@ -707,3 +783,124 @@ def test_incremental_em_ll_improves():
     assert np.isfinite(ll_after), "VG LL not finite"
     assert ll_after > ll_before - 1.0, (
         f"VG LL degraded too much: before={ll_before:.4f} after={ll_after:.4f}")
+
+
+@pytest.fixture(params=[False, True], ids=["full", "factor"])
+def vg_model(request):
+    params = dict(mu=jnp.ones(1), gamma=jnp.ones(1), alpha=2.0, beta=2.0)
+    if request.param:
+        return FactorVarianceGamma.from_classical(**params, F=jnp.ones((1, 1)), D=jnp.ones(1))
+    return VarianceGamma.from_classical(**params, sigma=jnp.eye(1))
+
+
+@pytest.mark.contract
+def test_infeasible_mstep(vg_model):
+    eta = vg_model.compute_eta_from_model()
+    invalid_stats = [
+        eqx.tree_at(lambda e: e.E_Y, eta, jnp.array(0.25)),
+        eqx.tree_at(lambda e: e.E_XXT_inv_Y, eta, jnp.array([[jnp.inf]])),
+    ]
+    if isinstance(vg_model, FactorVarianceGamma):
+        invalid_stats.append(eqx.tree_at(lambda e: e.E_inv_Y, eta, 1.0 / eta.E_Y))
+        for cross_moment in (1.0, 2.0):
+            invalid_stats.append(eqx.tree_at(lambda e: e.E_Z_sqrtY, eta, jnp.array([cross_moment])))
+
+    def fit(stats):
+        return vg_model.m_step_normal(stats).mu
+
+    batched_fit = jax.jit(jax.vmap(fit))
+    pair = jax.tree.map(lambda x: jnp.stack((x, x)), eta)
+    np.testing.assert_allclose(batched_fit(pair), jnp.stack((vg_model.mu, vg_model.mu)), atol=1e-12)
+    for invalid in invalid_stats:
+        with pytest.raises(ValueError, match="Infeasible normal M-step"):
+            fit(invalid)
+        pair = jax.tree.map(lambda x, y: jnp.stack((x, y)), eta, invalid)
+        with pytest.raises((RuntimeError, ValueError), match="Infeasible normal M-step"):
+            batched_fit(pair).block_until_ready()
+
+
+@pytest.mark.contract
+def test_incremental_scan_rejects_infeasible_update():
+    X = _make_data()
+    model = _make_models(X)["VG"]
+    fitter = IncrementalEMFitter(eta_update=AffineUpdate(b=0.0, c=0.0), inner_iter=2,
+                                 batch_size=32, max_steps=1,
+                                 e_step_backend="jax", m_step_backend="jax")
+    with pytest.raises((RuntimeError, ValueError), match="Infeasible normal M-step"):
+        jax.block_until_ready(fitter.fit(model, X, key=KEY).model)
+
+
+def test_shrinkage_feasibility():
+    model = VarianceGamma.from_classical(mu=jnp.zeros(1), gamma=jnp.ones(1),
+                                         alpha=2.0, beta=0.25, sigma=jnp.eye(1))
+    target = model.compute_eta_from_model()
+    other = model.replace(beta=8.0).compute_eta_from_model()
+    with pytest.raises(ValueError, match="finite target"):
+        Shrinkage(IdentityUpdate(), model.replace(alpha=0.2).compute_eta_from_model())
+    for tau in (0.0, 1.0, 100.0):
+        rule = Shrinkage(IdentityUpdate(), target, tau)
+        eta, _ = rule(other, other, 0, 1, {})
+        assert eta.E_inv_Y * eta.E_Y > 1
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("field", ["E_inv_Y", "E_Y", "E_log_Y"])
+def test_shrinkage_rejects_unequal_subordinator_tau(vg_model, field):
+    target = eta0_from_model(vg_model)
+    zeros = jax.tree.map(lambda _: 0.0, target)
+
+    def build(weight, prior=None):
+        tau = eqx.tree_at(lambda e: getattr(e, field), zeros, weight)
+        return Shrinkage(IdentityUpdate(), prior, tau).tau.E_X
+
+    message = "E_inv_Y, E_Y, and E_log_Y"
+    with pytest.raises(ValueError, match=message):
+        build(0.5, target)
+    with pytest.raises(eqx.EquinoxRuntimeError, match=message):
+        jax.block_until_ready(eqx.filter_jit(build)(jnp.array(0.5)))
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("shared_tau", [0.0, 0.5])
+def test_shrinkage_shared_subordinator_tau(vg_model, shared_tau):
+    target = eta0_from_model(vg_model)
+    other = vg_model.e_step(jnp.array([[-1.0], [0.5], [3.0]]), backend="jax").eta
+    tau = jax.tree.map(jnp.zeros_like, target)
+    tau = eqx.tree_at(lambda e: (e.E_inv_Y, e.E_Y, e.E_log_Y, e.E_X), tau,
+                      (shared_tau, shared_tau, shared_tau, jnp.ones_like(tau.E_X)))
+    if isinstance(vg_model, FactorVarianceGamma) and shared_tau:
+        tau = eqx.tree_at(lambda e: e.E_Z_sqrtY, tau, jnp.full_like(tau.E_Z_sqrtY, 2.0))
+
+    @jax.jit
+    def update(weights):
+        rule = Shrinkage(IdentityUpdate(), target, weights)
+        return rule(other, other, 0, 1, {})[0]
+
+    result = update(tau)
+    expected = jax.tree.map(lambda t, a, b: (t * a + b) / (1.0 + t), tau, target, other)
+    for actual, want in zip(jax.tree.leaves(result), jax.tree.leaves(expected), strict=True):
+        np.testing.assert_allclose(actual, want, atol=1e-12)
+    assert result.E_inv_Y * result.E_Y >= 1.0
+
+
+@pytest.mark.parametrize("cls", [VarianceGamma, NormalInverseGamma])
+def test_small_shape_em_paths(cls):
+    model = cls.from_classical(mu=jnp.array([1.0]), gamma=jnp.array([0.5]),
+                               sigma=jnp.array([[2.0]]), alpha=0.05, beta=2.0)
+    rng = np.random.default_rng(2026)
+    g = rng.gamma(0.65, 1.0, 64)
+    y = g if cls is VarianceGamma else 1.0 / g
+    X = jnp.asarray((1.0 + 0.5 * y + np.sqrt(2 * y) * rng.normal(size=y.size))[:, None])
+    rule = Shrinkage(EWMAUpdate(w=0.25), tau=100.0)
+    options = dict(eta_update=rule, e_step_backend='jax', m_step_backend='jax')
+    results = [BatchEMFitter(algorithm=alg, max_iter=2, **options).fit(model, X)
+               for alg in ('em', 'mcecm')]
+    for inner in (1, 2):
+        for verbose in (0, 1):
+            fitter = IncrementalEMFitter(inner_iter=inner, batch_size=32, max_steps=2,
+                                         verbose=verbose, **options)
+            results.append(fitter.fit(model, X, key=KEY))
+    for result in results:
+        assert result.n_iter == 2 and not result.diverged and not result.solver_failed
+        assert all(np.isfinite(v).all() for v in jax.tree.leaves(result.model))
+        assert result.model.mu[0] > 0 and result.model.gamma[0] > 0

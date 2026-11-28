@@ -339,16 +339,17 @@ KL = +∞ **exactly when the infinite moment couples to a nonzero chord
 coefficient**: VG(α ≤ 1) vs any b_q > 0 target or shifted μ is honestly
 infinite, while two VGs with identical (μ, Σ) differing only in (α, β)
 have A = 0 and stay finite — the mathematically correct extended-real
-semantics. The E13 `ALPHA_MOMENT_MARGIN` floor stays EM-scoped and
-never enters divergences.
+semantics. Public expectations use exact moments. EM reconstructs its running statistics
+from a [finite reference law](em_framework.md#prior-moment-reconstruction-e13).
 
 Per-family η overrides: Gamma/InverseGamma closed forms with the split
 (unfloored, honest ±∞ pole); InverseGaussian inherits the interior GIG
 Bessel path; GIG gets a degenerate-aware split mirroring its ψ branches
 (so hand-built boundary GIGs work); `JointNormalMixture` gets one base
 assembly from `subordinator()._divergence_eta()` plus the normal block —
-the same algebra as `compute_eta_from_model`, factored into a shared
-helper so the moment→η map has one source of truth.
+the split integrates the density-ratio chord before multiplication by the tail
+moment. Individual public statistics also require absolute integrability of
+the Gaussian noise terms.
 
 Verified end-to-end against quadrature: KL(VG ‖ GH) = 0.1047209744,
 KL(GH ‖ VG) = 0.0878955379, KL(Gamma(2.5, 1.5) ‖ InvGamma(3, 2)) =

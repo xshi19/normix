@@ -34,8 +34,88 @@ from normix.utils.constants import MOMENT_CANCEL_ATOL
 
 def _moment_origin(mu: jax.Array, E_inv_Y: jax.Array) -> jax.Array:
     """Choose an origin before forming location moments in float64."""
-    cancel = jnp.finfo(jnp.float64).eps * jnp.abs(E_inv_Y) * jnp.sum(mu ** 2)
-    return jnp.where(cancel > MOMENT_CANCEL_ATOL, mu, jnp.zeros_like(mu))
+    finite = jnp.isfinite(E_inv_Y)
+    cancel = jnp.finfo(jnp.float64).eps * jnp.where(finite, E_inv_Y, 0.0) * jnp.sum(mu ** 2)
+    return jnp.where(~finite | (cancel > MOMENT_CANCEL_ATOL), mu, jnp.zeros_like(mu))
+
+
+def _combine_split(eta_fin: jax.Array, m: jax.Array, v: jax.Array) -> jax.Array:
+    r""":math:`\eta_{\mathrm{fin}} + m v`, with :math:`0\cdot\infty` masked off."""
+    finite = jnp.isfinite(m)
+    value = eta_fin + jnp.where(finite, m, 0.0) * v
+    return jnp.where(finite | (v == 0), value, jnp.copysign(jnp.inf, v))
+
+def _half_moments_exist(subordinator):
+    r"""Existence of :math:`E[Y^{-1/2}]` and :math:`E[Y^{1/2}]` at the two GIG tails."""
+    gig = subordinator.to_gig()
+    return (gig.b > 0) | (gig.p > 0.5), (gig.a > 0) | (gig.p < -0.5)
+
+
+def _prior_existence(mu, gamma, noise, E_inv_Y, E_Y, half_inv, half_y):
+    r"""Absolute integrability of :math:`X, X/Y, XX^\top/Y`.
+
+    At each tail a drift term needs the first moment and a noise term
+    needs the half moment. The latter drops out on deterministic coordinates.
+    """
+    inv_ok, y_ok = jnp.isfinite(E_inv_Y), jnp.isfinite(E_Y)
+    x = (y_ok | (gamma == 0)) & (half_y | ~noise)
+    x_inv = (inv_ok | (mu == 0)) & (half_inv | ~noise)
+
+    def scatter_exists(c, first, half):
+        drift = c != 0
+        drift_pair = jnp.outer(drift, drift)
+        drift_noise = jnp.outer(drift, noise)
+        return (first | ~drift_pair) & (half | ~(drift_noise | drift_noise.T))
+
+    scatter = scatter_exists(mu, inv_ok, half_inv) & scatter_exists(gamma, y_ok, half_y)
+    return x, x_inv, scatter
+
+
+def _prior_location_moments(mu, gamma, sigma, E_inv_Y, E_Y, half_inv, half_y, *, group_cross):
+    r"""Moments of :math:`X, X/Y, XX^\top/Y` for location relative to the given origin.
+
+    ``group_cross`` preserves the summation order of full-covariance reconstruction.
+    """
+    x_ok, x_inv_ok, scatter_ok = _prior_existence(
+        mu, gamma, jnp.diag(sigma) > 0, E_inv_Y, E_Y, half_inv, half_y)
+    inv = jnp.where(jnp.isfinite(E_inv_Y), E_inv_Y, 0.0)
+    y = jnp.where(jnp.isfinite(E_Y), E_Y, 0.0)
+    scatter = sigma + jnp.outer(mu, mu) * inv + jnp.outer(gamma, gamma) * y
+    cross = jnp.outer(mu, gamma)
+    scatter = scatter + (cross + cross.T) if group_cross else scatter + cross + cross.T
+    return (jnp.where(x_ok, mu + gamma * y, jnp.inf),
+            jnp.where(x_inv_ok, mu * inv + gamma, jnp.inf),
+            jnp.where(scatter_ok, scatter, jnp.inf))
+
+
+def _checked_normal_params(eta, params, denom, *, schur=None):
+    r"""Validate the input to the normal M-step and return its parameters.
+
+    Allow a positive determinant deficit of :math:`8\epsilon\max(b^2,|ac|)`
+    in :math:`b^2-ac`, where :math:`a,c` are the diagonal entries and
+    :math:`b` is the off-diagonal. On a violation the larger term is
+    :math:`b^2`, which equals one for the full normal block. Factor models
+    also require a nonsingular Schur complement. Invalid concrete inputs
+    raise ValueError. Traced inputs use the runtime check in
+    ``equinox.error_if``.
+    """
+    D = denom if schur is None else 1.0 - eta.E_inv_Y * eta.E_Y
+    rtol = 8 * jnp.finfo(jnp.asarray(D).dtype).eps
+    valid = (eta.E_inv_Y > 0) & (eta.E_Y > 0) & jnp.isfinite(D) & (D <= rtol)
+    message = ("Infeasible normal M-step statistics. Expected finite moments and positive "
+               "E[Y] and E[1/Y] with product >= 1 up to roundoff.")
+    if schur is not None:
+        a, b, c = schur
+        valid &= ((a > 0) & (c > 0) & jnp.isfinite(denom)
+                  & (denom != 0) & (denom <= rtol * b ** 2))
+        message += " Factor statistics also require a nonsingular, positive definite Schur block up to roundoff."
+    for leaf in jax.tree.leaves(eta):
+        valid &= jnp.all(jnp.isfinite(leaf))
+    if isinstance(valid, jax.core.Tracer):
+        return eqx.error_if(params, ~valid, message)
+    if not bool(valid):
+        raise ValueError(message)
+    return params
 
 
 def _pack_gig_eta(*, E_log_Y: jax.Array, E_inv_Y: jax.Array, E_Y: jax.Array) -> jax.Array:

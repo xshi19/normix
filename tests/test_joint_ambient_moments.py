@@ -144,3 +144,14 @@ def test_d2_fisher_kernel_is_skew_duplicate():
     skew /= np.sqrt(2.0)
     cosine = abs(float(null[:, 0] @ skew))
     assert cosine > 1 - 1e-6
+
+@pytest.mark.contract
+def test_joint_finite_mean_gradient_with_divergent_neighbor():
+    def first_mean(gamma):
+        model = JointNormalInverseGamma.from_classical(
+            mu=jnp.ones(2), gamma=gamma, sigma=jnp.eye(2), alpha=0.75, beta=1.0)
+        return model.expectation_params()[3]
+
+    value, grad = jax.jit(jax.value_and_grad(first_mean))(jnp.array([0.0, 1.0]))
+    assert value == 1.0
+    assert grad[1] == 0.0

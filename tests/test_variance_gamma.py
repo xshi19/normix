@@ -377,9 +377,8 @@ class TestInverseMomentSingularityVG:
 
         MCECM (E -> M_normal -> E -> M_sub) runs a *second* E-step between the
         normal and subordinator M-steps, so it re-evaluates E[1/Y|x] on the
-        updated normal block. Combined with the b_post floor (E-step) and the
-        B2 prior-moment floor (subordinator warm start), every iterate must
-        stay finite on alpha_true = 0.7 data with a near-mode observation.
+        updated normal block. The posterior scale floor keeps both E-steps
+        finite on data with :math:`\alpha=0.7` and a near-mode observation.
         """
         vg_true = VarianceGamma.from_classical(
             mu=jnp.array([0.0]), gamma=jnp.array([0.2]),

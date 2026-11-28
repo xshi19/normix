@@ -51,15 +51,8 @@ GIG_P_MAX: float = 50.0
 #: Positive prior scales, including those below this floor, are preserved.
 B_POST_FLOOR: float = 1e-6
 
-#: Lower floor on the (α−1) denominator of the VG/NInvG prior reconstruction
-#: moment β/(α−1) in `compute_eta_from_model`. The Gamma inverse moment
-#: E[1/Y] (VG) and the InverseGamma forward moment E[Y] (NInvG) both equal
-#: β/(α−1) and diverge to +∞ as α↓1 (and the bare closed form turns *negative*
-#: for α<1). Flooring the denominator keeps the reconstructed moment finite,
-#: positive, and continuous, while leaving the well-conditioned α>1+margin
-#: regime exact. Only this single moment is regularized — E[log Y] and the
-#: other finite moment keep their exact closed forms.
-ALPHA_MOMENT_MARGIN: float = 0.1
+#: Shape margin above one for the same-family VG/NInvG reference used by EM.
+ALPHA_REFERENCE_MARGIN: float = 0.1
 
 #: Shape margin above the VG density or inverse-moment threshold in ``fit(alpha_min=...)``.
 ALPHA_MIN_MARGIN: float = 0.1
@@ -73,7 +66,7 @@ SIGMA_REG: float = 1e-8
 #: Above this threshold, statistic producers store moments with origin = μ.
 MOMENT_CANCEL_ATOL: float = 1e-6
 
-#: Magnitude floor for D = 1 − E[1/Y]·E[Y] in the M-step (applied as −max(``|D|``, floor))
+#: Magnitude floor for near-singular normal M-step denominators.
 SAFE_DENOMINATOR: float = 1e-10
 
 #: Positivity floor for the diagonal D in the factor-analysis M-step

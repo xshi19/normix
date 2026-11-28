@@ -117,9 +117,7 @@ $\kappa_{\mathrm{lev}}\sim 10^{-2}$). Hence:
   ($E[\log Y], E[Y]$), NIG ($E[Y], E[1/Y]$), and GH (all three).
   Only NInvG ($E[1/Y], E[\log Y]$) treats $E[Y]$ as an
   extrapolation — and its $E[Y]=\beta/(\alpha-1)$ may not exist
-  ($\alpha\le 1$; `normix` floors the denominator at
-  `ALPHA_MOMENT_MARGIN`, so a pinned "$E[Y]$" would silently use
-  the floored surrogate). The geometric gauge $\exp E[\log Y]=1$
+  ($\alpha\le 1$). In that case the public moment is $+\infty$. The geometric gauge $\exp E[\log Y]=1$
   is the mirror image: matched for VG, NInvG, GH, extrapolated for
   NIG, and it always exists.
 - **$\lvert\Sigma\rvert=1$, $\mathrm{tr}(\Sigma)=d$:
@@ -401,8 +399,7 @@ rejected.
   η together, closing the Phase 3 gauge-explosion problem without
   biasing the recursion.
 - NInvG: if the $E[Y]=1$ gauge is adopted, its display must fall
-  back to the geometric gauge when $\alpha\le 1+$ margin rather
-  than silently using the floored moment.
+  back to the geometric gauge when $\alpha\le 1$, where the public mean diverges.
 
 ## 7. What this is not asking `normix` to do
 

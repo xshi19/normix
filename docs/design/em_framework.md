@@ -43,7 +43,7 @@ e_step(X, *, backend='jax'|'cpu')        -> EStepResult  # eta + conjugacy ℓ_n
 m_step(eta, **kw)                        -> MarginalMixture       # full update
 m_step_normal(eta)                       -> MarginalMixture       # MCECM cycle 1
 m_step_subordinator(eta, **kw)           -> MarginalMixture       # MCECM cycle 2
-compute_eta_from_model()                 -> stats pytree          # incremental warm-start
+compute_eta_from_model()                 -> stats pytree          # public prior moments
 em_convergence_params()                  -> pytree                # hybrid-RMS diagnostic
 ```
 
@@ -236,9 +236,8 @@ This generalises in two directions:
    $E[X X^\top/Y]$ leaf shrinks **only** $\Sigma_{k+1}$.
 2. **Composition with running rules.** Replace $\hat\eta_k$ by
    $\mathrm{base}(\eta_{k-1},\hat\eta_k)$ — Robbins–Monro, EWMA,
-   sample-weighted, etc. Each leaf of η is updated by an independent
-   affine map; `affine_combine` already handles `tree.map`-broadcast
-   weights.
+   or sample-weighted updates. `affine_combine` applies the weights
+   to the corresponding fields.
 
 ### 4.2 The combinator
 
@@ -262,8 +261,11 @@ class Shrinkage(EtaUpdateRule):
 on η is affine, its `base` may be an arbitrary `EtaUpdateRule` (including
 non-affine predictors).
 
-The combinator detects per-field τ via `type(tau) is type(eta0)`, so the
-same code works for both `NormalMixtureEta` and `FactorMixtureStats`.
+For both `NormalMixtureEta` and `FactorMixtureStats`, the constructor
+requires the same τ for `E_inv_Y`, `E_Y`, and `E_log_Y`. Each Gaussian
+or latent-factor field can have its own weight. A mismatch raises
+`ValueError` for concrete weights and triggers `equinox.error_if` for
+traced weights, including when the fitter supplies the target.
 
 ### 4.3 Why a combinator (not `ShrunkX` copies)
 
@@ -293,10 +295,9 @@ assumptions at the fitter level.
 
 ### 4.5 Shrinkage targets
 
-`normix/fitting/shrinkage_targets.py` provides four constructors. Each
-returns a complete six-field `NormalMixtureEta`, even when the user
-intends to shrink only one statistic — keeping the public contract
-"η₀ is always a full prior" simple.
+The four `eta0_*` builders return the model's exact expectations. Full and
+univariate models return six statistics. For factor models, `eta0_from_model`
+also returns the four latent-factor statistics.
 
 | Builder | Effect |
 |---|---|
@@ -305,11 +306,22 @@ intends to shrink only one statistic — keeping the public contract
 | `eta0_diagonal(model, diag)` | $\Sigma_0 = \mathrm{diag}(s^2)$ |
 | `eta0_with_sigma(model, Σ₀)` | arbitrary user-supplied PSD matrix |
 
-The dispersion-substitution variants reuse the model's
-$(\mu, \gamma, p, a, b)$ to fill the other five fields, so the result
-is still a coherent prior expectation parameter — the user's per-field
-`tau` then decides which fields are actually shrunk. Inverting a target
-is `type(model).from_expectation(eta0_isotropic(model, σ²))`.
+The dispersion-substitution builders use the supplied $\Sigma_0$ and keep the
+model's location, skewness and subordinator. As in `compute_eta_from_model()`,
+a nonexistent moment is $+\infty$. In particular, for $\alpha\le1$ the VG
+inverse moment $E[1/Y]$ and the NInvG forward moment $E[Y]$ diverge.
+
+`Shrinkage(base, tau=tau)` uses the fitter's finite reference to the initial
+model. An explicit `eta0` must have finite entries. EM also uses the internal
+reference when it reconstructs running statistics. The normal M-step rejects
+nonfinite statistics, nonpositive mixing moments $E[Y]$ or $E[1/Y]$, and
+violations of $E[Y]E[1/Y]\ge1$ beyond roundoff. The factor M-step also
+requires a nonsingular Schur block that is positive definite up to roundoff.
+A violation raises `ValueError` eagerly. Under tracing, both the M-step
+and the shrinkage constructor use `equinox.error_if`. With the default
+`EQX_ON_ERROR=raise`, `equinox.filter_jit` reports
+`equinox.EquinoxRuntimeError`. Plain `jax.jit` wraps the callback error
+and preserves the diagnostic message.
 
 ### 4.6 Choosing $\tau$ and $\Sigma_0$
 

@@ -236,14 +236,15 @@ class InverseGamma(ExponentialFamily):
         r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.
 
         :math:`E[X]=\beta/(\alpha-1)` for :math:`\alpha>1` and :math:`+\infty`
-        for :math:`0<\alpha\le 1`. ``backend`` is accepted for a uniform
-        subordinator signature; the moments are closed form.
+        for :math:`0<\alpha\le 1`. For every positive shape,
+        :math:`E[\log X]=\log\beta-\psi(\alpha)` and :math:`E[1/X]=\alpha/\beta`.
+        Both backends use these closed forms.
         """
         del backend
         alpha, beta = self.alpha, self.beta
         E_log = jnp.log(beta) - jax.scipy.special.digamma(alpha)
         E_inv = alpha / beta
-        m = jnp.where(alpha > 1.0, beta / (alpha - 1.0), jnp.inf)
+        m = self.mean()
         eta_fin = jnp.array([E_log, E_inv, 0.0])
         v = jnp.array([0.0, 0.0, 1.0])
         return eta_fin, m, v

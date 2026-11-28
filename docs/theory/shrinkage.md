@@ -124,6 +124,13 @@ The penalized maximum likelihood thus amounts to a **linear shrinkage** of the
 conditional expectation parameters toward the prior $\theta_0$. The
 M-step is identical to the standard EM algorithm (see {eq}`m-step`).
 
+With per-field shrinkage, `Shrinkage` requires a common $\tau$ for
+$E[1/Y]$, $E[Y]$, and $E[\log Y]$. Their convex combination then gives
+the three moments of the same mixture of the prior and conditional laws,
+so $E[1/Y]E[Y]\ge 1$. Separate weights could combine a small $E[1/Y]$
+from one law with a small $E[Y]$ from the other. Gaussian and latent-factor
+statistics may each use a different weight.
+
 Furthermore, the linear relationship between $\Sigma_{k+1}$ and
 $\hat{\eta}_6^{(k)}$ implies that $\Sigma_{k+1}$ is shrunk
 toward $\Sigma_0$ directly. By choosing an appropriate
