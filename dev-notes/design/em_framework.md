@@ -289,9 +289,8 @@ This generalises in two directions:
    $E[X X^\top/Y]$ leaf shrinks **only** $\Sigma_{k+1}$.
 2. **Composition with running rules.** Replace $\hat\eta_k$ by
    $\mathrm{base}(\eta_{k-1},\hat\eta_k)$ — Robbins–Monro, EWMA,
-   sample-weighted, etc. Each leaf of η is updated by an independent
-   affine map; `affine_combine` already handles `tree.map`-broadcast
-   weights.
+   or sample-weighted updates. `affine_combine` applies the weights
+   to the corresponding fields.
 
 ### 4.2 The combinator
 
@@ -315,8 +314,11 @@ class Shrinkage(EtaUpdateRule):
 on η is affine, its `base` may be an arbitrary `EtaUpdateRule` (including
 non-affine predictors).
 
-The combinator detects per-field τ via `type(tau) is type(eta0)`, so the
-same code works for both `NormalMixtureEta` and `FactorMixtureStats`.
+For both `NormalMixtureEta` and `FactorMixtureStats`, the constructor
+requires the same τ for `E_inv_Y`, `E_Y`, and `E_log_Y`. Each Gaussian
+or latent-factor field can have its own weight. A mismatch raises
+`ValueError` for concrete weights and triggers `equinox.error_if` for
+traced weights, including when the fitter supplies the target.
 
 ### 4.3 Why a combinator (not `ShrunkX` copies)
 
@@ -365,9 +367,14 @@ inverse moment $E[1/Y]$ and the NInvG forward moment $E[Y]$ diverge.
 `Shrinkage(base, tau=tau)` uses the fitter's finite reference to the initial
 model. An explicit `eta0` must have finite entries. EM also uses the internal
 reference when it reconstructs running statistics. The normal M-step rejects
-nonfinite statistics and material violations of $E[Y]E[1/Y]\ge1$.
-A common scalar shrinkage weight preserves this bound. Separate weights on
-the two moments can violate it.
+nonfinite statistics, nonpositive mixing moments $E[Y]$ or $E[1/Y]$, and
+violations of $E[Y]E[1/Y]\ge1$ beyond roundoff. The factor M-step also
+requires a nonsingular Schur block that is positive definite up to roundoff.
+A violation raises `ValueError` eagerly. Under tracing, both the M-step
+and the shrinkage constructor use `equinox.error_if`. With the default
+`EQX_ON_ERROR=raise`, `equinox.filter_jit` reports
+`equinox.EquinoxRuntimeError`. Plain `jax.jit` wraps the callback error
+and preserves the diagnostic message.
 
 ### 4.6 Choosing $\tau$ and $\Sigma_0$
 
@@ -649,8 +656,15 @@ from one law and the small $v$ from another. The normal M-step checks the
 combined statistics. It allows roundoff in $1-uv$ up to
 $8\epsilon\max(1,uv)$, where $\epsilon$ is machine epsilon. The factor
 M-step checks the corresponding Schur complement on the scale of its two
-determinant terms. Nonfinite or materially infeasible inputs raise
-`ValueError` eagerly or return NaN parameters under tracing.
+determinant terms.
+
+**Status addendum, 2026-11-28.** Xiang, owner, approved both follow-ups
+on 2026-11-28 (session-reported, no durable source). Nonfinite or materially
+infeasible normal M-step statistics raise `ValueError` eagerly and trigger
+`equinox.error_if` under tracing. The `Shrinkage` constructor applies the
+same error policy if `E_inv_Y`, `E_Y`, and `E_log_Y` have unequal weights.
+A common weight makes the three statistics moments of the same mixture.
+Gaussian and latent-factor weights remain independent.
 
 | Alternative | Disposition and reason |
 |---|---|

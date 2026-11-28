@@ -677,10 +677,10 @@ class JointNormalMixture(ExponentialFamily):
         Notes
         -----
         Necessary conditions for a :class:`~normix.fitting.eta.NormalMixtureEta`.
-        The normal block needs :math:`E[Y] > 0`, :math:`E[1/Y] > 0`, and
+        The normal block needs finite moments, :math:`E[Y] > 0`, :math:`E[1/Y] > 0`, and
         :math:`E[Y] E[1/Y] \ge 1`.
         A material violation raises :class:`ValueError` for concrete inputs
-        and gives NaN parameters under tracing. The tolerance on
+        and raises via ``equinox.error_if`` under tracing. The tolerance on
         :math:`1-E[Y]E[1/Y]` is :math:`8\epsilon\max(1,E[Y]E[1/Y])`.
         Near zero the denominator is floored in magnitude at ``SAFE_DENOMINATOR``.
         The scatter must stay positive definite.

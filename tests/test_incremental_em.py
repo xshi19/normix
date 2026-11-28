@@ -785,25 +785,49 @@ def test_incremental_em_ll_improves():
         f"VG LL degraded too much: before={ll_before:.4f} after={ll_after:.4f}")
 
 
-@pytest.mark.parametrize("factor", [False, True])
-def test_infeasible_mstep(factor):
+@pytest.fixture(params=[False, True], ids=["full", "factor"])
+def vg_model(request):
     params = dict(mu=jnp.ones(1), gamma=jnp.ones(1), alpha=2.0, beta=2.0)
-    model = (FactorVarianceGamma.from_classical(**params, F=jnp.ones((1, 1)), D=jnp.ones(1))
-             if factor else VarianceGamma.from_classical(**params, sigma=jnp.eye(1)))
-    eta = model.compute_eta_from_model()
-    invalid = eqx.tree_at(lambda e: e.E_Y, eta, jnp.array(0.25))
-    with pytest.raises(ValueError, match="Infeasible normal M-step"):
-        model.m_step_normal(invalid)
-    assert jnp.isnan(jax.jit(lambda e: model.m_step_normal(e))(invalid).mu).all()
-    nonfinite = eqx.tree_at(lambda e: e.E_XXT_inv_Y, eta, jnp.array([[jnp.inf]]))
-    with pytest.raises(ValueError, match="Infeasible normal M-step"):
-        model.m_step_normal(nonfinite)
-    if factor:
-        for cross_moment in (1.0, 2.0):
-            invalid = eqx.tree_at(lambda e: e.E_Z_sqrtY, eta, jnp.array([cross_moment]))
-            with pytest.raises(ValueError, match="Infeasible normal M-step"):
-                model.m_step_normal(invalid)
+    if request.param:
+        return FactorVarianceGamma.from_classical(**params, F=jnp.ones((1, 1)), D=jnp.ones(1))
+    return VarianceGamma.from_classical(**params, sigma=jnp.eye(1))
 
+
+@pytest.mark.contract
+def test_infeasible_mstep(vg_model):
+    eta = vg_model.compute_eta_from_model()
+    invalid_stats = [
+        eqx.tree_at(lambda e: e.E_Y, eta, jnp.array(0.25)),
+        eqx.tree_at(lambda e: e.E_XXT_inv_Y, eta, jnp.array([[jnp.inf]])),
+    ]
+    if isinstance(vg_model, FactorVarianceGamma):
+        invalid_stats.append(eqx.tree_at(lambda e: e.E_inv_Y, eta, 1.0 / eta.E_Y))
+        for cross_moment in (1.0, 2.0):
+            invalid_stats.append(eqx.tree_at(lambda e: e.E_Z_sqrtY, eta, jnp.array([cross_moment])))
+
+    def fit(stats):
+        return vg_model.m_step_normal(stats).mu
+
+    batched_fit = jax.jit(jax.vmap(fit))
+    pair = jax.tree.map(lambda x: jnp.stack((x, x)), eta)
+    np.testing.assert_allclose(batched_fit(pair), jnp.stack((vg_model.mu, vg_model.mu)), atol=1e-12)
+    for invalid in invalid_stats:
+        with pytest.raises(ValueError, match="Infeasible normal M-step"):
+            fit(invalid)
+        pair = jax.tree.map(lambda x, y: jnp.stack((x, y)), eta, invalid)
+        with pytest.raises((RuntimeError, ValueError), match="Infeasible normal M-step"):
+            batched_fit(pair).block_until_ready()
+
+
+@pytest.mark.contract
+def test_incremental_scan_rejects_infeasible_update():
+    X = _make_data()
+    model = _make_models(X)["VG"]
+    fitter = IncrementalEMFitter(eta_update=AffineUpdate(b=0.0, c=0.0), inner_iter=2,
+                                 batch_size=32, max_steps=1,
+                                 e_step_backend="jax", m_step_backend="jax")
+    with pytest.raises((RuntimeError, ValueError), match="Infeasible normal M-step"):
+        jax.block_until_ready(fitter.fit(model, X, key=KEY).model)
 
 
 def test_shrinkage_feasibility():
@@ -817,12 +841,46 @@ def test_shrinkage_feasibility():
         rule = Shrinkage(IdentityUpdate(), target, tau)
         eta, _ = rule(other, other, 0, 1, {})
         assert eta.E_inv_Y * eta.E_Y > 1
-    weights = jax.tree.map(jnp.zeros_like, other)
-    weights = eqx.tree_at(lambda e: e.E_inv_Y, weights, 100.0)
-    mixed, _ = Shrinkage(IdentityUpdate(), target, weights)(other, other, 0, 1, {})
-    assert mixed.E_inv_Y * mixed.E_Y < 1
-    with pytest.raises(ValueError, match="Infeasible normal M-step"):
-        model.m_step_normal(mixed)
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("field", ["E_inv_Y", "E_Y", "E_log_Y"])
+def test_shrinkage_rejects_unequal_subordinator_tau(vg_model, field):
+    target = eta0_from_model(vg_model)
+    zeros = jax.tree.map(lambda _: 0.0, target)
+
+    def build(weight, prior=None):
+        tau = eqx.tree_at(lambda e: getattr(e, field), zeros, weight)
+        return Shrinkage(IdentityUpdate(), prior, tau).tau.E_X
+
+    message = "E_inv_Y, E_Y, and E_log_Y"
+    with pytest.raises(ValueError, match=message):
+        build(0.5, target)
+    with pytest.raises(eqx.EquinoxRuntimeError, match=message):
+        jax.block_until_ready(eqx.filter_jit(build)(jnp.array(0.5)))
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("shared_tau", [0.0, 0.5])
+def test_shrinkage_shared_subordinator_tau(vg_model, shared_tau):
+    target = eta0_from_model(vg_model)
+    other = vg_model.e_step(jnp.array([[-1.0], [0.5], [3.0]]), backend="jax").eta
+    tau = jax.tree.map(jnp.zeros_like, target)
+    tau = eqx.tree_at(lambda e: (e.E_inv_Y, e.E_Y, e.E_log_Y, e.E_X), tau,
+                      (shared_tau, shared_tau, shared_tau, jnp.ones_like(tau.E_X)))
+    if isinstance(vg_model, FactorVarianceGamma) and shared_tau:
+        tau = eqx.tree_at(lambda e: e.E_Z_sqrtY, tau, jnp.full_like(tau.E_Z_sqrtY, 2.0))
+
+    @jax.jit
+    def update(weights):
+        rule = Shrinkage(IdentityUpdate(), target, weights)
+        return rule(other, other, 0, 1, {})[0]
+
+    result = update(tau)
+    expected = jax.tree.map(lambda t, a, b: (t * a + b) / (1.0 + t), tau, target, other)
+    for actual, want in zip(jax.tree.leaves(result), jax.tree.leaves(expected), strict=True):
+        np.testing.assert_allclose(actual, want, atol=1e-12)
+    assert result.E_inv_Y * result.E_Y >= 1.0
 
 
 @pytest.mark.parametrize("cls", [VarianceGamma, NormalInverseGamma])

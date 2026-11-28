@@ -549,7 +549,11 @@ class FactorNormalMixture(MarginalMixture):
     def m_step_normal(self, eta: FactorMixtureStats) -> "FactorNormalMixture":
         r"""M-step for :math:`(\mu, \gamma, F, D)` only (MCECM cycle 1).
 
-        Subordinator unchanged.
+        The moments must be finite, with positive :math:`E[Y], E[1/Y]`
+        satisfying :math:`E[Y]E[1/Y] \ge 1` up to roundoff. The factor
+        Schur block must be nonsingular and positive definite up to roundoff.
+        Infeasible statistics raise :class:`ValueError` for concrete inputs
+        and raise via ``equinox.error_if`` under tracing.
         """
         mu_new, gamma_new, F_new, D_new = self._mstep_factor_params(eta)
         return self._replace_factor_params(mu_new, gamma_new, F_new, D_new)

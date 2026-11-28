@@ -116,8 +116,8 @@ The normal block needs $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$, and
 $\mathbb{E}[Y]\,\mathbb{E}[1/Y] \ge 1$.
 The update sets $D = 1 - \mathbb{E}[Y]\,\mathbb{E}[1/Y]$ and floors $|D|$ at
 `SAFE_DENOMINATOR`.
-A material violation of the product bound raises `ValueError` on concrete inputs
-and gives NaN parameters under tracing. Fitting requires finite statistics.
+Nonfinite statistics or a product below one beyond roundoff raise `ValueError`
+on concrete inputs and trigger `equinox.error_if` under tracing.
 The scatter must stay positive definite, or the Cholesky factor fails.
 
 Subordinator bounds on the pytree path:

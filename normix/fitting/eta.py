@@ -96,24 +96,25 @@ def _checked_normal_params(eta, params, denom, *, schur=None):
     :math:`b` is the off-diagonal. On a violation the larger term is
     :math:`b^2`, which equals one for the full normal block. Factor models
     also require a nonsingular Schur complement. Invalid concrete inputs
-    raise ValueError and invalid traced inputs give NaN parameters.
+    raise ValueError. Traced inputs use the runtime check in
+    ``equinox.error_if``.
     """
     D = denom if schur is None else 1.0 - eta.E_inv_Y * eta.E_Y
     rtol = 8 * jnp.finfo(jnp.asarray(D).dtype).eps
     valid = (eta.E_inv_Y > 0) & (eta.E_Y > 0) & jnp.isfinite(D) & (D <= rtol)
+    message = ("Infeasible normal M-step statistics. Expected finite moments and positive "
+               "E[Y] and E[1/Y] with product >= 1 up to roundoff.")
     if schur is not None:
         a, b, c = schur
         valid &= ((a > 0) & (c > 0) & jnp.isfinite(denom)
                   & (denom != 0) & (denom <= rtol * b ** 2))
+        message += " Factor statistics also require a nonsingular, positive definite Schur block up to roundoff."
     for leaf in jax.tree.leaves(eta):
         valid &= jnp.all(jnp.isfinite(leaf))
     if isinstance(valid, jax.core.Tracer):
-        return jax.tree.map(lambda p: jnp.where(valid, p, jnp.nan), params)
+        return eqx.error_if(params, ~valid, message)
     if not bool(valid):
-        raise ValueError(
-            "Infeasible normal M-step statistics. Expected finite moments, positive "
-            "E[Y] and E[1/Y] with product >= 1, and a nonsingular factor block for FA."
-        )
+        raise ValueError(message)
     return params
 
 

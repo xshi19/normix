@@ -188,10 +188,12 @@ class Shrinkage(EtaUpdateRule):
         * **scalar** — uniform shrinkage on every sufficient statistic;
           matches the penalised-MLE in
           :doc:`/theory/shrinkage`.
-        * **stats pytree** (e.g. :class:`NormalMixtureEta` with scalar
-          leaves) — per-field shrinkage. Setting all but one leaf to
-          ``0`` shrinks only that statistic (e.g. ``Σ`` alone via the
-          ``E_XXT_inv_Y`` field).
+        * **stats pytree** — ``E_inv_Y``, ``E_Y``, and ``E_log_Y`` must have
+          the same weight so their convex combination uses one mixing law.
+          Gaussian and latent-factor fields can have independent weights.
+          Unequal subordinator weights raise :class:`ValueError` at
+          construction. Under tracing, ``equinox.error_if`` checks the weights
+          at runtime.
 
     Examples
     --------
@@ -242,6 +244,13 @@ class Shrinkage(EtaUpdateRule):
             elif bool(invalid):
                 raise ValueError(message)
         self.eta0 = eta0
+        if isinstance(tau, NormalMixtureEta):
+            unequal = jnp.any((tau.E_inv_Y != tau.E_Y) | (tau.E_inv_Y != tau.E_log_Y))
+            message = "Shrinkage requires the same tau for E_inv_Y, E_Y, and E_log_Y"
+            if isinstance(unequal, jax.core.Tracer):
+                tau = eqx.error_if(jax.tree.map(jnp.asarray, tau), unequal, message)
+            elif bool(unequal):
+                raise ValueError(message)
         if (eta0 is None and isinstance(tau, NormalMixtureEta)) or type(tau) is type(eta0):
             self.tau = tau
         else:
