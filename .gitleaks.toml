@@ -1,0 +1,111 @@
+# Generic leak-guard rules (public-safe).
+# Copy to the repo root as .gitleaks.toml. Append any per-repo
+# [[allowlists]] snippet at the bottom.
+#
+# This file holds generic patterns only. It names no machine, user,
+# host, person, or bot, so it is safe in public repos and on public sites.
+# Allowlist by path, never by writing a real address or name here.
+
+title = "leak-guard (generic rules)"
+
+# Do not set [extend] useDefault = true here. The default gitleaks global
+# allowlist contains ^/(?:bin|etc|home|opt|tmp|usr|var)/... and would drop
+# every /home/... finding. Default secret rules run as a second pass with
+# .gitleaks-secrets.toml (see the pre-commit hook and the CI workflow).
+
+# ---------------------------------------------------------------------------
+# Hostnames
+# ---------------------------------------------------------------------------
+[[rules]]
+id = "tailscale-host"
+description = "Tailscale MagicDNS hostname"
+regex = '''(?i)\b[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.ts\.net\b'''
+keywords = [".ts.net"]
+
+# ---------------------------------------------------------------------------
+# Absolute home / workspace / Windows user paths
+# ---------------------------------------------------------------------------
+[[rules]]
+id = "unix-home-path"
+description = "Absolute Unix home path"
+regex = '''(?i)/home/[A-Za-z0-9._-]+(?:/|\b)'''
+keywords = ["/home/"]
+
+[[rules]]
+id = "workspace-path"
+description = "Absolute /workspace path"
+regex = '''/workspace(?:/|\b)'''
+keywords = ["/workspace"]
+
+[[rules]]
+id = "windows-user-path"
+description = "Absolute Windows user profile path (also JSON-escaped C:\\\\Users\\\\...)"
+# Keyword is just "users": a JSON-escaped path (notebooks) has doubled
+# backslashes, so a "C:\\Users" keyword would never match it.
+regex = '''(?i)\b[A-Z]:(?:/|\\)+Users(?:/|\\)+[A-Za-z0-9._-]+'''
+keywords = ["users"]
+
+# ---------------------------------------------------------------------------
+# Email addresses (allowlist by path, not by address)
+# ---------------------------------------------------------------------------
+[[rules]]
+id = "email"
+description = "Email address"
+regex = '''(?i)\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b'''
+keywords = ["@"]
+
+# ---------------------------------------------------------------------------
+# Agent / bot UUIDs
+# ---------------------------------------------------------------------------
+[[rules]]
+id = "agent-id"
+description = "UUID appearing near bot or agent wording"
+regex = '''(?i)(?:(?:bot|agent|管家).{0,80}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})|(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.{0,80}(?:bot|agent|管家))'''
+keywords = ["bot", "agent", "管家"]
+
+# ---------------------------------------------------------------------------
+# Base allowlists (generic only)
+# ---------------------------------------------------------------------------
+[[allowlists]]
+description = "Config and ignore files for this check"
+paths = [
+  '''(^|/)\.gitleaks\.toml$''',
+  '''(^|/)\.gitleaks-secrets\.toml$''',
+  '''(^|/)\.gitleaksignore$''',
+  '''(?:^|/)\.git(?:/.*)?$''',
+]
+
+[[allowlists]]
+description = "Lockfiles and common binary / generated assets"
+paths = [
+  '''(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|uv\.lock|poetry\.lock|Cargo\.lock|go\.sum|Gemfile\.lock)$''',
+  '''\.(png|jpe?g|gif|webp|ico|woff2?|ttf|eot|pdf|zip|gz|tar|whl|pyc)$''',
+]
+
+[[allowlists]]
+targetRules = ["email"]
+description = "Non-personal placeholder and GitHub noreply addresses"
+regexTarget = "match"
+regexes = [
+  '''(?i)@(users\.noreply\.github\.com|example\.(com|org|net)|localhost|example\.invalid)\b''',
+  '''(?i)^(noreply|no-reply|git(?:hub)?-noreply)@''',
+  '''(?i)@protect\.github\.com\b''',
+]
+
+[[allowlists]]
+targetRules = ["email"]
+description = "Third-party license, minified, and vendor assets"
+paths = [
+  '''(?i)LICENSE''',
+  '''(?i)\.min\.js$''',
+  '''(?i)(?:^|/)(?:vendor|third_party|fonts)/''',
+  '''(?i)(?:^|/)build/_shared/''',
+]
+
+[[allowlists]]
+targetRules = ["tailscale-host"]
+description = "Documentation and test placeholder MagicDNS names"
+regexTarget = "match"
+regexes = [
+  '''(?i)(?:^|\.)example\.ts\.net$''',
+]

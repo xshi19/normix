@@ -117,7 +117,7 @@ Adopting the pstack skill library (survey and verdicts:
 
 The four priorities stay in `AGENTS.md`.
 Generic engineering guidance lives in the pinned skills under `.agents/skills/`.
-Project additions live in [engineering attachments](../skill-overlays/principles.md) and [mutation-testing attachments](../skill-overlays/mutation-testing.md).
+Project additions live in [project attachments](../skill-overlays/principles.md) and [mutation-testing attachments](../skill-overlays/mutation-testing.md).
 These plain Markdown files have no skill frontmatter and sit outside every skill discovery directory.
 The engineering attachment maps each topic to its shared skill and project-specific section.
 

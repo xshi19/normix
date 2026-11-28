@@ -1,4 +1,4 @@
-# normix engineering attachments
+# normix project attachments
 
 Read this file for normix design, verification, and refactoring work.
 Read the relevant shared skills below alongside their project additions here.
