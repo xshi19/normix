@@ -22,7 +22,8 @@ prior expectation parameters are
            + \gamma_0\gamma_0^\top E[Y\mid\theta_0]
            + \mu_0\gamma_0^\top + \gamma_0\mu_0^\top.
 
-All four constructors return a complete six-field
+The constructors return exact moments, including :math:`+\infty` for
+nonexistent moments. Full-covariance models return a six-field
 :class:`~normix.fitting.eta.NormalMixtureEta`. The Σ-only variants reuse
 the model's own :math:`(\mu, \gamma, p, a, b)` to fill the other five
 fields, keeping the public contract simple ("``eta0`` is always a full
@@ -33,13 +34,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from normix.fitting.eta import NormalMixtureEta, _moment_origin
+from normix.distributions.gamma import Gamma
+from normix.distributions.inverse_gamma import InverseGamma
+from normix.fitting.eta import NormalMixtureEta
+from normix.utils.constants import ALPHA_REFERENCE_MARGIN
 
 if TYPE_CHECKING:  # pragma: no cover
-    from normix.mixtures.marginal import NormalMixture
+    from normix.mixtures.marginal import MarginalMixture, NormalMixture
 
 
 __all__ = [
@@ -50,21 +55,30 @@ __all__ = [
 ]
 
 
-def eta0_from_model(model: "NormalMixture") -> NormalMixtureEta:
+def _em_reference_eta(model: "MarginalMixture") -> NormalMixtureEta:
+    """Finite fitting statistics from the same family and normal parameters."""
+    if isinstance(model.subordinator(), (Gamma, InverseGamma)):
+        alpha = jnp.maximum(model.alpha, 1.0 + ALPHA_REFERENCE_MARGIN)
+        model = eqx.tree_at(lambda m: m.alpha, model, alpha)
+    return model.compute_eta_from_model()
+
+
+def eta0_from_model(model: "MarginalMixture") -> NormalMixtureEta:
     r"""Prior :math:`\eta_0` equal to the model's current expectation parameters.
 
-    Equivalent to ``model.compute_eta_from_model()``.
+    Equivalent to ``model.compute_eta_from_model()``, including :math:`+\infty`
+    for nonexistent moments.
 
     Parameters
     ----------
-    model : NormalMixture
+    model : MarginalMixture
         Source model; the prior reuses its :math:`(\mu, \gamma, \Sigma)`
         and subordinator parameters.
 
     Returns
     -------
     NormalMixtureEta
-        Six-statistic expectation pytree with an explicit origin.
+        Expectation pytree with an explicit origin and the model's statistic layout.
     """
     return model.compute_eta_from_model()
 
@@ -95,27 +109,11 @@ def eta0_with_sigma(
         Six-statistic expectation pytree with an explicit origin with ``E_XXT_inv_Y`` rebuilt from
         ``Sigma0``.
     """
+    from normix.mixtures.marginal import NormalMixture
+    if not isinstance(model, NormalMixture):
+        raise TypeError("Dispersion-substitution targets require a full or univariate mixture")
     Sigma0 = jnp.asarray(Sigma0, dtype=jnp.float64)
-    j = model._joint
-    mu, gamma = j.mu, j.gamma
-
-    E_log_Y, E_inv_Y, E_Y = model._subordinator_expectations()
-    origin = _moment_origin(mu, E_inv_Y)
-    mu = mu - origin
-
-    return NormalMixtureEta(
-        origin=origin,
-        E_inv_Y=E_inv_Y,
-        E_Y=E_Y,
-        E_log_Y=E_log_Y,
-        E_X=mu + gamma * E_Y,
-        E_X_inv_Y=mu * E_inv_Y + gamma,
-        E_XXT_inv_Y=(Sigma0
-                     + jnp.outer(mu, mu) * E_inv_Y
-                     + jnp.outer(gamma, gamma) * E_Y
-                     + jnp.outer(mu, gamma)
-                     + jnp.outer(gamma, mu)),
-    )
+    return model._prior_eta(Sigma0)
 
 
 def eta0_isotropic(

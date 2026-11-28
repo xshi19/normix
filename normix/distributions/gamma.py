@@ -129,23 +129,21 @@ class Gamma(ExponentialFamily):
     def raw_moment(self, k: jax.Array) -> jax.Array:
         r"""Raw moment :math:`E[X^k] = \Gamma(\alpha+k)/(\Gamma(\alpha)\,\beta^k)`.
 
-        Finite for all :math:`k > -\alpha`.
+        Finite for :math:`k > -\alpha` and :math:`+\infty` otherwise.
         """
-        k = jnp.asarray(k, dtype=jnp.float64)
-        return jnp.exp(
-            jax.scipy.special.gammaln(self.alpha + k)
-            - jax.scipy.special.gammaln(self.alpha)
-            - k * jnp.log(self.beta)
-        )
+        return self.raw_moments(k)
 
     def raw_moments(self, ks: jax.Array) -> jax.Array:
         r"""Vectorised :meth:`raw_moment` over orders ``ks``."""
         ks = jnp.asarray(ks, dtype=jnp.float64)
-        return jnp.exp(
+        exists = ks > -self.alpha
+        ks = jnp.where(exists, ks, 0.0)
+        value = jnp.exp(
             jax.scipy.special.gammaln(self.alpha + ks)
             - jax.scipy.special.gammaln(self.alpha)
             - ks * jnp.log(self.beta)
         )
+        return jnp.where(exists, value, jnp.inf)
 
     def log_density_power(self, alpha: jax.Array) -> jax.Array:
         r"""Log density-power integral :math:`R(q) = \log\int p^q`.
@@ -217,14 +215,16 @@ class Gamma(ExponentialFamily):
         r"""GIG-layout :math:`(E[\log X], E[1/X], E[X])` as :math:`(\eta_{\mathrm{fin}}, m, v)`.
 
         :math:`E[1/X]=\beta/(\alpha-1)` for :math:`\alpha>1` and :math:`+\infty`
-        for :math:`0<\alpha\le 1`. ``backend`` is accepted for a uniform
-        subordinator signature; the moments are closed form.
+        for :math:`0<\alpha\le 1`. For every positive shape,
+        :math:`E[\log X]=\psi(\alpha)-\log\beta` and :math:`E[X]=\alpha/\beta`.
+        Both backends use these closed forms.
         """
+        from normix.distributions.inverse_gamma import InverseGamma
         del backend
         alpha, beta = self.alpha, self.beta
         E_log = jax.scipy.special.digamma(alpha) - jnp.log(beta)
-        E_X = alpha / beta
-        m = jnp.where(alpha > 1.0, beta / (alpha - 1.0), jnp.inf)
+        E_X = self.mean()
+        m = InverseGamma(alpha=alpha, beta=beta).mean()
         eta_fin = jnp.array([E_log, 0.0, E_X])
         v = jnp.array([0.0, 1.0, 0.0])
         return eta_fin, m, v

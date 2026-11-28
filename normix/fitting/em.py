@@ -18,6 +18,7 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import _check_backend, _normalize_sample_weight, _weighted_mean
+from normix.fitting.shrinkage_targets import _em_reference_eta
 from normix.fitting.solvers import SolverDidNotConverge
 from normix.fitting.eta import _pack_gig_eta
 
@@ -53,6 +54,9 @@ def _recenter_eta_update(model, rule, center: jax.Array):
     """
     if rule is None or not hasattr(rule, "eta0"):
         return rule
+    base = _recenter_eta_update(model, rule.base, center)
+    if rule.eta0 is None:
+        return type(rule)(base, _em_reference_eta(model), rule.tau)
     eta0 = _translate_location_moments(rule.eta0, center)
     if hasattr(eta0, "E_ZZT") and hasattr(model, "_z_stats_from_six"):
         s7, s8, s9, s10 = model._z_stats_from_six(
@@ -66,7 +70,7 @@ def _recenter_eta_update(model, rule, center: jax.Array):
             eta0,
             (s7, s8, s9, s10),
         )
-    return type(rule)(rule.base, eta0, rule.tau)
+    return type(rule)(base, eta0, rule.tau)
 
 
 def _validate_fit_data(
@@ -288,9 +292,8 @@ class BatchEMFitter:
         ``X`` is centered at its sample mean before any statistic is
         accumulated, and that mean is added back onto ``mu``. ``gamma``,
         ``Sigma``, and the subordinator are unchanged by the shift. A
-        shrinkage target equal to the initial model's own η is rebuilt
-        in these coordinates; any other target is translated as a
-        population moment.
+        model-based shrinkage target uses a finite reference in these
+        coordinates. An explicit prior is translated to the fit coordinates.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         sample_weight = _validate_fit_data(X, sample_weight)
@@ -588,7 +591,7 @@ class BatchEMFitter:
 
         eta_state = None
         if self.eta_update is not None:
-            eta_prev = model.compute_eta_from_model()
+            eta_prev = _em_reference_eta(model)
             rule_state = self.eta_update.initial_state()
             eta_state = (eta_prev, rule_state, 0)
 
@@ -849,8 +852,8 @@ class IncrementalEMFitter:
         """Run incremental EM. Returns :class:`EMResult`.
 
         ``X`` is centered at its sample mean for the whole stream, and
-        that mean is added back onto ``mu``. A shrinkage target equal to
-        the initial model's own η is rebuilt in these coordinates.
+        that mean is added back onto ``mu``. Model-based shrinkage uses
+        the finite reference to the centered initial model.
         """
         X = jnp.asarray(X, dtype=jnp.float64)
         _validate_fit_data(X)
@@ -901,7 +904,7 @@ class IncrementalEMFitter:
         mb = self.m_step_backend
         mm = self.m_step_method
 
-        eta_init = model.compute_eta_from_model()
+        eta_init = _em_reference_eta(model)
         rs_init = self.eta_update.initial_state()
 
         bs_i = jnp.asarray(batch_sz, dtype=jnp.int32)
@@ -934,7 +937,7 @@ class IncrementalEMFitter:
                         mj, X_batch, mb, mm, target_log_det),
                     model_c,
                 )
-                eta_new = model_mid.compute_eta_from_model()
+                eta_new = _em_reference_eta(model_mid)
             else:
                 model_mid = model_c
                 eta_new = model_mid.e_step(X_batch, backend=eb).eta
@@ -995,7 +998,7 @@ class IncrementalEMFitter:
                 f"max_steps={self.max_steps}, inner_iter={self.inner_iter}"
             )
 
-        eta_prev = model.compute_eta_from_model()
+        eta_prev = _em_reference_eta(model)
         rule_state = self.eta_update.initial_state()
 
         for step in range(self.max_steps):
@@ -1011,7 +1014,7 @@ class IncrementalEMFitter:
                     model = model.m_step(
                         eta, backend=mb, method=mm)
                     model = self._regularize(model, target_log_det)
-                eta_new = model.compute_eta_from_model()
+                eta_new = _em_reference_eta(model)
             else:
                 eta_new = model.e_step(X_batch, backend=eb).eta
 

@@ -483,6 +483,9 @@ and linear in $d$**, as §6 claims.
 
 ### 9.2 T4 — small-$\alpha$ moments and EM-path finiteness (B2)
 
+> Historical B2 tests. On 2026-11-27 [E13](../design/em_framework.md#prior-moment-reconstruction-e13)
+> superseded this floor with exact public moments and a finite same-family EM reference.
+
 `tests/test_incremental_em.py::test_compute_eta_from_model_small_alpha`,
 `::test_incremental_em_heavy_peaked_vg_finite`, and
 `tests/test_variance_gamma.py::...::test_mcecm_no_overflow_heavy_peaked`.

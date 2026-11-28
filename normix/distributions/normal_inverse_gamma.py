@@ -11,8 +11,6 @@ Stored: :math:`\\mu`, :math:`\\gamma`, :math:`L_\\Sigma` (Cholesky of :math:`\\S
 """
 from __future__ import annotations
 
-from typing import Tuple
-
 import jax
 import jax.numpy as jnp
 
@@ -21,7 +19,7 @@ from normix.mixtures.factor import FactorNormalMixture
 from normix.mixtures.joint import JointNormalMixture
 from normix.mixtures.marginal import NormalMixture, _UnivariateNormalMixtureMixin
 from normix.utils.bessel import log_kv
-from normix.utils.constants import ALPHA_MOMENT_MARGIN, LOG_EPS
+from normix.utils.constants import LOG_EPS
 
 
 class JointNormalInverseGamma(JointNormalMixture):
@@ -209,22 +207,6 @@ class NormalInverseGamma(NormalMixture):
         log_f = log_C + linear + log_integral
         return log_f
 
-    def _subordinator_expectations(self) -> Tuple[jax.Array, jax.Array, jax.Array]:
-        r"""Prior InverseGamma moments :math:`(E[\log Y], E[1/Y], E[Y])`.
-
-        :math:`E[\log Y] = \log\beta - \psi(\alpha)` and
-        :math:`E[1/Y] = \alpha/\beta` are exact and finite for all
-        :math:`\alpha > 0`. For :math:`\alpha > 1` the forward moment is
-        :math:`E[Y] = \beta/(\alpha-1)`. It is infinite for :math:`\alpha \le 1`.
-        Reconstruction uses a finite surrogate whenever the denominator falls
-        below :data:`~normix.utils.constants.ALPHA_MOMENT_MARGIN`.
-        """
-        j = self._joint
-        E_log_Y = jnp.log(j.beta) - jax.scipy.special.digamma(j.alpha)
-        E_inv_Y = j.alpha / j.beta
-        E_Y = j.beta / jnp.maximum(j.alpha - 1.0, ALPHA_MOMENT_MARGIN)
-        return E_log_Y, E_inv_Y, E_Y
-
     @classmethod
     def _joint_class(cls):
         return JointNormalInverseGamma
@@ -364,13 +346,6 @@ class FactorNormalInverseGamma(FactorNormalMixture):
                         + 0.5 * p_gig * jnp.log(b_eff / a_eff)
                         + log_bessel)
         return log_C + zw + log_integral
-
-    def _subordinator_expectations(self):
-        r"""Prior InverseGamma moments; see ``NormalInverseGamma._subordinator_expectations``."""
-        E_log_Y = jnp.log(self.beta) - jax.scipy.special.digamma(self.alpha)
-        E_inv_Y = self.alpha / self.beta
-        E_Y = self.beta / jnp.maximum(self.alpha - 1.0, ALPHA_MOMENT_MARGIN)
-        return E_log_Y, E_inv_Y, E_Y
 
     @classmethod
     def _subordinator_from_eta(cls, eta, *, theta0=None, **kwargs):

@@ -85,7 +85,7 @@ e_step(X, *, backend='jax'|'cpu')        -> EStepResult  # eta + conjugacy ℓ_n
 m_step(eta, **kw)                        -> MarginalMixture       # full update
 m_step_normal(eta)                       -> MarginalMixture       # MCECM cycle 1
 m_step_subordinator(eta, **kw)           -> MarginalMixture       # MCECM cycle 2
-compute_eta_from_model()                 -> stats pytree          # incremental warm-start
+compute_eta_from_model()                 -> stats pytree          # public prior moments
 em_convergence_params()                  -> pytree                # hybrid-RMS diagnostic
 ```
 
@@ -346,10 +346,9 @@ assumptions at the fitter level.
 
 ### 4.5 Shrinkage targets
 
-`normix/fitting/shrinkage_targets.py` provides four constructors. Each
-returns a complete six-field `NormalMixtureEta`, even when the user
-intends to shrink only one statistic — keeping the public contract
-"η₀ is always a full prior" simple.
+The four `eta0_*` builders return the model's exact expectations. Full and
+univariate models return six statistics. For factor models, `eta0_from_model`
+also returns the four latent-factor statistics.
 
 | Builder | Effect |
 |---|---|
@@ -358,11 +357,17 @@ intends to shrink only one statistic — keeping the public contract
 | `eta0_diagonal(model, diag)` | $\Sigma_0 = \mathrm{diag}(s^2)$ |
 | `eta0_with_sigma(model, Σ₀)` | arbitrary user-supplied PSD matrix |
 
-The dispersion-substitution variants reuse the model's
-$(\mu, \gamma, p, a, b)$ to fill the other five fields, so the result
-is still a coherent prior expectation parameter — the user's per-field
-`tau` then decides which fields are actually shrunk. Inverting a target
-is `type(model).from_expectation(eta0_isotropic(model, σ²))`.
+The dispersion-substitution builders use the supplied $\Sigma_0$ and keep the
+model's location, skewness and subordinator. As in `compute_eta_from_model()`,
+a nonexistent moment is $+\infty$. In particular, for $\alpha\le1$ the VG
+inverse moment $E[1/Y]$ and the NInvG forward moment $E[Y]$ diverge.
+
+`Shrinkage(base, tau=tau)` uses the fitter's finite reference to the initial
+model. An explicit `eta0` must have finite entries. EM also uses the internal
+reference when it reconstructs running statistics. The normal M-step rejects
+nonfinite statistics and material violations of $E[Y]E[1/Y]\ge1$.
+A common scalar shrinkage weight preserves this bound. Separate weights on
+the two moments can violate it.
 
 ### 4.6 Choosing $\tau$ and $\Sigma_0$
 
@@ -615,3 +620,89 @@ would restore the known mode singularity. Tests cover both hierarchies and both
 backends against half-order GH and inverse-gamma formulas and SciPy NIG ratios.
 Reopen if a positive-scale posterior cannot be evaluated within its stated
 accuracy domain; any approximation would need a separate error contract.
+
+## Prior moment reconstruction (E13)
+
+**Status and scope.** Accepted for full, univariate and factor VG and NInvG,
+their public prior statistics, and their use in EM and shrinkage. This reopens
+and supersedes the single-moment floor in [E13](design.md).
+Recorded 2026-11-27. Decided 2026-11-27 by Xiang, owner
+(session-reported, no durable source beyond this PR).
+
+Public reconstruction and shrinkage-target builders evaluate moments of the
+specified law. For $\alpha\le1$, VG's $E[1/Y]$ and NInvG's $E[Y]$ are
+$+\infty$. A zero drift still requires a finite Gaussian noise first absolute
+moment. For example, $E[X/Y]$ at $\mu=0$ requires $E[Y^{-1/2}]<\infty$.
+
+EM reconstruction uses the same family and $\beta$, with shape
+$\max(\alpha,1+\texttt{ALPHA_REFERENCE_MARGIN})$. The margin is 0.1.
+All three mixing moments come from this law, so the two log-Jensen bounds
+hold and the product of forward and inverse moments is
+$\alpha_{\rm ref}/(\alpha_{\rm ref}-1)>1$. This applies to running-state
+initialization, reconstruction after inner minibatch iterations, and
+model-based shrinkage targets. Minibatch weights retain their definitions.
+
+For positive moments $u=E[1/Y]$ and $v=E[Y]$, the feasible set
+$v\ge1/u$ is the epigraph of a convex function. Scalar convex updates
+therefore preserve feasibility. Per-field weights can take the small $u$
+from one law and the small $v$ from another. The normal M-step checks the
+combined statistics. It allows roundoff in $1-uv$ up to
+$8\epsilon\max(1,uv)$, where $\epsilon$ is machine epsilon. The factor
+M-step checks the corresponding Schur complement on the scale of its two
+determinant terms. Nonfinite or materially infeasible inputs raise
+`ValueError` eagerly or return NaN parameters under tracing.
+
+| Alternative | Disposition and reason |
+|---|---|
+| (a) Keep the 0.1 denominator floor | Rejected. It biases finite public moments and allows an infeasible product below shape 0.1. |
+| (b) Use a smaller margin | Rejected. It shifts both failures toward a smaller shape and increases cancellation in the scatter. |
+| (c) Return public infinity alone | Insufficient alone. Translation and affine updates require finite EM statistics even at zero weight. |
+| (d) Split public moments from EM reconstruction | Chosen. Exact public values and a feasible reference address both failures. |
+| Initialize from a posterior minibatch | Not selected. This changes first-batch weighting and adds an untested E-step policy. |
+
+**Evidence, 2026-11-27.** CPU float64, JAX 0.9.1, base `94d17ed`,
+$d=1$, $\beta=2$, $(\mu,\gamma,\Sigma)=(1,0.5,2)$. Applying
+`m_step_normal(compute_eta_from_model())` gave the following results.
+$M$ denotes the divergent mixing slot and $D=1-E[Y]E[1/Y]$.
+
+| Shape | Former $M$ | Exact $M$ | Former $D$ | Returned $(\mu,\gamma,\Sigma)$ |
+|---:|---:|---:|---:|---|
+| 0.05 | 20 | $+\infty$ | 0.5 | VG $(-1,-0.5,84.00000001)$, NInvG $(-1,-0.5,4.10000001)$ |
+| 0.10 | 20 | $+\infty$ | 0 | VG $(2.22\times10^{-6},0,23.012409)$, NInvG $(0,0,8.05000001)$ |
+| 1.01 | 20 | 200 | −9.1 | Both $(1,0.5,2.00000001)$ |
+| 1.05 | 20 | 40 | −9.5 | Both $(1,0.5,2.00000001)$ |
+| 1.10 | 20 | 20 | −10 | Both $(1,0.5,2.00000001)$ |
+
+The former product was $10\alpha$ below shape one. The cap biased the
+finite moment for $1<\alpha<1.1$ and met the exact value at 1.1.
+At shape 0.2 the VG product passed, yet $20<\exp(-E[\log Y])=396.306$.
+
+Unconstrained batch EM on the first 512 finite AAPL percentage log returns
+in `data/sp500_returns.csv` fitted shapes 0.983656 (VG, 43 iterations) and
+1.530607 (NInvG, 35). With NumPy seed 2026 reset per family, 512 Gaussian
+scale-mixture observations with true shape 0.65 fitted 0.819743 (VG, 33)
+and 0.657554 (NInvG, 25). Both backends were JAX, from default initialization
+with tolerance $10^{-5}$ and 150 iterations allowed. The regression cases
+are in [the incremental EM tests](../../tests/test_incremental_em.py).
+
+On the same simulated observations, five incremental steps of size 64
+(key 7) gave the following fitted shapes. Both ordinary batch fits on each
+dataset matched the base revision bit for bit. The reference law does
+change the subordinator update when the running model has small shape.
+
+| Family | Inner iterations | Former shape | Reference-law shape | Former / new mean log-likelihood |
+|---|---:|---:|---:|---|
+| VG | 1 | 0.820228 | 1.038886 | −1.062423 / −1.075109 |
+| VG | 2 | 0.818281 | 1.098065 | −1.062449 / −1.080535 |
+| NInvG | 1 | 0.660536 | 0.920427 | −2.407998 / −2.461239 |
+| NInvG | 2 | 0.658238 | 1.063086 | −2.406784 / −2.518889 |
+
+**Related decisions.** MD1 governs public nonexistence, JEF-1 the ambient
+joint statistic, DEC-1 the divergence chord, and E16 the coordinate origin.
+E12 governs posterior scale flooring and E14 the opt-in density bound.
+E17 governs batch fit failure reporting. B2 retained closed forms because
+lifting Gamma at shape 0.2 distorted $E[\log Y]$ by about one. See the [original B2 record](../archive/design/em_robustness_followups.md).
+
+**Reopen when** benchmarks show a posterior-minibatch reference improves
+fit accuracy or convergence enough to justify changing the weighting or
+adding an E-step, or a valid posterior update trips the feasibility check.

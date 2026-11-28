@@ -387,6 +387,14 @@ class TestMStepDenominatorSign:
         assert np.sign(float(mu_flo[0])) == np.sign(float(mu_ref[0])) != 0.0
         assert np.sign(float(gamma_flo[0])) == np.sign(float(gamma_ref[0])) != 0.0
 
+    def test_positive_D_roundoff_boundary(self):
+        from normix.mixtures.joint import JointNormalMixture
+        eps = np.finfo(np.float64).eps
+        mu, gamma, _ = JointNormalMixture._mstep_normal_params(self._eta_with_D(-eps))
+        assert mu[0] > 0 and gamma[0] < 0
+        with pytest.raises(ValueError, match="Infeasible normal M-step"):
+            JointNormalMixture._mstep_normal_params(self._eta_with_D(-32 * eps))
+
     def test_cauchy_schwarz_property_all_families(self):
         # 1 - eta_2 eta_3 <= 0 must hold for the e_step output of every family.
         models = {

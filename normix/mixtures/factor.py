@@ -43,14 +43,17 @@ import jax
 import jax.numpy as jnp
 
 from normix.exponential_family import ExponentialFamily, _normalize_sample_weight, _weighted_mean
-from normix.fitting.eta import EStepResult, FactorMixtureStats, _moment_origin, _unpack_gig_eta
+from normix.fitting.eta import (
+    EStepResult, FactorMixtureStats, _checked_normal_params, _half_moments_exist, _moment_origin,
+    _unpack_gig_eta,
+)
 from normix.mixtures.marginal import (
     MarginalMixture,
     _normal_mixture_cov,
     _normal_mixture_mean,
     _normal_mixture_skew_kurt,
 )
-from normix.utils.constants import B_POST_FLOOR, D_FLOOR, SIGMA_INIT_REG
+from normix.utils.constants import B_POST_FLOOR, D_FLOOR, SAFE_DENOMINATOR, SIGMA_INIT_REG
 
 
 # ============================================================================
@@ -303,13 +306,6 @@ class FactorNormalMixture(MarginalMixture):
         warm-start; closed-form subordinators ignore it.
         """
 
-    @abc.abstractmethod
-    def _subordinator_expectations(
-        self,
-    ) -> Tuple[jax.Array, jax.Array, jax.Array]:
-        r"""Return :math:`(E[\log Y], E[1/Y], E[Y])` under the
-        subordinator prior (used by :meth:`compute_eta_from_model`)."""
-
     # ------------------------------------------------------------------
     # E-step: posterior expectations + factor-stat reduction
     # ------------------------------------------------------------------
@@ -508,8 +504,9 @@ class FactorNormalMixture(MarginalMixture):
         q5 = s10_inv_s7T.T @ s9 - s4     # (d,)
 
         denom = q2 ** 2 - q1 * q3
-        mu = (q2 * q5 - q3 * q4) / denom
-        gamma = (q2 * q4 - q1 * q5) / denom
+        safe_denom = jnp.where(denom < 0.0, denom, -jnp.maximum(denom, SAFE_DENOMINATOR))
+        mu = (q2 * q5 - q3 * q4) / safe_denom
+        gamma = (q2 * q4 - q1 * q5) / safe_denom
 
         # F = (s_7 - μ s_8ᵀ - γ s_9ᵀ) s_10⁻¹              shape (d, r)
         F = jax.scipy.linalg.solve(
@@ -535,7 +532,8 @@ class FactorNormalMixture(MarginalMixture):
                   + 2.0 * mu * gamma)
 
         D = jnp.maximum(diag_R, D_FLOOR)
-        return mu + eta.origin, gamma, F, D
+        return _checked_normal_params(eta, (mu + eta.origin, gamma, F, D), denom,
+                                      schur=(-q1, q2, -q3))
 
     def m_step(self, eta: FactorMixtureStats, **kwargs) -> "FactorNormalMixture":
         r"""Full M-step: update :math:`(\mu, \gamma, F, D)` and the
@@ -592,7 +590,7 @@ class FactorNormalMixture(MarginalMixture):
         return eqx.tree_at(lambda m: m._subordinator, self, subordinator)
 
     # ------------------------------------------------------------------
-    # Eta from model (incremental EM warm-start)
+    # Prior moments
     # ------------------------------------------------------------------
 
     def compute_eta_from_model(self) -> FactorMixtureStats:
@@ -601,30 +599,32 @@ class FactorNormalMixture(MarginalMixture):
 
         The first six fields use the marginal expectations of the joint
         sufficient statistics under the current :math:`\Sigma = F F^\top
-        + \mathrm{diag}(D)`; the four :math:`Z`-fields use the same
-        deterministic relations as :meth:`e_step` (§E-Step of the
-        theory doc).
+        + \mathrm{diag}(D)`. The latent factor is independent of the
+        subordinator. A statistic without a first absolute moment is
+        reported as :math:`+\infty`.
         """
-        E_log_Y, E_inv_Y, E_Y = self._subordinator_expectations()
-        origin = _moment_origin(self.mu, E_inv_Y)
-        mu = self.mu - origin
-        gamma = self.gamma
-        Sigma = self.sigma()
+        eta = self._prior_eta(self.sigma())
+        finite = jnp.isfinite(eta.E_inv_Y) & jnp.isfinite(eta.E_Y)
 
-        s4 = mu + gamma * E_Y
-        s5 = mu * E_inv_Y + gamma
-        s6 = (Sigma
-              + jnp.outer(mu, mu) * E_inv_Y
-              + jnp.outer(gamma, gamma) * E_Y
-              + jnp.outer(mu, gamma) + jnp.outer(gamma, mu))
-        s7, s8, s9, s10 = self._z_stats_from_six(E_inv_Y, E_Y, s4, s5, s6, origin=origin)
-        return FactorMixtureStats(
-            origin=origin,
-            E_inv_Y=E_inv_Y, E_Y=E_Y, E_log_Y=E_log_Y,
-            E_X=s4, E_X_inv_Y=s5, E_XXT_inv_Y=s6,
-            E_XZT_inv_sqrtY=s7, E_Z_inv_sqrtY=s8,
-            E_Z_sqrtY=s9, E_ZZT=s10,
-        )
+        def finite_z_stats(model, e):
+            return model._z_stats_from_six(e.E_inv_Y, e.E_Y, e.E_X, e.E_X_inv_Y,
+                                           e.E_XXT_inv_Y, origin=e.origin)
+
+        def tail_z_stats(model, e):
+            half_inv, half_y = _half_moments_exist(model.subordinator())
+            exists = ((model.mu == e.origin) | half_inv) & ((model.gamma == 0) | half_y)
+            zeros = jnp.zeros(model.r)
+            return (jnp.where(exists[:, None], model.F, jnp.inf),
+                    jnp.where(half_inv, zeros, jnp.inf), jnp.where(half_y, zeros, jnp.inf),
+                    jnp.eye(model.r))
+
+        if isinstance(finite, jax.core.Tracer):
+            z_stats = jax.lax.cond(finite, finite_z_stats, tail_z_stats, self, eta)
+        else:
+            z_stats = (finite_z_stats if finite else tail_z_stats)(self, eta)
+        return FactorMixtureStats(**vars(eta), E_XZT_inv_sqrtY=z_stats[0],
+                                  E_Z_inv_sqrtY=z_stats[1], E_Z_sqrtY=z_stats[2],
+                                  E_ZZT=z_stats[3])
 
     # ------------------------------------------------------------------
     # Convergence hook

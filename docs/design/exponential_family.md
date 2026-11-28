@@ -116,7 +116,8 @@ The normal block needs $\mathbb{E}[Y] > 0$, $\mathbb{E}[1/Y] > 0$, and
 $\mathbb{E}[Y]\,\mathbb{E}[1/Y] \ge 1$.
 The update sets $D = 1 - \mathbb{E}[Y]\,\mathbb{E}[1/Y]$ and floors $|D|$ at
 `SAFE_DENOMINATOR`.
-A violation of the product bound is not rejected.
+A material violation of the product bound raises `ValueError` on concrete inputs
+and gives NaN parameters under tracing. Fitting requires finite statistics.
 The scatter must stay positive definite, or the Cholesky factor fails.
 
 Subordinator bounds on the pytree path:

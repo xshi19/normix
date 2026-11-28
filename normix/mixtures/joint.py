@@ -78,7 +78,10 @@ from typing import Dict, Tuple
 import jax
 import jax.numpy as jnp
 
-from normix.fitting.eta import NormalMixtureEta, _unpack_gig_eta
+from normix.fitting.eta import (
+    NormalMixtureEta, _checked_normal_params, _combine_split, _half_moments_exist,
+    _prior_existence, _unpack_gig_eta,
+)
 
 from normix.exponential_family import ExponentialFamily, _check_backend
 
@@ -135,10 +138,8 @@ class JointNormalMixture(ExponentialFamily):
     def _divergence_eta(self, backend: str = "jax"):
         r"""Assemble joint-gauge :math:`\eta` from the subordinator GIG-layout split.
 
-        Same algebra as :meth:`~normix.mixtures.marginal.NormalMixture.compute_eta_from_model`,
-        but without the EM-only :math:`\alpha`-moment floor: infinite prior
-        moments stay honest ``inf`` and are handled by
-        :func:`~normix.divergences.kl_divergence_from_eta`.
+        Splitting off the divergent conditional-mean term lets KL evaluate
+        its coefficient along the natural-parameter chord before multiplication.
         ``backend`` is forwarded to the subordinator moments.
         """
         eta_s, m, v_s = self.subordinator()._gig_layout_eta(backend=backend)
@@ -188,8 +189,14 @@ class JointNormalMixture(ExponentialFamily):
         """
         _check_backend(backend)
         if self._ambient_moment_contract():
-            eta_fin, m, v = self._divergence_eta(backend=backend)
-            return self._combine_split(eta_fin, m, v)
+            eta = _combine_split(*self._divergence_eta(backend=backend))
+            moments = _unpack_gig_eta(eta[:3])
+            x, x_inv, scatter = _prior_existence(
+                self.mu, self.gamma, jnp.any(self.L_Sigma != 0, axis=1),
+                moments["E_inv_Y"], moments["E_Y"],
+                *_half_moments_exist(self.subordinator()))
+            exists = jnp.concatenate([jnp.ones(3, dtype=bool), x, x_inv, scatter.ravel()])
+            return jnp.where(exists, eta, jnp.inf)
         return super().expectation_params(backend)
 
     def fisher_information(self, backend: str = "jax") -> jax.Array:
@@ -210,7 +217,7 @@ class JointNormalMixture(ExponentialFamily):
             return super().fisher_information(backend)
         sub = self.subordinator()
         eta_s, m, v_s = sub._gig_layout_eta(backend=backend)
-        moments = _unpack_gig_eta(self._combine_split(eta_s, m, v_s))
+        moments = _unpack_gig_eta(_combine_split(eta_s, m, v_s))
         between = self._sandwich(
             self._direction_matrix(self.mu, self.gamma),
             sub._gig_layout_cov(backend=backend),
@@ -219,11 +226,6 @@ class JointNormalMixture(ExponentialFamily):
             self.mu, self.gamma, self.sigma(), moments["E_inv_Y"], moments["E_Y"],
         )
         return between + cond
-
-    @staticmethod
-    def _combine_split(eta_fin: jax.Array, m: jax.Array, v: jax.Array) -> jax.Array:
-        r""":math:`\eta_{\mathrm{fin}} + m v`, with :math:`0\cdot\infty` masked off."""
-        return eta_fin + jnp.where(v != 0.0, m * v, jnp.zeros_like(v))
 
     @staticmethod
     def _direction_matrix(mu: jax.Array, gamma: jax.Array) -> jax.Array:
@@ -677,9 +679,10 @@ class JointNormalMixture(ExponentialFamily):
         Necessary conditions for a :class:`~normix.fitting.eta.NormalMixtureEta`.
         The normal block needs :math:`E[Y] > 0`, :math:`E[1/Y] > 0`, and
         :math:`E[Y] E[1/Y] \ge 1`.
-        :math:`|D|` for :math:`D = 1 - E[Y] E[1/Y]` is floored at
-        ``SAFE_DENOMINATOR``.
-        A violation is not rejected.
+        A material violation raises :class:`ValueError` for concrete inputs
+        and gives NaN parameters under tracing. The tolerance on
+        :math:`1-E[Y]E[1/Y]` is :math:`8\epsilon\max(1,E[Y]E[1/Y])`.
+        Near zero the denominator is floored in magnitude at ``SAFE_DENOMINATOR``.
         The scatter must stay positive definite.
 
         Variance-gamma needs :math:`E[Y] > 0` and
@@ -764,9 +767,6 @@ class JointNormalMixture(ExponentialFamily):
         Returns ``(mu_new, gamma_new, L_new)``.
         """
         D = 1.0 - eta.E_inv_Y * eta.E_Y
-
-        # Cauchy–Schwarz gives D <= 0 always; floor at -SAFE_DENOMINATOR so a
-        # tiny |D| (or roundoff D > 0) never flips the sign of mu, gamma.
         safe_D = -jnp.maximum(jnp.abs(D), SAFE_DENOMINATOR)
 
         mu_new = (eta.E_X - eta.E_Y * eta.E_X_inv_Y) / safe_D
@@ -783,4 +783,4 @@ class JointNormalMixture(ExponentialFamily):
         Sigma = Sigma + SIGMA_REG * jnp.eye(d)
         L_new = jnp.linalg.cholesky(Sigma)
 
-        return mu_new + eta.origin, gamma_new, L_new
+        return _checked_normal_params(eta, (mu_new + eta.origin, gamma_new, L_new), D)

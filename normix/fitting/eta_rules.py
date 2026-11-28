@@ -179,9 +179,9 @@ class Shrinkage(EtaUpdateRule):
     base : EtaUpdateRule
         Base rule that produces the unshrunk update
         :math:`\mathrm{base}(\eta_{t-1}, \hat\eta)`.
-    eta0 : NormalMixtureEta
-        Prior expectation parameters (shrinkage target). Must be a complete
-        stats pytree of the same type as ``eta_prev`` / ``eta_new``.
+    eta0 : NormalMixtureEta, optional
+        Finite prior statistics of the same type as ``eta_prev`` and ``eta_new``.
+        With ``None``, the fitter builds a finite reference from the initial model.
     tau : float, jax.Array, or NormalMixtureEta
         Shrinkage strength.
 
@@ -230,13 +230,19 @@ class Shrinkage(EtaUpdateRule):
     def __init__(
         self,
         base: EtaUpdateRule,
-        eta0,
+        eta0=None,
         tau: Union[float, jax.Array, Any] = 0.5,
     ):
         self.base = base
+        if eta0 is not None:
+            invalid = jnp.any(jnp.stack([jnp.any(~jnp.isfinite(v)) for v in jax.tree.leaves(eta0)]))
+            message = "Shrinkage requires finite target statistics"
+            if isinstance(invalid, jax.core.Tracer):
+                eta0 = eqx.error_if(eta0, invalid, message)
+            elif bool(invalid):
+                raise ValueError(message)
         self.eta0 = eta0
-        # τ is per-field iff it has the same pytree type as eta0.
-        if type(tau) is type(eta0):
+        if (eta0 is None and isinstance(tau, NormalMixtureEta)) or type(tau) is type(eta0):
             self.tau = tau
         else:
             self.tau = jnp.asarray(tau, dtype=jnp.float64)
@@ -245,6 +251,8 @@ class Shrinkage(EtaUpdateRule):
         return self.base.initial_state()
 
     def __call__(self, eta_prev, eta_new, step, batch_size, state):
+        if self.eta0 is None:
+            raise ValueError("A model-based shrinkage target must be initialized by the fitter")
         eta_base, state = self.base(eta_prev, eta_new, step, batch_size, state)
 
         if type(self.tau) is type(self.eta0):
